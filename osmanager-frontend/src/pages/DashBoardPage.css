@@ -1,0 +1,51 @@
+/* Local: src/pages/DashboardPage.css */
+
+.dashboard-container {
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f8f9fa; /* Um cinzento muito claro */
+    padding: 2rem;
+    box-sizing: border-box;
+  }
+  
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .dashboard-header h1 {
+    margin: 0;
+    color: #343a40;
+    font-size: 2rem;
+  }
+  
+  .logout-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    color: white;
+    background-color: #6c757d; /* Cinzento escuro */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .logout-button:hover {
+    background-color: #5a6268;
+  }
+  
+  .os-list-container {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  .os-list-container h2 {
+    margin-top: 0;
+    color: #495057;
+  }
