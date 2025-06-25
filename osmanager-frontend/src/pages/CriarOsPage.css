@@ -1,0 +1,72 @@
+/* Local: src/pages/CriarOsPage.css */
+.form-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    background-color: #f8f9fa;
+  }
+  
+  .os-form {
+    width: 100%;
+    max-width: 800px;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .os-form h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .os-form .input-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .os-form .input-group label {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .os-form .input-group input,
+  .os-form .input-group select,
+  .os-form .input-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 1rem;
+  }
+  
+  .os-form textarea {
+    resize: vertical;
+  }
+  
+  .submit-button {
+    width: 100%;
+    padding: 0.8rem;
+    border: none;
+    background-color: #28a745; /* Verde */
+    color: white;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: background-color 0.3s ease;
+  }
+  
+  .submit-button:hover {
+    background-color: #218838;
+  }
