@@ -1,4 +1,4 @@
-// Crie este arquivo em: src/main/java/com/bag/osmanager/service/JwtService.java
+// Local do arquivo: src/main/java/com/bag/osmanager/service/JwtService.java
 package com.bag.osmanager.service;
 
 import io.jsonwebtoken.Claims;
@@ -18,10 +18,9 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    // Chave secreta para assinar o token. Em um projeto real, isso viria de um arquivo de configuração.
-    // Gere uma chave segura, por exemplo, no site: https://www.allkeysgenerator.com/Random/Security-Encryption-Key-Generator.aspx
-    private static final String SECRET_KEY = "MYFvr/E0KCo/Gi0sCPWbI+jSyFScMxE0QbaQxxkfT94/9jZq0kRuE/wJqCb3yVIAR0YewXa8HArskz7CKnR7ZKUvy1I8NosSzehC+GGfyAyYta/MRvIuyLN7gD8bNnF2RseM5ed/fwmloo9akrLQtwWRD3O01JVqeaYSMnGDeSGKKxUPAaETW6qxKFYBwYnMyJAqYWS/43vK66Aj5b3cotHqVyf4Gy+ke7N8a/+Y6BapWfmqFGI7elNo0ABv9D+MJEa06HbWnzedLhAHehoGFCZ9aWYpBO2vbLn5Ask9YJYFWYmN3G4E6VkfTYYnKJekDlBsDqlDFXFHi0GXwvYiz/2TUFotAol5tbDzu8WOJWk=\r\n" + //
-                "";
+    // 👇 CHAVE SECRETA CORRIGIDA E LIMPA 👇
+    // A chave agora é uma única string, sem espaços, quebras de linha ou concatenação.
+    private static final String SECRET_KEY = "SuaChaveSuperSecretaDe256BitsDeveSerColocadaAquiSemEspacosOuQuebrasDeLinha";
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -68,7 +67,10 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        // Você pode gerar uma chave segura em Base64 e usar aqui.
+        // Por simplicidade, este exemplo usa a string diretamente, mas para produção,
+        // uma chave gerada (e vinda de um arquivo de propriedades) é melhor.
+        byte[] keyBytes = SECRET_KEY.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

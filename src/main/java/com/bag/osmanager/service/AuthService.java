@@ -1,4 +1,4 @@
-// Crie este arquivo em: src/main/java/com/bag/osmanager/service/AuthService.java
+// Local do arquivo: src/main/java/com/bag/osmanager/service/AuthService.java
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.AuthRequestDTO;
@@ -23,6 +23,11 @@ public class AuthService {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getSenha())
         );
+
+        // 👇 ADICIONAMOS ESTA LINHA PARA O TESTE DEFINITIVO 👇
+        System.out.println("******************************************************");
+        System.out.println("AUTENTICAÇÃO BEM-SUCEDIDA PARA: " + request.getEmail());
+        System.out.println("******************************************************");
 
         // Se a autenticação for bem-sucedida, busca o usuário e gera o token
         final UserDetails user = funcionarioRepository.findByEmail(request.getEmail()).orElseThrow();
