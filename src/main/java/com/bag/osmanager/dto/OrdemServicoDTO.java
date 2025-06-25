@@ -1,3 +1,4 @@
+// Local do arquivo: src/main/java/com/bag/osmanager/dto/OrdemServicoDTO.java
 package com.bag.osmanager.dto;
 
 import com.bag.osmanager.model.enums.*;
@@ -35,4 +36,7 @@ public class OrdemServicoDTO {
 
     private Long aprovadoPorId;
     private LocalDateTime dataAprovacao;
+
+    // 👇 CAMPO ADICIONADO PARA A TOLERÂNCIA 👇
+    private LocalDateTime dataLimite;
 }
