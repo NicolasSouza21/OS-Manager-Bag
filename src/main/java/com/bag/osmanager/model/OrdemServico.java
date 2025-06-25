@@ -1,3 +1,4 @@
+// Local do arquivo: src/main/java/com/bag/osmanager/model/OrdemServico.java
 package com.bag.osmanager.model;
 
 import com.bag.osmanager.model.enums.*;
@@ -72,4 +73,7 @@ public class OrdemServico {
     @JoinColumn(name = "aprovado_por_id")
     private Funcionario aprovadoPor;
     private LocalDateTime dataAprovacao;
+    
+    // 👇 CAMPO ADICIONADO PARA A TOLERÂNCIA 👇
+    private LocalDateTime dataLimite;
 }

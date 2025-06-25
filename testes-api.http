@@ -1,17 +1,20 @@
-### Criar Funcionário
+### 1. Criar o primeiro usuário (ADMIN)
 POST http://localhost:8080/api/funcionarios
-Authorization: Basic YWRtaW46YWRtaW4xMjM=   # admin:admin123 em base64
 Content-Type: application/json
 
 {
-  "nome": "João Silva",
-  "email": "joao@empresa.com",
-  "telefone": "11999999999",
-  "tipoFuncionario": "MECANICO"
+    "nome": "Administrador do Sistema",
+    "email": "admin@empresa.com",
+    "senha": "senha_forte_123",
+    "telefone": "11912345678",
+    "tipoFuncionario": "ADMIN"
 }
 
-###
+### 2. Fazer Login para obter o Token JWT
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
 
-GET http://localhost:8080/api/funcionarios
-Authorization: Basic bmljb2xhczoxMjM=
-
+{
+    "email": "admin@empresa.com",
+    "senha": "senha_forte_123"
+}
