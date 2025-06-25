@@ -1,0 +1,17 @@
+### Criar Funcionário
+POST http://localhost:8080/api/funcionarios
+Authorization: Basic YWRtaW46YWRtaW4xMjM=   # admin:admin123 em base64
+Content-Type: application/json
+
+{
+  "nome": "João Silva",
+  "email": "joao@empresa.com",
+  "telefone": "11999999999",
+  "tipoFuncionario": "MECANICO"
+}
+
+###
+
+GET http://localhost:8080/api/funcionarios
+Authorization: Basic bmljb2xhczoxMjM=
+
