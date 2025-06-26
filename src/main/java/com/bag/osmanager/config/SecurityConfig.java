@@ -1,4 +1,3 @@
-// Local do ficheiro: src/main/java/com/bag/osmanager/config/SecurityConfig.java
 package com.bag.osmanager.config;
 
 import com.bag.osmanager.config.filter.JwtAuthFilter;
@@ -52,25 +51,32 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // 👇 BEAN ADICIONADO PARA CONFIGURAR O CORS 👇
+    // --- 👇👇 CONFIGURAÇÃO DE CORS ATUALIZADA 👇👇 ---
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permite que o seu frontend React (a rodar em localhost:5173) aceda à API
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        
+        // 1. ADICIONAMOS O SEU IP DE REDE À LISTA DE ORIGENS PERMITIDAS
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://192.168.0.11:5173"));
+        
         // Permite os métodos HTTP mais comuns
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        
         // Permite os cabeçalhos necessários, incluindo o de Autorização
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
+
+        // 2. ESSA LINHA É IMPORTANTE para permitir que o navegador envie credenciais (como o token JWT)
+        configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", configuration); // Aplica para todas as rotas
         return source;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 👇 ATIVA A CONFIGURAÇÃO DE CORS DEFINIDA ACIMA 👇
+            // Ativa a configuração de CORS que definimos acima
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

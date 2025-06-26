@@ -1,72 +1,145 @@
-/* Local: src/pages/CriarOsPage.css */
-.form-container {
-    display: flex;
-    justify-content: center;
-    padding: 2rem;
-    background-color: #f8f9fa;
-  }
-  
-  .os-form {
-    width: 100%;
-    max-width: 800px;
-    padding: 2rem;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .os-form h1 {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-  
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-  
-  .os-form .input-group {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .os-form .input-group label {
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-    color: #555;
-  }
-  
-  .os-form .input-group input,
-  .os-form .input-group select,
-  .os-form .input-group textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-family: inherit;
-    font-size: 1rem;
-  }
-  
-  .os-form textarea {
-    resize: vertical;
-  }
-  
-  .submit-button {
-    width: 100%;
-    padding: 0.8rem;
-    border: none;
-    background-color: #28a745; /* Verde */
-    color: white;
-    border-radius: 4px;
-    font-size: 1.1rem;
-    cursor: pointer;
-    margin-top: 1rem;
-    transition: background-color 0.3s ease;
-  }
-  
-  .submit-button:hover {
-    background-color: #218838;
-  }
+/* Container principal da página */
+.create-os-page {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+  background-color: #f4f7fc;
+}
+
+/* Formulário principal */
+.create-os-form {
+  width: 100%;
+  max-width: 900px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden; /* Garante que os cantos arredondados funcionem */
+}
+
+/* Cabeçalho do formulário */
+.form-header-main {
+  background-color: #34495e; /* Azul escuro */
+  color: white;
+  padding: 1rem 2rem;
+  text-align: center;
+}
+
+.form-header-main h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Estilo para as seções do formulário */
+.form-section {
+  padding: 1.5rem 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  border-bottom: 1px solid #eef2f9;
+}
+
+/* Seção de campos somente leitura */
+.read-only-section {
+  background-color: #f8f9fa;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Força 3 colunas */
+}
+
+/* Grupo de input (label + campo) */
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.input-group input:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+/* Estilo específico para o input de status "ABERTO" */
+.status-aberto-input {
+  text-align: center;
+  font-weight: bold;
+  color: #28a745;
+  border-color: #28a745;
+}
+
+/* Campo que ocupa a largura total da grid */
+.input-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.input-group.large-field {
+  grid-column: span 2; /* Faz o campo de equipamento ocupar duas colunas */
+}
+
+.os-form textarea {
+  resize: vertical;
+}
+
+/* Seção de botões de ação */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  background-color: #f8f9fa;
+}
+
+.button-save,
+.button-cancel {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.button-save {
+  background-color: #3b82f6; /* Azul */
+  color: white;
+}
+
+.button-save:hover {
+  background-color: #2563eb;
+}
+
+.button-cancel {
+  background-color: #e2e8f0; /* Cinza claro */
+  color: #4a5568;
+}
+
+.button-cancel:hover {
+  background-color: #cbd5e0;
+}
