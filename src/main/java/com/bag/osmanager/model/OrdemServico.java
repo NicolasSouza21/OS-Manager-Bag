@@ -1,4 +1,3 @@
-// Local do arquivo: src/main/java/com/bag/osmanager/model/OrdemServico.java
 package com.bag.osmanager.model;
 
 import com.bag.osmanager.model.enums.*;
@@ -21,12 +20,24 @@ public class OrdemServico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String numeroMaquina;
+    // --- 👇👇 CAMPOS REMOVIDOS E SUBSTITUÍDOS 👇👇 ---
+    // private String numeroMaquina; // REMOVIDO
+    // private String tipoMaquina;   // REMOVIDO
+
+    // 1. NOVO RELACIONAMENTO com a entidade Equipamento
+    // Muitas Ordens de Serviço podem apontar para um Equipamento.
+    @ManyToOne
+    @JoinColumn(name = "equipamento_id") // Nome da coluna da chave estrangeira no banco
+    private Equipamento equipamento;
+
+    // 2. NOVO RELACIONAMENTO com a entidade Local
+    @ManyToOne
+    @JoinColumn(name = "local_id") // Nome da coluna da chave estrangeira no banco
+    private Local local;
+    // --- 👆👆 FIM DAS MUDANÇAS ESTRUTURAIS 👆👆 ---
 
     @Enumerated(EnumType.STRING)
     private Prioridade prioridade;
-
-    private String tipoMaquina;
 
     @Enumerated(EnumType.STRING)
     private Turno turno;
@@ -74,6 +85,5 @@ public class OrdemServico {
     private Funcionario aprovadoPor;
     private LocalDateTime dataAprovacao;
     
-    // 👇 CAMPO ADICIONADO PARA A TOLERÂNCIA 👇
     private LocalDateTime dataLimite;
 }

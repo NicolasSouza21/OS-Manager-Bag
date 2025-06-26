@@ -1,5 +1,8 @@
 package com.bag.osmanager.service;
 
+// 1. Precisamos importar a classe Funcionario para acessar o nome
+import com.bag.osmanager.model.Funcionario; 
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -31,32 +34,36 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
-    // --- 👇👇 A MUDANÇA ESTÁ AQUI 👇👇 ---
+    // --- 👇👇 A NOVA MUDANÇA ESTÁ AQUI 👇👇 ---
     public String generateToken(UserDetails userDetails) {
-        // 1. Criamos um mapa para guardar as informações extras (claims)
         Map<String, Object> claims = new HashMap<>();
         
-        // 2. Pegamos a lista de permissões (authorities) do usuário
-        //    e a transformamos em uma lista de Strings (ex: ["ROLE_ADMIN"])
+        // Adiciona os cargos (roles) ao token
         List<String> roles = userDetails.getAuthorities()
                 .stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
-        
-        // 3. Adicionamos essa lista de cargos ao mapa com a chave "roles"
         claims.put("roles", roles);
 
-        // 4. Chamamos o método que gera o token, agora passando o mapa com os cargos
+        // 2. ADICIONA O NOME COMPLETO AO TOKEN
+        // Verificamos se o userDetails é uma instância de Funcionario
+        if (userDetails instanceof Funcionario) {
+            // Se for, fazemos um "cast" e pegamos o nome completo
+            String nomeCompleto = ((Funcionario) userDetails).getNome();
+            // Adicionamos o nome ao mapa de claims com a chave "fullName"
+            claims.put("fullName", nomeCompleto);
+        }
+
         return generateToken(claims, userDetails);
     }
     // --- 👆👆 FIM DA MUDANÇA 👆👆 ---
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
-                .setClaims(extraClaims) // O mapa agora contém os cargos
+                .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Token válido por 10 horas
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

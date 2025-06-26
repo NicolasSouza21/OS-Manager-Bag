@@ -52,8 +52,6 @@ export const getOsById = (id) => {
   return api.get(`/ordens-servico/${id}`);
 };
 
-
-// --- 👇👇 NOVA FUNÇÃO ADICIONADA AQUI 👇👇 ---
 /**
  * Função para CADASTRAR um novo funcionário.
  * Requer permissão de ADMIN no backend.
@@ -62,7 +60,25 @@ export const getOsById = (id) => {
 export const cadastrarFuncionario = (funcionarioData) => {
   return api.post('/funcionarios', funcionarioData);
 };
-// --- 👆👆 FIM DA ADIÇÃO 👆👆 ---
+
+
+// --- 👇👇 NOVAS FUNÇÕES ADICIONADAS AQUI 👇👇 ---
+
+/**
+ * Função para buscar a lista de todos os EQUIPAMENTOS cadastrados.
+ */
+export const getEquipamentos = () => {
+  return api.get('/equipamentos');
+};
+
+/**
+ * Função para buscar a lista de todos os LOCAIS cadastrados.
+ */
+export const getLocais = () => {
+  return api.get('/locais');
+};
+
+// --- 👆� FIM DA ADIÇÃO 👆👆 ---
 
 
 /**
@@ -70,7 +86,6 @@ export const cadastrarFuncionario = (funcionarioData) => {
  */
 export const logout = () => {
   localStorage.removeItem('authToken');
-  // É uma boa prática limpar o cargo também ao fazer logout.
   localStorage.removeItem('userRole'); 
 };
 

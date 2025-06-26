@@ -24,27 +24,33 @@ function LoginPage() {
 
       const decodedToken = jwtDecode(token);
       
-      console.log('Token decodificado:', decodedToken); // Mantenha este log para depuração
+      console.log('Token decodificado:', decodedToken);
 
-      // --- CORREÇÃO APLICADA AQUI ---
-      // Verificamos se a propriedade 'roles' existe e é um array.
-      // Se não existir, consideramos um cargo padrão ou nulo para evitar o erro.
+      // Pega o cargo do usuário
       const userRole = (decodedToken.roles && Array.isArray(decodedToken.roles) && decodedToken.roles.length > 0) 
         ? decodedToken.roles[0] 
         : null;
 
       if (!userRole) {
-        // Se, mesmo após a decodificação, não encontrarmos um cargo, informamos um erro.
         console.error("Não foi possível encontrar o 'role' do usuário no token JWT.");
         setError("Erro de permissão. Contate o administrador.");
-        return; // Impede o restante da execução
+        return;
       }
-      // --- FIM DA CORREÇÃO ---
       
       localStorage.setItem('userRole', userRole);
 
-      console.log('Login realizado com sucesso!');
-      console.log('Cargo do usuário salvo:', userRole);
+      // --- 👇👇 A NOVA MUDANÇA ESTÁ AQUI 👇👇 ---
+      // 1. Pegamos o nome completo do usuário da chave "fullName" que adicionamos no backend
+      const userName = decodedToken.fullName;
+
+      // 2. Verificamos se o nome existe e o salvamos no localStorage
+      if (userName) {
+        localStorage.setItem('userName', userName);
+        console.log('Nome do usuário salvo:', userName);
+      } else {
+        console.warn("A chave 'fullName' não foi encontrada no token.");
+      }
+      // --- 👆👆 FIM DA MUDANÇA 👆👆 ---
       
       alert('Login bem-sucedido! Redirecionando...');
 
@@ -52,7 +58,6 @@ function LoginPage() {
 
     } catch (err) {
       console.error('Erro no login:', err);
-      // Mantém a mensagem de erro genérica para o usuário
       setError('Email ou senha inválidos. Tente novamente.');
     }
   };
