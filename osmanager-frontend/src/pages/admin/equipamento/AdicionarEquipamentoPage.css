@@ -1,0 +1,46 @@
+/* Local: src/pages/inventario/AdicionarEquipamentoPage.css */
+.form-container-inventario {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    background-color: #f8f9fa;
+  }
+  
+  .inventario-form {
+    width: 100%;
+    max-width: 600px;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .inventario-form h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .inventario-form .input-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .inventario-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .inventario-form input,
+  .inventario-form textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1rem;
+  }
+  
+  .inventario-form textarea {
+    resize: vertical;
+  }

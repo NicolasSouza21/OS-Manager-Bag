@@ -76,7 +76,6 @@ export const getLocais = () => {
   return api.get('/locais');
 };
 
-// --- 👇👇 NOVA FUNÇÃO ADICIONADA AQUI 👇👇 ---
 
 /**
  * Função para buscar a lista de todos os FUNCIONÁRIOS cadastrados.
@@ -85,7 +84,18 @@ export const getFuncionarios = () => {
     return api.get('/funcionarios');
 };
 
+// --- 👇👇 NOVA FUNÇÃO ADICIONADA AQUI 👇👇 ---
+
+/**
+ * Função para CRIAR um novo equipamento.
+ * @param {object} equipamentoData - Os dados do equipamento (nome, tag, descricao).
+ */
+export const createEquipamento = (equipamentoData) => {
+  return api.post('/equipamentos', equipamentoData);
+};
+
 // --- 👆👆 FIM DA ADIÇÃO 👆👆 ---
+
 
 /**
  * Função para fazer o logout (limpa o token e o cargo do usuário do navegador).
