@@ -5,8 +5,11 @@ import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CriarOsPage from './pages/CriarOsPage';
-import VisualizarOsPage from './pages/VisualizarOsPage'; // 1. Importamos a nova página
+import VisualizarOsPage from './pages/VisualizarOsPage';
 import Navbar from './components/Navbar';
+
+// 1. Vamos importar a nova página que iremos criar no próximo passo
+import CadastroUsuarioPage from './pages/admin/CadastroUsuarioPage';
 
 /**
  * Componente de Layout:
@@ -28,15 +31,14 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
 
       {/* Rota "pai" que usa nosso AppLayout com Navbar. */}
-      {/* Todas as rotas filhas aqui dentro terão a barra de navegação no topo. */}
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/criar-os" element={<CriarOsPage />} />
-        
-        {/* --- 👇👇 ROTA ADICIONADA AQUI 👇👇 --- */}
-        {/* 2. Esta é a rota dinâmica para visualizar uma OS específica. */}
-        {/* O ":id" é um parâmetro que pegaremos na página de visualização. */}
         <Route path="/os/:id" element={<VisualizarOsPage />} />
+        
+        {/* --- 👇👇 ROTA DE ADMINISTRAÇÃO ADICIONADA AQUI 👇👇 --- */}
+        {/* 2. Esta rota leva para a nossa nova página de cadastro de usuários. */}
+        <Route path="/admin/usuarios" element={<CadastroUsuarioPage />} />
         {/* --- 👆👆 FIM DA ADIÇÃO 👆👆 --- */}
 
       </Route>

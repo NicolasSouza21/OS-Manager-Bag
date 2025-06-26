@@ -1,4 +1,3 @@
-// Local do arquivo: src/main/java/com/bag/osmanager/service/JwtService.java
 package com.bag.osmanager.service;
 
 import io.jsonwebtoken.Claims;
@@ -6,20 +5,21 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
 
-    // 👇 CHAVE SECRETA CORRIGIDA E LIMPA 👇
-    // A chave agora é uma única string, sem espaços, quebras de linha ou concatenação.
     private static final String SECRET_KEY = "SuaChaveSuperSecretaDe256BitsDeveSerColocadaAquiSemEspacosOuQuebrasDeLinha";
 
     public String extractUsername(String token) {
@@ -31,13 +31,29 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
+    // --- 👇👇 A MUDANÇA ESTÁ AQUI 👇👇 ---
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        // 1. Criamos um mapa para guardar as informações extras (claims)
+        Map<String, Object> claims = new HashMap<>();
+        
+        // 2. Pegamos a lista de permissões (authorities) do usuário
+        //    e a transformamos em uma lista de Strings (ex: ["ROLE_ADMIN"])
+        List<String> roles = userDetails.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+        
+        // 3. Adicionamos essa lista de cargos ao mapa com a chave "roles"
+        claims.put("roles", roles);
+
+        // 4. Chamamos o método que gera o token, agora passando o mapa com os cargos
+        return generateToken(claims, userDetails);
     }
+    // --- 👆👆 FIM DA MUDANÇA 👆👆 ---
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
-                .setClaims(extraClaims)
+                .setClaims(extraClaims) // O mapa agora contém os cargos
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Token válido por 10 horas
@@ -67,9 +83,6 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        // Você pode gerar uma chave segura em Base64 e usar aqui.
-        // Por simplicidade, este exemplo usa a string diretamente, mas para produção,
-        // uma chave gerada (e vinda de um arquivo de propriedades) é melhor.
         byte[] keyBytes = SECRET_KEY.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
     }

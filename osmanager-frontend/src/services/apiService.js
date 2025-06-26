@@ -1,10 +1,8 @@
 // Local: src/services/apiService.js
 import axios from 'axios';
 
-// --- A MUDANÇA FOI FEITA AQUI ---
 // O endereço do seu backend agora aponta para o IP correto na sua rede.
 const API_URL = 'http://192.168.0.11:8080/api';
-// --- FIM DA MUDANÇA ---
 
 
 const api = axios.create({
@@ -54,11 +52,26 @@ export const getOsById = (id) => {
   return api.get(`/ordens-servico/${id}`);
 };
 
+
+// --- 👇👇 NOVA FUNÇÃO ADICIONADA AQUI 👇👇 ---
 /**
- * Função para fazer o logout (limpa o token do navegador).
+ * Função para CADASTRAR um novo funcionário.
+ * Requer permissão de ADMIN no backend.
+ * @param {object} funcionarioData - Os dados do novo funcionário.
+ */
+export const cadastrarFuncionario = (funcionarioData) => {
+  return api.post('/funcionarios', funcionarioData);
+};
+// --- 👆👆 FIM DA ADIÇÃO 👆👆 ---
+
+
+/**
+ * Função para fazer o logout (limpa o token e o cargo do usuário do navegador).
  */
 export const logout = () => {
   localStorage.removeItem('authToken');
+  // É uma boa prática limpar o cargo também ao fazer logout.
+  localStorage.removeItem('userRole'); 
 };
 
 export default api;

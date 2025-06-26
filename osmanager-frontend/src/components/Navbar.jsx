@@ -1,21 +1,29 @@
 import React from 'react';
-// Usaremos Link para navegação, que é o ideal para links visíveis
 import { Link, useNavigate } from 'react-router-dom'; 
 import { logout } from '../services/apiService';
-import './Navbar.css'; // Vamos criar este arquivo de estilo
+import './Navbar.css';
 
 function Navbar() {
   const navigate = useNavigate();
 
+  // 1. Lemos o cargo do usuário que foi salvo no localStorage durante o login
+  const userRole = localStorage.getItem('userRole');
+
+  // 2. Criamos uma variável booleana para verificar se o usuário é ADMIN
+  //    O Spring Security geralmente adiciona o prefixo "ROLE_", então verificamos por "ROLE_ADMIN"
+  const isAdmin = userRole === 'ROLE_ADMIN';
+
   const handleLogout = () => {
-    logout(); // Limpa o token do localStorage
-    navigate('/login'); // Redireciona para a página de login
+    // A função logout do apiService já limpa o token. 
+    // Vamos garantir que a role também seja limpa.
+    localStorage.removeItem('userRole'); 
+    logout(); 
+    navigate('/login');
   };
 
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        {/* Link para o nome do app, que leva ao dashboard */}
         <Link to="/dashboard">OS Manager</Link>
       </div>
       <ul className="navbar-links">
@@ -25,6 +33,18 @@ function Navbar() {
         <li>
           <Link to="/criar-os" className="nav-link">Criar OS</Link>
         </li>
+        
+        {/* --- 👇👇 RENDERIZAÇÃO CONDICIONAL AQUI 👇👇 --- */}
+        {/* 3. Este bloco <li> só será renderizado na tela se a variável 'isAdmin' for verdadeira */}
+        {isAdmin && (
+          <li>
+            <Link to="/admin/usuarios" className="nav-link admin-link">
+              Gerenciar Usuários
+            </Link>
+          </li>
+        )}
+        {/* --- 👆👆 FIM DA CONDIÇÃO 👆👆 --- */}
+        
       </ul>
       <div className="navbar-actions">
         <button onClick={handleLogout} className="logout-button">

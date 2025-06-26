@@ -1,11 +1,11 @@
-// Local: src/pages/LoginPage.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // 👈 1. IMPORTE O useNavigate
+import { useNavigate } from 'react-router-dom';
 import { login } from '../services/apiService';
+import { jwtDecode } from 'jwt-decode';
 import './LoginPage.css';
 
 function LoginPage() {
-  const navigate = useNavigate(); // 👈 2. INICIE O HOOK
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
@@ -20,19 +20,39 @@ function LoginPage() {
       
       const token = response.data.token;
 
-      console.log('Login realizado com sucesso!');
-      console.log('Token recebido:', token);
-      
       localStorage.setItem('authToken', token);
 
-      // Feedback para o utilizador (opcional, pode ser removido)
+      const decodedToken = jwtDecode(token);
+      
+      console.log('Token decodificado:', decodedToken); // Mantenha este log para depuração
+
+      // --- CORREÇÃO APLICADA AQUI ---
+      // Verificamos se a propriedade 'roles' existe e é um array.
+      // Se não existir, consideramos um cargo padrão ou nulo para evitar o erro.
+      const userRole = (decodedToken.roles && Array.isArray(decodedToken.roles) && decodedToken.roles.length > 0) 
+        ? decodedToken.roles[0] 
+        : null;
+
+      if (!userRole) {
+        // Se, mesmo após a decodificação, não encontrarmos um cargo, informamos um erro.
+        console.error("Não foi possível encontrar o 'role' do usuário no token JWT.");
+        setError("Erro de permissão. Contate o administrador.");
+        return; // Impede o restante da execução
+      }
+      // --- FIM DA CORREÇÃO ---
+      
+      localStorage.setItem('userRole', userRole);
+
+      console.log('Login realizado com sucesso!');
+      console.log('Cargo do usuário salvo:', userRole);
+      
       alert('Login bem-sucedido! Redirecionando...');
 
-      // 👇 3. NAVEGUE PARA O DASHBOARD APÓS O SUCESSO 👇
       navigate('/dashboard');
 
     } catch (err) {
       console.error('Erro no login:', err);
+      // Mantém a mensagem de erro genérica para o usuário
       setError('Email ou senha inválidos. Tente novamente.');
     }
   };
