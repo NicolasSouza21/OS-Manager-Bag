@@ -1,10 +1,8 @@
 // Local: src/services/apiService.js
 import axios from 'axios';
 
-// --- A MUDANÇA FOI FEITA AQUI ---
 // O endereço do seu backend agora aponta para o IP correto na sua rede.
 const API_URL = 'http://192.168.0.11:8080/api';
-// --- FIM DA MUDANÇA ---
 
 
 const api = axios.create({
@@ -55,10 +53,56 @@ export const getOsById = (id) => {
 };
 
 /**
- * Função para fazer o logout (limpa o token do navegador).
+ * Função para CADASTRAR um novo funcionário.
+ * Requer permissão de ADMIN no backend.
+ * @param {object} funcionarioData - Os dados do novo funcionário.
+ */
+export const cadastrarFuncionario = (funcionarioData) => {
+  return api.post('/funcionarios', funcionarioData);
+};
+
+
+/**
+ * Função para buscar a lista de todos os EQUIPAMENTOS cadastrados.
+ */
+export const getEquipamentos = () => {
+  return api.get('/equipamentos');
+};
+
+/**
+ * Função para buscar a lista de todos os LOCAIS cadastrados.
+ */
+export const getLocais = () => {
+  return api.get('/locais');
+};
+
+
+/**
+ * Função para buscar a lista de todos os FUNCIONÁRIOS cadastrados.
+ */
+export const getFuncionarios = () => {
+    return api.get('/funcionarios');
+};
+
+// --- 👇👇 NOVA FUNÇÃO ADICIONADA AQUI 👇👇 ---
+
+/**
+ * Função para CRIAR um novo equipamento.
+ * @param {object} equipamentoData - Os dados do equipamento (nome, tag, descricao).
+ */
+export const createEquipamento = (equipamentoData) => {
+  return api.post('/equipamentos', equipamentoData);
+};
+
+// --- 👆👆 FIM DA ADIÇÃO 👆👆 ---
+
+
+/**
+ * Função para fazer o logout (limpa o token e o cargo do usuário do navegador).
  */
 export const logout = () => {
   localStorage.removeItem('authToken');
+  localStorage.removeItem('userRole'); 
 };
 
 export default api;

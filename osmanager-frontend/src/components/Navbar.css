@@ -53,3 +53,11 @@
   .logout-button:hover {
     background-color: #c0392b; /* Vermelho mais escuro */
   }
+
+  .admin-link {
+    background-color: #f39c12; /* Um laranja para destacar */
+    color: white !important; /* !important para sobrescrever outras regras */
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    font-weight: bold;
+  }

@@ -1,42 +1,89 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
+.cadastro-usuario-page {
+  display: flex;
+  justify-content: center;
   padding: 2rem;
+  background-color: #f4f7fc;
+}
+
+.cadastro-form {
+  width: 100%;
+  max-width: 500px;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cadastro-form h1 {
   text-align: center;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #334155;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.cadastro-form p {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #64748B;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.cadastro-form .input-group {
+  display: flex;
+  flex-direction: column;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.cadastro-form .input-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #4a5568;
 }
 
-.card {
-  padding: 2em;
+.cadastro-form .input-group input,
+.cadastro-form .input-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 1rem;
 }
 
-.read-the-docs {
-  color: #888;
+.form-message {
+  padding: 1rem;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.success-message {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.button-save {
+padding: 0.8rem;
+border: none;
+background-color: #3b82f6; /* Azul */
+color: white;
+border-radius: 6px;
+font-size: 1.1rem;
+font-weight: 600;
+cursor: pointer;
+margin-top: 1rem;
+transition: background-color 0.3s ease;
+}
+
+.button-save:hover {
+background-color: #2563eb;
 }

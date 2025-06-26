@@ -1,11 +1,11 @@
-// Local: src/pages/LoginPage.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // 👈 1. IMPORTE O useNavigate
+import { useNavigate } from 'react-router-dom';
 import { login } from '../services/apiService';
+import { jwtDecode } from 'jwt-decode';
 import './LoginPage.css';
 
 function LoginPage() {
-  const navigate = useNavigate(); // 👈 2. INICIE O HOOK
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
@@ -20,15 +20,40 @@ function LoginPage() {
       
       const token = response.data.token;
 
-      console.log('Login realizado com sucesso!');
-      console.log('Token recebido:', token);
-      
       localStorage.setItem('authToken', token);
 
-      // Feedback para o utilizador (opcional, pode ser removido)
+      const decodedToken = jwtDecode(token);
+      
+      console.log('Token decodificado:', decodedToken);
+
+      // Pega o cargo do usuário
+      const userRole = (decodedToken.roles && Array.isArray(decodedToken.roles) && decodedToken.roles.length > 0) 
+        ? decodedToken.roles[0] 
+        : null;
+
+      if (!userRole) {
+        console.error("Não foi possível encontrar o 'role' do usuário no token JWT.");
+        setError("Erro de permissão. Contate o administrador.");
+        return;
+      }
+      
+      localStorage.setItem('userRole', userRole);
+
+      // --- 👇👇 A NOVA MUDANÇA ESTÁ AQUI 👇👇 ---
+      // 1. Pegamos o nome completo do usuário da chave "fullName" que adicionamos no backend
+      const userName = decodedToken.fullName;
+
+      // 2. Verificamos se o nome existe e o salvamos no localStorage
+      if (userName) {
+        localStorage.setItem('userName', userName);
+        console.log('Nome do usuário salvo:', userName);
+      } else {
+        console.warn("A chave 'fullName' não foi encontrada no token.");
+      }
+      // --- 👆👆 FIM DA MUDANÇA 👆👆 ---
+      
       alert('Login bem-sucedido! Redirecionando...');
 
-      // 👇 3. NAVEGUE PARA O DASHBOARD APÓS O SUCESSO 👇
       navigate('/dashboard');
 
     } catch (err) {

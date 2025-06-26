@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// 1. Precisamos do 'useNavigate' para navegar para outra página
 import { useNavigate } from 'react-router-dom';
 import { getOrdensServico } from '../services/apiService';
 import { FaSearch } from 'react-icons/fa'; 
@@ -7,7 +6,6 @@ import { FaSearch } from 'react-icons/fa';
 import './DashBoardPage.css';
 
 function DashboardPage() {
-  // 2. Inicializamos o hook que nos dá a função de navegação
   const navigate = useNavigate();
 
   const [ordens, setOrdens] = useState([]);
@@ -31,16 +29,23 @@ function DashboardPage() {
     fetchOrdens();
   }, []);
 
-  const formatDate = (dateString) => {
+  // --- 👇👇 A MUDANÇA ESTÁ AQUI 👇👇 ---
+  // 1. Renomeamos a função para ser mais clara e ajustamos as opções de formatação.
+  const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    // Usamos toLocaleString para formatar data e hora.
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
+  // --- 👆👆 FIM DA MUDANÇA 👆👆 ---
 
-  // 3. Criamos a função que será chamada ao clicar na lupa
   const handleViewDetails = (osId) => {
-    // A função navigate nos leva para a URL da página de detalhes,
-    // passando o ID da OS clicada.
     navigate(`/os/${osId}`);
   };
 
@@ -58,7 +63,8 @@ function DashboardPage() {
               <tr>
                 <th>Status</th>
                 <th>Nº O.S.</th>
-                <th>Data Abertura</th>
+                {/* 2. Atualizamos o cabeçalho da coluna */}
+                <th>Data e Hora Abertura</th>
                 <th>Equipamento</th>
                 <th>Nº Equipamento</th>
                 <th>Local</th>
@@ -77,14 +83,16 @@ function DashboardPage() {
                       </span>
                     </td>
                     <td>{os.id}</td>
-                    <td>{formatDate(os.dataAbertura)}</td>
+                    
+                    {/* 3. Chamamos a nova função de formatação */}
+                    <td>{formatDateTime(os.dataSolicitacao)}</td>
+                    
                     <td>{os.tipoMaquina || 'N/A'}</td>
                     <td>{os.numeroMaquina || 'N/A'}</td>
                     <td>{os.local || 'N/A'}</td>
                     <td>{os.prioridade || 'N/A'}</td>
                     <td>{os.solicitante || 'N/A'}</td>
                     <td>
-                      {/* 4. Adicionamos o evento 'onClick' ao botão */}
                       <button 
                         className="view-button" 
                         title="Visualizar Detalhes"

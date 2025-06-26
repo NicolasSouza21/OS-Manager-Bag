@@ -51,38 +51,35 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // --- 👇👇 CONFIGURAÇÃO DE CORS ATUALIZADA 👇👇 ---
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // 1. ADICIONAMOS O SEU IP DE REDE À LISTA DE ORIGENS PERMITIDAS
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://192.168.0.11:5173"));
-        
-        // Permite os métodos HTTP mais comuns
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        
-        // Permite os cabeçalhos necessários, incluindo o de Autorização
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
-
-        // 2. ESSA LINHA É IMPORTANTE para permitir que o navegador envie credenciais (como o token JWT)
         configuration.setAllowCredentials(true);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Aplica para todas as rotas
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Ativa a configuração de CORS que definimos acima
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/auth/**").permitAll()
+                // Talvez seja mais seguro mudar isso para .hasRole("ADMIN") no futuro
                 .requestMatchers(HttpMethod.POST, "/api/funcionarios").permitAll()
+                
+                // --- 👇👇 A CORREÇÃO ESTÁ AQUI 👇👇 ---
+                // Esta linha permite que QUALQUER usuário AUTENTICADO (logado)
+                // crie uma nova Ordem de Serviço.
+                .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated() 
+                // --- 👆👆 FIM DA CORREÇÃO 👆👆 ---
+
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
