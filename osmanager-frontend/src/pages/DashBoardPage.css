@@ -1,51 +1,119 @@
-/* Local: src/pages/DashboardPage.css */
-
+/* Estilos gerais para o container do dashboard */
 .dashboard-container {
-    width: 100%;
-    min-height: 100vh;
-    background-color: #f8f9fa; /* Um cinzento muito claro */
-    padding: 2rem;
-    box-sizing: border-box;
-  }
-  
-  .dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #dee2e6;
-  }
-  
-  .dashboard-header h1 {
-    margin: 0;
-    color: #343a40;
-    font-size: 2rem;
-  }
-  
-  .logout-button {
-    padding: 0.6rem 1.2rem;
-    font-size: 1rem;
-    color: white;
-    background-color: #6c757d; /* Cinzento escuro */
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-  }
-  
-  .logout-button:hover {
-    background-color: #5a6268;
-  }
-  
-  .os-list-container {
-    background-color: #ffffff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  }
-  
-  .os-list-container h2 {
-    margin-top: 0;
-    color: #495057;
-  }
+  width: 100%;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  background-color: #F4F7FC; /* Um azul bem claro, quase branco */
+}
+
+.dashboard-title {
+  color: #334155;
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Container da tabela para permitir scroll horizontal em telas pequenas */
+.table-container {
+  width: 100%;
+  overflow-x: auto; /* Garante que a tabela não quebre o layout */
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilos principais da tabela */
+.os-table {
+  width: 100%;
+  border-collapse: collapse; /* Remove espaço entre as células */
+  font-size: 0.9rem;
+}
+
+/* Estilos do cabeçalho da tabela (thead) */
+.os-table thead tr {
+  background-color: #F8F9FA; /* Fundo cinza claro para o cabeçalho */
+}
+
+.os-table th {
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 600; /* Mais forte que o normal */
+  color: #64748B;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #E2E8F0;
+}
+
+/* Estilos das células de dados (td) */
+.os-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #E2E8F0; /* Linha cinza clara separando as linhas */
+  color: #334155;
+}
+
+/* Remove a borda da última linha para um visual mais limpo */
+.os-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Estilo para zebrar a tabela (alternar cores de fundo), melhora a leitura */
+.os-table tbody tr:nth-of-type(even) {
+  background-color: #F8F9FA;
+}
+
+/* --- Estilos do Status Pill --- */
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 12px; /* Pílula bem arredondada */
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #fff;
+  display: inline-block;
+  text-align: center;
+  min-width: 70px;
+}
+
+/* Cores específicas para cada status */
+.status-aberto { background-color: #28a745; } /* Verde para Aberto */
+.status-pendente { background-color: #ffc107; color: #333; } /* Amarelo para Pendente */
+.status-em_andamento { background-color: #007bff; } /* Azul para Em Andamento */
+.status-concluido { background-color: #6c757d; } /* Cinza para Concluído */
+.status-cancelado { background-color: #dc3545; } /* Vermelho para Cancelado */
+
+/* Estilos do botão de visualizar */
+.view-button {
+  background: none;
+  border: none;
+  color: #64748B;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.view-button:hover {
+  background-color: #E2E8F0;
+  color: #1E293B;
+}
+
+/* Mensagem para quando não houver ordens */
+.no-os-message {
+  text-align: center;
+  padding: 3rem;
+  color: #64748B;
+}
+
+/* Estilos para o estado de loading e erro */
+.loading, .error {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.2rem;
+}
+
+.error {
+  color: #dc3545;
+}

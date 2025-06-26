@@ -1,0 +1,156 @@
+/* Container principal da página de visualização */
+.view-os-page {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    background-color: #f4f7fc;
+  }
+  
+  /* Formulário principal que contém tudo */
+  .view-os-form {
+    width: 100%;
+    max-width: 900px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+  
+  /* Cabeçalho do formulário */
+  .form-header-main {
+    background-color: #34495e;
+    color: white;
+    padding: 1rem 2rem;
+    text-align: center;
+  }
+  
+  .form-header-main h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  
+  /* Estilo para as seções do formulário */
+  .form-section {
+    padding: 1.5rem 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    border-bottom: 1px solid #eef2f9;
+  }
+  
+  /* Seção de campos somente leitura no topo */
+  .read-only-section {
+    background-color: #f8f9fa;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  /* Grupo de input (label + campo) */
+  .input-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .input-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.875rem;
+  }
+  
+  .input-group input,
+  .input-group select,
+  .input-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 1rem;
+  }
+  
+  .input-group input:disabled,
+  .input-group select:disabled,
+  .input-group textarea:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    color: #333; /* Cor do texto para garantir boa leitura */
+  }
+  
+  /* Estilos para o input de status colorido */
+  .status-input {
+    text-align: center;
+    font-weight: bold;
+    color: #fff;
+    border: 2px solid;
+  }
+  
+  .status-aberto-input {
+    background-color: #28a745; border-color: #28a745;
+  }
+  .status-pendente-input {
+    background-color: #ffc107; border-color: #ffc107; color: #333;
+  }
+  .status-em_andamento-input {
+    background-color: #007bff; border-color: #007bff;
+  }
+  .status-concluido-input {
+    background-color: #6c757d; border-color: #6c757d;
+  }
+  .status-cancelado-input {
+    background-color: #dc3545; border-color: #dc3545;
+  }
+  
+  
+  /* Campo que ocupa a largura total da grid */
+  .input-group.full-width {
+    grid-column: 1 / -1;
+  }
+  
+  /* Campo que ocupa 2 colunas */
+  .input-group.large-field {
+    grid-column: span 2;
+  }
+  
+  .view-os-form textarea {
+    resize: vertical;
+  }
+  
+  /* Seção de botões de ação */
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    background-color: #f8f9fa;
+  }
+  
+  .button-back {
+    padding: 0.7rem 1.5rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #e2e8f0;
+    color: #4a5568;
+  }
+  
+  .button-back:hover {
+    background-color: #cbd5e0;
+  }
+  
+  /* Mensagens de estado */
+  .loading-details, .error-details, .no-data-details {
+    text-align: center;
+    padding: 4rem;
+    font-size: 1.2rem;
+    color: #4a5568;
+  }
+  
+  .error-details {
+    color: #dc3545;
+  }

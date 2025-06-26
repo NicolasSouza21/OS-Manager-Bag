@@ -1,52 +1,64 @@
 // Local: src/services/apiService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';
+// --- A MUDANÇA FOI FEITA AQUI ---
+// O endereço do seu backend agora aponta para o IP correto na sua rede.
+const API_URL = 'http://192.168.0.11:8080/api';
+// --- FIM DA MUDANÇA ---
+
 
 const api = axios.create({
   baseURL: API_URL,
 });
 
-// 👇 INTERCETOR ADICIONADO 👇
-// Este código é executado ANTES de cada requisição ser enviada.
 api.interceptors.request.use(
   (config) => {
-    // 1. Pega o token do localStorage
     const token = localStorage.getItem('authToken');
-    
-    // 2. Se o token existir, adiciona-o ao cabeçalho 'Authorization'
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
-    
-    // 3. Retorna a configuração da requisição modificada
     return config;
   },
   (error) => {
-    // Faz alguma coisa com o erro da requisição
     return Promise.reject(error);
   }
 );
 
-
 /**
  * Função para fazer o login.
- * @param {object} credentials - Um objeto contendo o email e a senha.
  */
 export const login = (credentials) => {
   return api.post('/auth/login', credentials);
 };
 
 /**
- * 👇 NOVA FUNÇÃO ADICIONADA 👇
  * Função para buscar a lista de Ordens de Serviço.
- * @param {object} params - Objeto com parâmetros de filtro e paginação (ex: { page: 0, size: 10 })
  */
 export const getOrdensServico = (params) => {
-  // Agora, quando esta função for chamada, o intercetor acima
-  // irá adicionar o token de autorização automaticamente.
   return api.get('/ordens-servico', { params });
 };
 
+/**
+ * Função para CRIAR uma nova Ordem de Serviço.
+ * @param {object} osData - Os dados da OS a serem enviados no corpo da requisição.
+ */
+export const createOrdemServico = (osData) => {
+  return api.post('/ordens-servico', osData);
+};
+
+/**
+ * Função para BUSCAR uma Ordem de Serviço específica pelo seu ID.
+ * @param {number} id - O ID da OS a ser buscada.
+ */
+export const getOsById = (id) => {
+  return api.get(`/ordens-servico/${id}`);
+};
+
+/**
+ * Função para fazer o logout (limpa o token do navegador).
+ */
+export const logout = () => {
+  localStorage.removeItem('authToken');
+};
 
 export default api;
