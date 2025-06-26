@@ -1,0 +1,48 @@
+/* Local: src/pages/admin/ListarFuncionariosPage.css */
+
+.page-container {
+    padding: 2rem;
+  }
+  
+  .page-container h1 {
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 1rem;
+  }
+  
+  .error-text {
+    color: #D8000C;
+    background-color: #FFD2D2;
+    padding: 1rem;
+    border-radius: 5px;
+  }
+  
+  .funcionarios-table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden; /* Garante que o border-radius seja aplicado nas bordas da tabela */
+  }
+  
+  .funcionarios-table th,
+  .funcionarios-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .funcionarios-table thead th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #495057;
+  }
+  
+  .funcionarios-table tbody tr:hover {
+    background-color: #f1f3f5;
+  }
+  
+  .funcionarios-table td {
+    color: #212529;
+  }

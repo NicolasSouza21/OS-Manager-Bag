@@ -62,8 +62,6 @@ export const cadastrarFuncionario = (funcionarioData) => {
 };
 
 
-// --- 👇👇 NOVAS FUNÇÕES ADICIONADAS AQUI 👇👇 ---
-
 /**
  * Função para buscar a lista de todos os EQUIPAMENTOS cadastrados.
  */
@@ -78,8 +76,16 @@ export const getLocais = () => {
   return api.get('/locais');
 };
 
-// --- 👆� FIM DA ADIÇÃO 👆👆 ---
+// --- 👇👇 NOVA FUNÇÃO ADICIONADA AQUI 👇👇 ---
 
+/**
+ * Função para buscar a lista de todos os FUNCIONÁRIOS cadastrados.
+ */
+export const getFuncionarios = () => {
+    return api.get('/funcionarios');
+};
+
+// --- 👆👆 FIM DA ADIÇÃO 👆👆 ---
 
 /**
  * Função para fazer o logout (limpa o token e o cargo do usuário do navegador).
