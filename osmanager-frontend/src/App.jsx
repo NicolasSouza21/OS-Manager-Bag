@@ -14,8 +14,11 @@ import GerenciarFuncionariosPage from './pages/admin/GerenciarFuncionariosPage';
 // --- 👇👇 IMPORTS DE EQUIPAMENTO 👇👇 ---
 import AdicionarEquipamentoPage from './pages/admin/equipamento/AdicionarEquipamentoPage';
 import GerenciarEquipamentosPage from './pages/admin/equipamento/GerenciarEquipamentosPage';
-import EquipamentoMenuPage from './pages/admin/equipamento/EquipamentoMenuPage'; // <--- NOVO MENU
+import EquipamentoMenuPage from './pages/admin/equipamento/EquipamentoMenuPage';
 
+// --- 👇👇 IMPORTS DE LOCAIS 👇👇 ---
+import LocaisListPage from './pages/admin/equipamento/LocaisListPage';
+import LocalAddPage from './pages/admin/equipamento/LocalAddPage';
 
 /**
  * Componente de Layout:
@@ -51,6 +54,10 @@ function App() {
         <Route path="/admin/equipamentos" element={<EquipamentoMenuPage />} />
         <Route path="/admin/equipamentos/adicionar" element={<AdicionarEquipamentoPage />} />
         <Route path="/admin/equipamentos/gerenciar" element={<GerenciarEquipamentosPage />} />
+
+        {/* --- 👇👇 ROTAS DE LOCAIS (DENTRO DE EQUIPAMENTOS) 👇👇 --- */}
+        <Route path="/admin/equipamentos/locais" element={<LocaisListPage />} />
+        <Route path="/admin/equipamentos/locais/adicionar" element={<LocalAddPage />} />
       </Route>
 
       {/* Redirecionamentos padrão */}

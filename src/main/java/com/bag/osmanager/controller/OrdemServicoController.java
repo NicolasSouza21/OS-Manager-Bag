@@ -1,4 +1,3 @@
-// Local do arquivo: src/main/java/com/bag/osmanager/controller/OrdemServicoController.java
 package com.bag.osmanager.controller;
 
 import com.bag.osmanager.dto.*;
@@ -26,20 +25,17 @@ public class OrdemServicoController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'LIDER')")
     public ResponseEntity<OrdemServicoDTO> criarOS(@RequestBody CriarOrdemServicoDTO dto) {
+        // Certifique-se de que CriarOrdemServicoDTO tem os campos: equipamentoId e localId
         OrdemServicoDTO osCriada = osService.criarOS(dto);
         return new ResponseEntity<>(osCriada, HttpStatus.CREATED);
     }
 
-    // 👇 O MÉTODO "listarTodas" FOI COMPLETAMENTE SUBSTITUÍDO POR ESTE 👇
     @GetMapping
     public ResponseEntity<Page<OrdemServicoDTO>> buscarComFiltros(
-            // Parâmetros de filtro (não obrigatórios)
             @RequestParam(required = false) String numeroMaquina,
             @RequestParam(required = false) Prioridade prioridade,
             @RequestParam(required = false) StatusVerificacao status,
             @RequestParam(required = false) Turno turno,
-
-            // Parâmetros de paginação e ordenação com valores padrão
             @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<OrdemServicoDTO> pagina = osService.buscarComFiltros(numeroMaquina, prioridade, status, turno, pageable);

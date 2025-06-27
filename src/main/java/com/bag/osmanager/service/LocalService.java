@@ -11,35 +11,30 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Serviço para gerir a lógica de negócio relacionada a Locais.
+ * Serviço para lógica de negócio relacionada a Locais.
  */
 @Service
 @RequiredArgsConstructor
 public class LocalService {
 
-    // Injetamos o repositório para podermos aceder à base de dados
     private final LocalRepository localRepository;
 
-    /**
-     * Busca todos os locais cadastrados na base de dados e os converte para DTOs.
-     * @return Uma lista de LocalDTO.
-     */
     public List<LocalDTO> listarTodos() {
-        // Usamos o método findAll() do repositório para obter todas as entidades
-        List<Local> locais = localRepository.findAll();
-
-        // Convertemos cada entidade Local para um LocalDTO
-        return locais.stream()
-                .map(this::converteParaDTO)
-                .collect(Collectors.toList());
+        return localRepository.findAll().stream()
+            .map(this::converterParaDTO)
+            .collect(Collectors.toList());
     }
 
-    /**
-     * Método privado para converter uma entidade Local num LocalDTO.
-     * @param local A entidade a ser convertida.
-     * @return O DTO correspondente.
-     */
-    private LocalDTO converteParaDTO(Local local) {
+    public LocalDTO criar(LocalDTO dto) {
+        Local local = new Local();
+        BeanUtils.copyProperties(dto, local);
+        Local salvo = localRepository.save(local);
+        LocalDTO dtoSalvo = new LocalDTO();
+        BeanUtils.copyProperties(salvo, dtoSalvo);
+        return dtoSalvo;
+    }
+
+    private LocalDTO converterParaDTO(Local local) {
         LocalDTO dto = new LocalDTO();
         BeanUtils.copyProperties(local, dto);
         return dto;

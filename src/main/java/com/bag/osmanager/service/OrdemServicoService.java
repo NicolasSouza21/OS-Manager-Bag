@@ -1,16 +1,12 @@
-// Local do arquivo: src/main/java/com/bag/osmanager/service/OrdemServicoService.java
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.*;
 import com.bag.osmanager.exception.ResourceNotFoundException;
-import com.bag.osmanager.model.Funcionario;
-import com.bag.osmanager.model.OrdemServico;
-import com.bag.osmanager.model.PecaSubstituida;
+import com.bag.osmanager.model.*;
 import com.bag.osmanager.model.enums.Prioridade;
 import com.bag.osmanager.model.enums.StatusVerificacao;
 import com.bag.osmanager.model.enums.Turno;
-import com.bag.osmanager.repository.FuncionarioRepository;
-import com.bag.osmanager.repository.OrdemServicoRepository;
+import com.bag.osmanager.repository.*;
 import com.bag.osmanager.service.specification.OrdemServicoSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -30,28 +26,41 @@ public class OrdemServicoService {
 
     private final OrdemServicoRepository osRepository;
     private final FuncionarioRepository funcionarioRepository;
+    private final EquipamentoRepository equipamentoRepository;
+    private final LocalRepository localRepository; // Adicione se for associar Local
 
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
-        BeanUtils.copyProperties(dto, os);
+
+        // Copie apenas campos simples do DTO
+        BeanUtils.copyProperties(dto, os, "equipamentoId", "localId"); // Evita sobrescrever relacionamentos
 
         LocalDateTime agora = LocalDateTime.now();
         os.setDataSolicitacao(agora);
         os.setStatusVerificacao(StatusVerificacao.PENDENTE);
 
-        // 👇 LÓGICA DE TOLERÂNCIA APLICADA AQUI 👇
+        // Associa o equipamento existente pelo ID
+        Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
+        os.setEquipamento(equipamento);
+
+        // Associa o local existente pelo ID (opcional)
+        if (dto.getLocalId() != null) {
+            Local local = localRepository.findById(dto.getLocalId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Local com ID " + dto.getLocalId() + " não encontrado!"));
+            os.setLocal(local);
+        }
+
+        // Lógica de tolerância
         switch (dto.getPrioridade()) {
             case ALTA:
-                // Se for ALTA, o prazo é até o final do dia da solicitação.
-                os.setDataLimite(agora.with(LocalTime.MAX)); 
+                os.setDataLimite(agora.with(LocalTime.MAX));
                 break;
             case MEDIA:
-                // Se for MEDIA, o prazo é de 4 dias.
                 os.setDataLimite(agora.plusDays(4));
                 break;
             case BAIXA:
-                // Se for BAIXA, o prazo é de 7 dias.
                 os.setDataLimite(agora.plusDays(7));
                 break;
         }
@@ -160,6 +169,13 @@ public class OrdemServicoService {
                 BeanUtils.copyProperties(peca, pecaDTO);
                 return pecaDTO;
             }).collect(Collectors.toList()));
+        }
+        // Adicione o ID do equipamento e local para o DTO de resposta
+        if (os.getEquipamento() != null) {
+            dto.setEquipamentoId(os.getEquipamento().getId());
+        }
+        if (os.getLocal() != null) {
+            dto.setLocalId(os.getLocal().getId());
         }
         return dto;
     }

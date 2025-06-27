@@ -28,6 +28,9 @@ public class OrdemServicoDTO {
     private Boolean trocaPecas;
     private List<PecaSubstituidaDTO> pecasSubstituidas;
 
+    private Long equipamentoId;
+    private Long localId;
+
     private Long executadoPorId;
     private LocalDateTime dataExecucao;
 
