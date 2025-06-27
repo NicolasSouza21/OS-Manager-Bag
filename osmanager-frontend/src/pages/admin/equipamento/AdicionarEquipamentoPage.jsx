@@ -1,80 +1,72 @@
-// Local: src/pages/inventario/AdicionarEquipamentoPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createEquipamento } from '../../services/apiService'; // Importamos a função correta
-import './AdicionarEquipamentoPage.css'; // Importamos o CSS correto
+import { createEquipamento } from '../../../services/apiService';
+import './AdicionarEquipamentoPage.css';
 
 function AdicionarEquipamentoPage() {
-  const navigate = useNavigate();
-
-  // Estados apenas para os campos de equipamento
   const [tag, setTag] = useState('');
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  // Função para submeter os dados do NOVO EQUIPAMENTO
-  const handleSubmit = async (evento) => {
-    evento.preventDefault();
-    setError(null);
-
-    const equipamentoData = {
-      tag,
-      nome,
-      descricao,
-    };
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSuccess('');
+    setError('');
     try {
-      // Chama a função da API para CRIAR EQUIPAMENTO
-      await createEquipamento(equipamentoData);
-      alert('Equipamento adicionado com sucesso!');
-      navigate('/dashboard'); // Redireciona após o sucesso
+        await createEquipamento({ tag, nome, descricao });
+        setSuccess('Equipamento cadastrado com sucesso!');
+      setTag('');
+      setNome('');
+      setDescricao('');
+      setTimeout(() => navigate('/admin/equipamentos/gerenciar'), 1200);
     } catch (err) {
-      console.error('Erro ao adicionar equipamento:', err);
-      setError('Falha ao adicionar o equipamento. Verifique os dados.');
+      setError('Erro ao cadastrar equipamento. Tente novamente.');
     }
   };
 
   return (
-    <div className="form-container-inventario">
-      <form className="inventario-form" onSubmit={handleSubmit}>
-        <h1>Adicionar Novo Equipamento</h1>
-
-        {error && <p className="error-message">{error}</p>}
-        
+    <div className="add-equipamento-container">
+      <h1 className="add-equipamento-title">Cadastrar Novo Equipamento</h1>
+      <p className="add-equipamento-subtitle">Preencha os dados abaixo para adicionar um novo equipamento ao inventário.</p>
+      <form className="add-equipamento-card" onSubmit={handleSubmit}>
         <div className="input-group">
-          <label htmlFor="tag">Tag do Equipamento (Ex: T-001)</label>
-          <input 
-            type="text" 
-            id="tag" 
+          <label htmlFor="tag">Tag do Equipamento</label>
+          <input
+            id="tag"
+            type="text"
             value={tag}
-            onChange={(e) => setTag(e.target.value)}
-            required 
+            onChange={e => setTag(e.target.value)}
+            placeholder="Ex: EQP-001"
+            required
           />
         </div>
-
         <div className="input-group">
           <label htmlFor="nome">Nome do Equipamento</label>
-          <input 
-            type="text" 
+          <input
             id="nome"
+            type="text"
             value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            required 
+            onChange={e => setNome(e.target.value)}
+            placeholder="Ex: Impressora HP"
+            required
           />
         </div>
-
         <div className="input-group">
           <label htmlFor="descricao">Descrição</label>
-          <textarea 
-            id="descricao" 
-            rows="4"
+          <textarea
+            id="descricao"
             value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-          ></textarea>
+            onChange={e => setDescricao(e.target.value)}
+            placeholder="Detalhes, localização, etc."
+            rows={3}
+          />
         </div>
-        
-        <button type="submit" className="submit-button">Adicionar Equipamento</button>
+        <button className="add-equipamento-btn" type="submit">Cadastrar Equipamento</button>
+        {success && <div className="add-equipamento-success">{success}</div>}
+        {error && <div className="add-equipamento-error">{error}</div>}
       </form>
     </div>
   );

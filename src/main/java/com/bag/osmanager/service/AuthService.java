@@ -1,13 +1,14 @@
-// Local do arquivo: src/main/java/com/bag/osmanager/service/AuthService.java
+// Local do ficheiro: src/main/java/com/bag/osmanager/service/AuthService.java
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.AuthRequestDTO;
 import com.bag.osmanager.dto.AuthResponseDTO;
+import com.bag.osmanager.model.Funcionario; // 👈 1. IMPORTE A ENTIDADE FUNCIONARIO
 import com.bag.osmanager.repository.FuncionarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,20 +20,27 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthResponseDTO login(AuthRequestDTO request) {
-        // Autentica o usuário com as credenciais fornecidas
+        // Autentica o utilizador com as credenciais fornecidas
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getSenha())
         );
 
-        // 👇 ADICIONAMOS ESTA LINHA PARA O TESTE DEFINITIVO 👇
+        // Se a autenticação for bem-sucedida, busca o funcionário completo
+        // 👇 2. ALTERADO PARA BUSCAR A ENTIDADE FUNCIONARIO DIRETAMENTE 👇
+        Funcionario funcionario = funcionarioRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("Utilizador não encontrado com o email: " + request.getEmail()));
+
+        // Gera o token JWT
+        String token = jwtService.generateToken(funcionario);
+        
+        // 👇 3. OBTÉM O CARGO (ROLE) DO FUNCIONÁRIO 👇
+        String role = funcionario.getTipoFuncionario().name();
+
         System.out.println("******************************************************");
-        System.out.println("AUTENTICAÇÃO BEM-SUCEDIDA PARA: " + request.getEmail());
+        System.out.println("AUTENTICAÇÃO BEM-SUCEDIDA PARA: " + request.getEmail() + " | CARGO: " + role);
         System.out.println("******************************************************");
 
-        // Se a autenticação for bem-sucedida, busca o usuário e gera o token
-        final UserDetails user = funcionarioRepository.findByEmail(request.getEmail()).orElseThrow();
-        String token = jwtService.generateToken(user);
-
-        return new AuthResponseDTO(token);
+        // 👇 4. RETORNA O DTO COM O TOKEN E O CARGO 👇
+        return new AuthResponseDTO(token, role);
     }
 }

@@ -37,7 +37,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -71,15 +71,14 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/auth/**").permitAll()
-                // Talvez seja mais seguro mudar isso para .hasRole("ADMIN") no futuro
-                .requestMatchers(HttpMethod.POST, "/api/funcionarios").permitAll()
+                // Rotas públicas (caso deseje, ajuste aqui)
+                //.requestMatchers(HttpMethod.POST, "/api/funcionarios").permitAll()
                 
-                // --- 👇👇 A CORREÇÃO ESTÁ AQUI 👇👇 ---
-                // Esta linha permite que QUALQUER usuário AUTENTICADO (logado)
-                // crie uma nova Ordem de Serviço.
-                .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated() 
-                // --- 👆👆 FIM DA CORREÇÃO 👆👆 ---
-
+                // --- PERMISSÕES ESPECÍFICAS ---
+                .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
+                .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated()
+                
+                // Protege as demais rotas
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

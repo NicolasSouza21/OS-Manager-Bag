@@ -1,5 +1,3 @@
-// Crie a pasta 'filter' em: src/main/java/com/bag/osmanager/config/filter/
-// E dentro dela, crie o arquivo JwtAuthFilter.java
 package com.bag.osmanager.config.filter;
 
 import com.bag.osmanager.service.JwtService;
@@ -36,6 +34,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
+        // Valida se o header existe e começa com "Bearer "
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -44,11 +43,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
         userEmail = jwtService.extractUsername(jwt);
 
+        // Só autentica se não houver autenticação já presente e e-mail for válido
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
             if (jwtService.isTokenValid(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }

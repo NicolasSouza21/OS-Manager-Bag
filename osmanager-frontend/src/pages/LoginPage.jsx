@@ -1,7 +1,7 @@
+// Local: src/pages/LoginPage.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../services/apiService';
-import { jwtDecode } from 'jwt-decode';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -18,42 +18,16 @@ function LoginPage() {
       const credentials = { email, senha };
       const response = await login(credentials);
       
-      const token = response.data.token;
+      // 1. Extraímos o token E o cargo da resposta da API
+      const { token, role } = response.data;
 
+      // 2. Guardamos AMBAS as informações no localStorage
       localStorage.setItem('authToken', token);
+      localStorage.setItem('userRole', role); // <-- A LINHA ESSENCIAL QUE FALTAVA
 
-      const decodedToken = jwtDecode(token);
-      
-      console.log('Token decodificado:', decodedToken);
-
-      // Pega o cargo do usuário
-      const userRole = (decodedToken.roles && Array.isArray(decodedToken.roles) && decodedToken.roles.length > 0) 
-        ? decodedToken.roles[0] 
-        : null;
-
-      if (!userRole) {
-        console.error("Não foi possível encontrar o 'role' do usuário no token JWT.");
-        setError("Erro de permissão. Contate o administrador.");
-        return;
-      }
-      
-      localStorage.setItem('userRole', userRole);
-
-      // --- 👇👇 A NOVA MUDANÇA ESTÁ AQUI 👇👇 ---
-      // 1. Pegamos o nome completo do usuário da chave "fullName" que adicionamos no backend
-      const userName = decodedToken.fullName;
-
-      // 2. Verificamos se o nome existe e o salvamos no localStorage
-      if (userName) {
-        localStorage.setItem('userName', userName);
-        console.log('Nome do usuário salvo:', userName);
-      } else {
-        console.warn("A chave 'fullName' não foi encontrada no token.");
-      }
-      // --- 👆👆 FIM DA MUDANÇA 👆👆 ---
+      console.log(`Login bem-sucedido! Role: ${role}, Token: ${token}`);
       
       alert('Login bem-sucedido! Redirecionando...');
-
       navigate('/dashboard');
 
     } catch (err) {
