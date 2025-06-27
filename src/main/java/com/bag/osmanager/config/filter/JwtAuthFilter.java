@@ -1,5 +1,3 @@
-// Crie a pasta 'filter' em: src/main/java/com/bag/osmanager/config/filter/
-// E dentro dela, crie o arquivo JwtAuthFilter.java
 package com.bag.osmanager.config.filter;
 
 import com.bag.osmanager.service.JwtService;
@@ -36,23 +34,37 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
+        // Check if the Authorization header is present and starts with "Bearer "
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
 
+        // Extract username/email from JWT. Handle possible exception if token is invalid.
+        try {
+            userEmail = jwtService.extractUsername(jwt);
+        } catch (Exception e) {
+            // Invalid JWT, skip authentication step
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Authenticate only if userEmail is valid and user is not already authenticated
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
             if (jwtService.isTokenValid(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+
         filterChain.doFilter(request, response);
     }
 }

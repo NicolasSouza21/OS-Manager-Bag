@@ -25,23 +25,28 @@ public class EquipamentoService {
      * @return Uma lista de EquipamentoDTO.
      */
     public List<EquipamentoDTO> listarTodos() {
-        // 2. Usamos o método findAll() do repositório para obter todas as entidades
         List<Equipamento> equipamentos = equipamentoRepository.findAll();
-
-        // 3. Convertemos cada entidade Equipamento para um EquipamentoDTO
         return equipamentos.stream()
                 .map(this::converteParaDTO)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Método privado para converter uma entidade Equipamento num EquipamentoDTO.
-     * @param equipamento A entidade a ser convertida.
-     * @return O DTO correspondente.
+     * Cadastra um novo equipamento na base de dados.
+     * @param dto DTO com os dados do equipamento.
+     * @return O DTO do equipamento salvo.
      */
+    public EquipamentoDTO cadastrar(EquipamentoDTO dto) {
+        Equipamento equipamento = new Equipamento();
+        BeanUtils.copyProperties(dto, equipamento);
+        Equipamento salvo = equipamentoRepository.save(equipamento);
+        EquipamentoDTO dtoSalvo = new EquipamentoDTO();
+        BeanUtils.copyProperties(salvo, dtoSalvo);
+        return dtoSalvo;
+    }
+
     private EquipamentoDTO converteParaDTO(Equipamento equipamento) {
         EquipamentoDTO dto = new EquipamentoDTO();
-        // O BeanUtils.copyProperties copia os campos com nomes iguais de um objeto para o outro.
         BeanUtils.copyProperties(equipamento, dto);
         return dto;
     }

@@ -9,6 +9,5 @@ public class FuncionarioDTO {
     private String nome;
     private String senha; // 👈 Adicione este campo
     private String email;
-    private String telefone;
     private TipoFuncionario tipoFuncionario;
 }

@@ -37,7 +37,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -56,7 +56,14 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://192.168.0.11:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "Cache-Control",
+            "Access-Control-Request-Headers",
+            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Headers"
+        ));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -71,15 +78,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/auth/**").permitAll()
-                // Talvez seja mais seguro mudar isso para .hasRole("ADMIN") no futuro
-                .requestMatchers(HttpMethod.POST, "/api/funcionarios").permitAll()
-                
-                // --- 👇👇 A CORREÇÃO ESTÁ AQUI 👇👇 ---
-                // Esta linha permite que QUALQUER usuário AUTENTICADO (logado)
-                // crie uma nova Ordem de Serviço.
-                .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated() 
-                // --- 👆👆 FIM DA CORREÇÃO 👆👆 ---
-
+                .requestMatchers("/error").permitAll() // <- Libera o endpoint de erro para evitar 403 ao tratar exceções
+                .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
+                .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

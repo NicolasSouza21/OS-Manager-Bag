@@ -1,108 +1,62 @@
-// Local: src/services/apiService.js
 import axios from 'axios';
 
-// O endereço do seu backend agora aponta para o IP correto na sua rede.
+// Endereço do backend
 const API_URL = 'http://192.168.0.11:8080/api';
 
-
+// Cria instância do axios
 const api = axios.create({
   baseURL: API_URL,
 });
 
+// Interceptor para adicionar o token Authorization a cada requisição
 api.interceptors.request.use(
   (config) => {
+    // Sempre pega o token mais recente do localStorage
     const token = localStorage.getItem('authToken');
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      // Remove o header se não houver token para evitar requisições com token inválido
+      delete config.headers.Authorization;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-/**
- * Função para fazer o login.
- */
-export const login = (credentials) => {
-  return api.post('/auth/login', credentials);
-};
+// --- Funções da API ---
 
-/**
- * Função para buscar a lista de Ordens de Serviço.
- */
-export const getOrdensServico = (params) => {
-  return api.get('/ordens-servico', { params });
-};
+/** Login */
+export const login = (credentials) => api.post('/auth/login', credentials);
 
-/**
- * Função para CRIAR uma nova Ordem de Serviço.
- * @param {object} osData - Os dados da OS a serem enviados no corpo da requisição.
- */
-export const createOrdemServico = (osData) => {
-  return api.post('/ordens-servico', osData);
-};
+/** Lista OS */
+export const getOrdensServico = (params) => api.get('/ordens-servico', { params });
 
-/**
- * Função para BUSCAR uma Ordem de Serviço específica pelo seu ID.
- * @param {number} id - O ID da OS a ser buscada.
- */
-export const getOsById = (id) => {
-  return api.get(`/ordens-servico/${id}`);
-};
+/** Cria OS */
+export const createOrdemServico = (osData) => api.post('/ordens-servico', osData);
 
-/**
- * Função para CADASTRAR um novo funcionário.
- * Requer permissão de ADMIN no backend.
- * @param {object} funcionarioData - Os dados do novo funcionário.
- */
-export const cadastrarFuncionario = (funcionarioData) => {
-  return api.post('/funcionarios', funcionarioData);
-};
+/** Busca OS por ID */
+export const getOsById = (id) => api.get(`/ordens-servico/${id}`);
 
+/** Cadastra funcionário (precisa ADMIN) */
+export const cadastrarFuncionario = (funcionarioData) => api.post('/funcionarios', funcionarioData);
 
-/**
- * Função para buscar a lista de todos os EQUIPAMENTOS cadastrados.
- */
-export const getEquipamentos = () => {
-  return api.get('/equipamentos');
-};
+/** Lista equipamentos */
+export const getEquipamentos = () => api.get('/equipamentos');
 
-/**
- * Função para buscar a lista de todos os LOCAIS cadastrados.
- */
-export const getLocais = () => {
-  return api.get('/locais');
-};
+/** Lista locais */
+export const getLocais = () => api.get('/locais');
 
+/** Lista funcionários */
+export const getFuncionarios = () => api.get('/funcionarios');
 
-/**
- * Função para buscar a lista de todos os FUNCIONÁRIOS cadastrados.
- */
-export const getFuncionarios = () => {
-    return api.get('/funcionarios');
-};
+/** Cria equipamento */
+export const createEquipamento = (equipamentoData) => api.post('/equipamentos', equipamentoData);
 
-// --- 👇👇 NOVA FUNÇÃO ADICIONADA AQUI 👇👇 ---
-
-/**
- * Função para CRIAR um novo equipamento.
- * @param {object} equipamentoData - Os dados do equipamento (nome, tag, descricao).
- */
-export const createEquipamento = (equipamentoData) => {
-  return api.post('/equipamentos', equipamentoData);
-};
-
-// --- 👆👆 FIM DA ADIÇÃO 👆👆 ---
-
-
-/**
- * Função para fazer o logout (limpa o token e o cargo do usuário do navegador).
- */
+/** Logout */
 export const logout = () => {
   localStorage.removeItem('authToken');
-  localStorage.removeItem('userRole'); 
+  localStorage.removeItem('userRole');
 };
 
 export default api;

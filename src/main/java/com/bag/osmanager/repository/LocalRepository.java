@@ -5,12 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 /**
- * Interface de repositório para a entidade Local.
- * Ao estender JpaRepository, o Spring Data JPA nos fornece
- * automaticamente todos os métodos básicos de CRUD (Create, Read, Update, Delete).
+ * Repositório para operações com a entidade Local.
  */
 @Repository
 public interface LocalRepository extends JpaRepository<Local, Long> {
-    // Não precisamos escrever nenhum método aqui.
-    // O JpaRepository já nos dá tudo o que precisamos para começar.
 }
