@@ -4,6 +4,7 @@ import com.bag.osmanager.dto.*;
 import com.bag.osmanager.exception.ResourceNotFoundException;
 import com.bag.osmanager.model.*;
 import com.bag.osmanager.model.enums.Prioridade;
+import com.bag.osmanager.model.enums.StatusOrdemServico;
 import com.bag.osmanager.model.enums.StatusVerificacao;
 import com.bag.osmanager.model.enums.Turno;
 import com.bag.osmanager.repository.*;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,18 +29,21 @@ public class OrdemServicoService {
     private final OrdemServicoRepository osRepository;
     private final FuncionarioRepository funcionarioRepository;
     private final EquipamentoRepository equipamentoRepository;
-    private final LocalRepository localRepository; // Adicione se for associar Local
+    private final LocalRepository localRepository;
 
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
 
         // Copie apenas campos simples do DTO
-        BeanUtils.copyProperties(dto, os, "equipamentoId", "localId"); // Evita sobrescrever relacionamentos
+        BeanUtils.copyProperties(dto, os, "equipamentoId", "localId");
 
         LocalDateTime agora = LocalDateTime.now();
         os.setDataSolicitacao(agora);
         os.setStatusVerificacao(StatusVerificacao.PENDENTE);
+
+        // Ao criar, status sempre ABERTA
+        os.setStatus(StatusOrdemServico.ABERTA);
 
         // Associa o equipamento existente pelo ID
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
@@ -91,6 +96,15 @@ public class OrdemServicoService {
     }
 
     @Transactional
+    public OrdemServicoDTO atualizarStatus(Long osId, StatusOrdemServico novoStatus) {
+        OrdemServico os = osRepository.findById(osId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        os.setStatus(novoStatus);
+        OrdemServico osAtualizada = osRepository.save(os);
+        return converteParaDTO(osAtualizada);
+    }
+
+    @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, CienciaDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
@@ -108,11 +122,22 @@ public class OrdemServicoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
         Funcionario executante = funcionarioRepository.findById(dto.getMecanicoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Mecânico executante com ID " + dto.getMecanicoId() + " não encontrado!"));
-        BeanUtils.copyProperties(dto, os, "pecasSubstituidas");
+
         os.setExecutadoPor(executante);
         os.setDataExecucao(LocalDateTime.now());
+        os.setAcaoRealizada(dto.getAcaoRealizada());
+        os.setTrocaPecas(dto.getTrocaPecas());
+        os.setInicio(dto.getInicio());
+        os.setTermino(dto.getTermino());
+        os.setMaquinaParada(dto.getMaquinaParada());
+
         if (Boolean.TRUE.equals(dto.getTrocaPecas()) && dto.getPecasSubstituidas() != null) {
-            os.getPecasSubstituidas().clear();
+            // Substitui a lista de peças substituídas
+            if (os.getPecasSubstituidas() == null) {
+                os.setPecasSubstituidas(new ArrayList<>());
+            } else {
+                os.getPecasSubstituidas().clear();
+            }
             dto.getPecasSubstituidas().forEach(pecaDTO -> {
                 PecaSubstituida peca = new PecaSubstituida();
                 BeanUtils.copyProperties(pecaDTO, peca);
@@ -120,6 +145,7 @@ public class OrdemServicoService {
                 os.getPecasSubstituidas().add(peca);
             });
         }
+
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
     }
@@ -170,13 +196,13 @@ public class OrdemServicoService {
                 return pecaDTO;
             }).collect(Collectors.toList()));
         }
-        // Adicione o ID do equipamento e local para o DTO de resposta
         if (os.getEquipamento() != null) {
             dto.setEquipamentoId(os.getEquipamento().getId());
         }
         if (os.getLocal() != null) {
             dto.setLocalId(os.getLocal().getId());
         }
+        dto.setStatus(os.getStatus());
         return dto;
     }
 }
