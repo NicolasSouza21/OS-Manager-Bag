@@ -59,4 +59,7 @@ export const logout = () => {
   localStorage.removeItem('userRole');
 };
 
+export const updateEquipamento = (id, equipamentoData) => api.put(`/equipamentos/${id}`, equipamentoData);
+export const deleteEquipamento = (id) => api.delete(`/equipamentos/${id}`);
+
 export default api;
