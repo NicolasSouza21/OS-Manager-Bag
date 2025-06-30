@@ -78,7 +78,12 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/error").permitAll() // <- Libera o endpoint de erro para evitar 403 ao tratar exceções
+                .requestMatchers("/error").permitAll()
+                // Proteja os endpoints de LOCAIS conforme regra de negócio:
+                .requestMatchers(HttpMethod.POST, "/api/locais").hasAnyRole("ADMIN", "MECANICO")
+                .requestMatchers(HttpMethod.GET, "/api/locais").authenticated() // ou .permitAll() se quiser listar para todos
+                .requestMatchers(HttpMethod.PUT, "/api/locais/**").hasAnyRole("ADMIN", "MECANICO")
+                .requestMatchers(HttpMethod.DELETE, "/api/locais/**").hasAnyRole("ADMIN", "MECANICO")
                 .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
                 .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated()

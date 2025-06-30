@@ -1,4 +1,3 @@
-// Local do arquivo: src/main/java/com/bag/osmanager/dto/OrdemServicoDTO.java
 package com.bag.osmanager.dto;
 
 import com.bag.osmanager.model.enums.*;
@@ -10,9 +9,11 @@ import java.util.List;
 @Data
 public class OrdemServicoDTO {
     private Long id;
-    private String numeroMaquina;
+
+    private Long equipamentoId; // id do Equipamento relacionado
+    private Long localId;       // id do Local relacionado
+
     private Prioridade prioridade;
-    private String tipoMaquina;
     private Turno turno;
     private TipoManutencao tipoManutencao;
     private String descricaoProblema;
@@ -28,9 +29,6 @@ public class OrdemServicoDTO {
     private Boolean trocaPecas;
     private List<PecaSubstituidaDTO> pecasSubstituidas;
 
-    private Long equipamentoId;
-    private Long localId;
-
     private Long executadoPorId;
     private LocalDateTime dataExecucao;
 
@@ -40,6 +38,5 @@ public class OrdemServicoDTO {
     private Long aprovadoPorId;
     private LocalDateTime dataAprovacao;
 
-    // 👇 CAMPO ADICIONADO PARA A TOLERÂNCIA 👇
     private LocalDateTime dataLimite;
 }

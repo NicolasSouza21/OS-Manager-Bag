@@ -1,53 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getOsById } from '../services/apiService';
-import './VisualizarOsPage.css'; // Usaremos um CSS próprio para esta página
+import { getOsById, getEquipamentos, getLocais } from '../services/apiService';
+import './VisualizarOsPage.css';
 
 function VisualizarOsPage() {
-  // O hook useParams nos permite ler parâmetros da URL. Ex: /os/5 -> id será "5"
   const { id } = useParams(); 
   const navigate = useNavigate();
 
   const [ordemServico, setOrdemServico] = useState(null);
+  const [equipamento, setEquipamento] = useState(null);
+  const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Este useEffect será executado assim que a página carregar ou quando o ID na URL mudar.
   useEffect(() => {
-    // Se por algum motivo não houver ID na URL, não fazemos nada.
     if (!id) return;
 
-    const fetchOsDetails = async () => {
+    const fetchAll = async () => {
       try {
         setLoading(true);
-        // Chamamos a função da API para buscar os dados da OS específica
-        const response = await getOsById(id);
-        setOrdemServico(response.data);
+        // Busca OS, equipamentos e locais em paralelo
+        const [osRes, equipsRes, locaisRes] = await Promise.all([
+          getOsById(id),
+          getEquipamentos(),
+          getLocais()
+        ]);
+        setOrdemServico(osRes.data);
+
+        // Busca o equipamento e local pelo id do DTO da OS
+        const equip = equipsRes.data.find(e => e.id === osRes.data.equipamentoId);
+        setEquipamento(equip || null);
+
+        const loc = locaisRes.data.find(l => l.id === osRes.data.localId);
+        setLocal(loc || null);
+
         setError(null);
       } catch (err) {
-        console.error(`Erro ao buscar detalhes da OS ${id}:`, err);
         setError('Falha ao carregar os detalhes da Ordem de Serviço.');
       } finally {
-        // Independentemente de sucesso ou erro, paramos o carregamento.
         setLoading(false);
       }
     };
 
-    fetchOsDetails();
-  }, [id]); // A lista de dependências [id] garante que isso rode de novo se o ID mudar.
+    fetchAll();
+  }, [id]);
 
-  // Função auxiliar para formatar a data para o padrão brasileiro
   const formatDate = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  // --- Renderização condicional ---
   if (loading) return <div className="loading-details">Carregando detalhes da OS...</div>;
   if (error) return <div className="error-details">{error}</div>;
   if (!ordemServico) return <div className="no-data-details">Ordem de Serviço não encontrada.</div>;
 
-  // --- Renderização principal (quando os dados foram carregados com sucesso) ---
   return (
     <div className="view-os-page">
       <div className="view-os-form">
@@ -62,7 +68,7 @@ function VisualizarOsPage() {
           </div>
           <div className="input-group">
             <label>Data de Abertura</label>
-            <input type="text" value={formatDate(ordemServico.dataAbertura)} disabled />
+            <input type="text" value={formatDate(ordemServico.dataSolicitacao)} disabled />
           </div>
           <div className="input-group">
             <label>Situação O.S.</label>
@@ -82,11 +88,11 @@ function VisualizarOsPage() {
           </div>
           <div className="input-group large-field">
             <label>Equipamento</label>
-            <input type="text" value={ordemServico.tipoMaquina || ''} disabled />
+            <input type="text" value={equipamento ? equipamento.nome : ''} disabled />
           </div>
           <div className="input-group">
             <label>Nº Equipamento</label>
-            <input type="text" value={ordemServico.numeroMaquina || ''} disabled />
+            <input type="text" value={equipamento ? equipamento.tag : ''} disabled />
           </div>
           <div className="input-group">
             <label>Criticidade</label>
@@ -98,7 +104,7 @@ function VisualizarOsPage() {
           </div>
           <div className="input-group">
             <label>Local</label>
-            <input type="text" value={ordemServico.local || 'Não informado'} disabled />
+            <input type="text" value={local ? local.nome : ''} disabled />
           </div>
           <div className="input-group full-width">
             <label>Descrição do Problema</label>

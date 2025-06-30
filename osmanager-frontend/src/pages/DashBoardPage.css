@@ -4,6 +4,7 @@
   padding: 1.5rem;
   box-sizing: border-box;
   background-color: #F4F7FC; /* Um azul bem claro, quase branco */
+  margin-top: 8px;
 }
 
 .dashboard-title {

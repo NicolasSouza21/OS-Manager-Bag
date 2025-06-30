@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
+import './LocalAddPage.css';
 
 function LocalAddPage() {
   const [nome, setNome] = useState('');
   const [setor, setSetor] = useState('');
   const [mensagem, setMensagem] = useState('');
+  const [erro, setErro] = useState(false);
 
   function handleSubmit(e) {
     e.preventDefault();
+    setErro(false);
+    const token = localStorage.getItem('authToken');
     fetch('/api/locais', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, setor })
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ nome, setor }),
     })
       .then(res => {
         if (!res.ok) throw new Error('Erro ao criar!');
@@ -21,24 +28,41 @@ function LocalAddPage() {
         setNome('');
         setSetor('');
       })
-      .catch(() => setMensagem('Erro ao criar local!'));
+      .catch(() => {
+        setMensagem('Erro ao criar local!');
+        setErro(true);
+      });
   }
 
   return (
-    <div>
-      <h2>Adicionar Local</h2>
-      <form onSubmit={handleSubmit}>
+    <div className="local-add-card">
+      <h2 className="local-add-title">Adicionar Local</h2>
+      <form className="local-add-form" onSubmit={handleSubmit}>
         <div>
           <label>Nome:</label>
-          <input value={nome} onChange={e => setNome(e.target.value)} required />
+          <input
+            value={nome}
+            onChange={e => setNome(e.target.value)}
+            required
+            type="text"
+          />
         </div>
         <div>
           <label>Setor:</label>
-          <input value={setor} onChange={e => setSetor(e.target.value)} required />
+          <input
+            value={setor}
+            onChange={e => setSetor(e.target.value)}
+            required
+            type="text"
+          />
         </div>
-        <button type="submit">Adicionar</button>
+        <button className="local-add-btn" type="submit">Adicionar</button>
       </form>
-      {mensagem && <div>{mensagem}</div>}
+      {mensagem && (
+        <div className={`local-add-message${erro ? ' error' : ''}`}>
+          {mensagem}
+        </div>
+      )}
     </div>
   );
 }

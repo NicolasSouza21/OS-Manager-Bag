@@ -1,9 +1,8 @@
 package com.bag.osmanager.controller;
 
-import com.bag.osmanager.model.Local;
-import com.bag.osmanager.repository.LocalRepository;
+import com.bag.osmanager.dto.LocalDTO;
+import com.bag.osmanager.service.LocalService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,16 +13,28 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LocalController {
 
-    private final LocalRepository localRepository;
+    private final LocalService localService;
 
     @GetMapping
-    public List<Local> listar() {
-        return localRepository.findAll();
+    public List<LocalDTO> listarTodos() {
+        return localService.listarTodos();
     }
 
     @PostMapping
-    public ResponseEntity<Local> criar(@RequestBody Local local) {
-        Local salvo = localRepository.save(local);
-        return new ResponseEntity<>(salvo, HttpStatus.CREATED);
+    public ResponseEntity<LocalDTO> criar(@RequestBody LocalDTO dto) {
+        LocalDTO salvo = localService.criar(dto);
+        return ResponseEntity.status(201).body(salvo);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<LocalDTO> atualizar(@PathVariable Long id, @RequestBody LocalDTO dto) {
+        LocalDTO atualizado = localService.atualizar(id, dto);
+        return ResponseEntity.ok(atualizado);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        localService.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 }

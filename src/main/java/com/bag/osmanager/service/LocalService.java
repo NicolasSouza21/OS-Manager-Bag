@@ -8,6 +8,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +33,29 @@ public class LocalService {
         LocalDTO dtoSalvo = new LocalDTO();
         BeanUtils.copyProperties(salvo, dtoSalvo);
         return dtoSalvo;
+    }
+
+    // MÉTODO UPDATE
+    public LocalDTO atualizar(Long id, LocalDTO dto) {
+        Optional<Local> opt = localRepository.findById(id);
+        if (opt.isEmpty()) {
+            throw new RuntimeException("Local não encontrado com id: " + id);
+        }
+        Local existente = opt.get();
+        existente.setNome(dto.getNome());
+        existente.setSetor(dto.getSetor());
+        Local salvo = localRepository.save(existente);
+        LocalDTO dtoSalvo = new LocalDTO();
+        BeanUtils.copyProperties(salvo, dtoSalvo);
+        return dtoSalvo;
+    }
+
+    // MÉTODO DELETE
+    public void deletar(Long id) {
+        if (!localRepository.existsById(id)) {
+            throw new RuntimeException("Local não encontrado com id: " + id);
+        }
+        localRepository.deleteById(id);
     }
 
     private LocalDTO converterParaDTO(Local local) {

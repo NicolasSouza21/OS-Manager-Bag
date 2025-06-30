@@ -20,21 +20,15 @@ public class OrdemServico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // --- 👇👇 CAMPOS REMOVIDOS E SUBSTITUÍDOS 👇👇 ---
-    // private String numeroMaquina; // REMOVIDO
-    // private String tipoMaquina;   // REMOVIDO
-
-    // 1. NOVO RELACIONAMENTO com a entidade Equipamento
-    // Muitas Ordens de Serviço podem apontar para um Equipamento.
+    // Relacionamento com Equipamento (FK: equipamento_id → equipamentos.id)
     @ManyToOne
-    @JoinColumn(name = "equipamento_id") // Nome da coluna da chave estrangeira no banco
+    @JoinColumn(name = "equipamento_id", referencedColumnName = "id", nullable = false)
     private Equipamento equipamento;
 
-    // 2. NOVO RELACIONAMENTO com a entidade Local
+    // Relacionamento com Local (FK: local_id → locais.id)
     @ManyToOne
-    @JoinColumn(name = "local_id") // Nome da coluna da chave estrangeira no banco
+    @JoinColumn(name = "local_id", referencedColumnName = "id", nullable = false)
     private Local local;
-    // --- 👆👆 FIM DAS MUDANÇAS ESTRUTURAIS 👆👆 ---
 
     @Enumerated(EnumType.STRING)
     private Prioridade prioridade;

@@ -1,40 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getOrdensServico } from '../services/apiService';
-import { FaSearch } from 'react-icons/fa'; 
-
+import { getOrdensServico, getEquipamentos, getLocais } from '../services/apiService';
+import { FaSearch } from 'react-icons/fa';
 import './DashBoardPage.css';
 
 function DashboardPage() {
   const navigate = useNavigate();
 
   const [ordens, setOrdens] = useState([]);
+  const [equipamentos, setEquipamentos] = useState([]);
+  const [locais, setLocais] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchOrdens = async () => {
+    const fetchAll = async () => {
       try {
-        const params = { page: 0, size: 20, sort: 'id,desc' }; 
-        const response = await getOrdensServico(params);
-        setOrdens(response.data.content);
+        const params = { page: 0, size: 20, sort: 'id,desc' };
+        const [osRes, equipsRes, locaisRes] = await Promise.all([
+          getOrdensServico(params),
+          getEquipamentos(),
+          getLocais()
+        ]);
+        setOrdens(osRes.data.content);
+        setEquipamentos(equipsRes.data);
+        setLocais(locaisRes.data);
         setLoading(false);
       } catch (err) {
-        console.error("Erro ao buscar ordens de serviço:", err);
         setError('Falha ao carregar as ordens de serviço.');
         setLoading(false);
       }
     };
-
-    fetchOrdens();
+    fetchAll();
   }, []);
 
-  // --- 👇👇 A MUDANÇA ESTÁ AQUI 👇👇 ---
-  // 1. Renomeamos a função para ser mais clara e ajustamos as opções de formatação.
   const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    // Usamos toLocaleString para formatar data e hora.
     return date.toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -43,10 +45,26 @@ function DashboardPage() {
       minute: '2-digit'
     });
   };
-  // --- 👆👆 FIM DA MUDANÇA 👆👆 ---
 
   const handleViewDetails = (osId) => {
     navigate(`/os/${osId}`);
+  };
+
+  // Funções auxiliares para buscar nome/tag do equipamento/local
+  const getEquipamentoNome = (id) => {
+    if (!id) return 'N/A';
+    const eq = equipamentos.find(e => e.id === id);
+    return eq ? eq.nome : 'N/A';
+  };
+  const getEquipamentoTag = (id) => {
+    if (!id) return 'N/A';
+    const eq = equipamentos.find(e => e.id === id);
+    return eq ? eq.tag : 'N/A';
+  };
+  const getLocalNome = (id) => {
+    if (!id) return 'N/A';
+    const loc = locais.find(l => l.id === id);
+    return loc ? loc.nome : 'N/A';
   };
 
   if (loading) return <div className="loading">Carregando...</div>;
@@ -56,14 +74,12 @@ function DashboardPage() {
     <div className="dashboard-container">
       <main>
         <h1 className="dashboard-title">Painel de Ordens de Serviço</h1>
-        
         <div className="table-container">
           <table className="os-table">
             <thead>
               <tr>
                 <th>Status</th>
                 <th>Nº O.S.</th>
-                {/* 2. Atualizamos o cabeçalho da coluna */}
                 <th>Data e Hora Abertura</th>
                 <th>Equipamento</th>
                 <th>Nº Equipamento</th>
@@ -83,18 +99,15 @@ function DashboardPage() {
                       </span>
                     </td>
                     <td>{os.id}</td>
-                    
-                    {/* 3. Chamamos a nova função de formatação */}
                     <td>{formatDateTime(os.dataSolicitacao)}</td>
-                    
-                    <td>{os.tipoMaquina || 'N/A'}</td>
-                    <td>{os.numeroMaquina || 'N/A'}</td>
-                    <td>{os.local || 'N/A'}</td>
+                    <td>{getEquipamentoNome(os.equipamentoId)}</td>
+                    <td>{getEquipamentoTag(os.equipamentoId)}</td>
+                    <td>{getLocalNome(os.localId)}</td>
                     <td>{os.prioridade || 'N/A'}</td>
                     <td>{os.solicitante || 'N/A'}</td>
                     <td>
-                      <button 
-                        className="view-button" 
+                      <button
+                        className="view-button"
                         title="Visualizar Detalhes"
                         onClick={() => handleViewDetails(os.id)}
                       >
