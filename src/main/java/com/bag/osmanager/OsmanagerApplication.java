@@ -47,8 +47,7 @@ public class OsmanagerApplication {
                 System.out.println("Usuário admin já existe. Nenhuma ação necessária.");
             }
 
-            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        System.out.println(encoder.encode("159456"));
+          
         };
     }
 }
