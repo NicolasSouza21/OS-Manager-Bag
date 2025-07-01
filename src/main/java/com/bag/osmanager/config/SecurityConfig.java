@@ -87,6 +87,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
                 .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated()
+                // Adicione a linha abaixo para proteger o endpoint de troca de status:
+                .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_QC")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

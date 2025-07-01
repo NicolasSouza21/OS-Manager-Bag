@@ -1,10 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getOsById, getEquipamentos, getLocais } from '../services/apiService';
+import {
+  getOsById,
+  getEquipamentos,
+  getLocais,
+  updateStatusOs,
+  deleteOrdemServico
+} from '../services/apiService';
 import './VisualizarOsPage.css';
 
+const STATUS_OPTIONS = [
+  { value: 'ABERTA', label: 'Aberta' },
+  { value: 'EM_EXECUCAO', label: 'Em Execução' },
+  { value: 'CONCLUIDA', label: 'Concluída' },
+  { value: 'CANCELADA', label: 'Cancelada' },
+];
+
+// Função auxiliar para normalizar o status
+function mapStatusToOptionValue(status) {
+  if (!status) return STATUS_OPTIONS[0].value;
+  const normalized = status
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .toUpperCase()
+    .replace(/\s/g, "_"); // troca espaços por underline
+
+  const match = STATUS_OPTIONS.find(opt => opt.value === normalized);
+  if (match) return match.value;
+
+  const looseMatch = STATUS_OPTIONS.find(opt =>
+    opt.value.replace(/_/g, "") === normalized.replace(/_/g, "")
+  );
+  if (looseMatch) return looseMatch.value;
+
+  return STATUS_OPTIONS[0].value;
+}
+
 function VisualizarOsPage() {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [ordemServico, setOrdemServico] = useState(null);
@@ -12,6 +44,14 @@ function VisualizarOsPage() {
   const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [novoStatus, setNovoStatus] = useState('');
+  const [alterandoStatus, setAlterandoStatus] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+
+  // Pega perfil - garantir que está no mesmo padrão salvo no backend
+  const userRoleRaw = localStorage.getItem("userRole") || "";
+  const userRole = userRoleRaw.startsWith("ROLE_") ? userRoleRaw.replace("ROLE_", "") : userRoleRaw;
+  const podeTrocarStatus = ['MECANICO', 'ANALISTA_CQ', 'ADMIN'].includes(userRole);
 
   useEffect(() => {
     if (!id) return;
@@ -19,7 +59,6 @@ function VisualizarOsPage() {
     const fetchAll = async () => {
       try {
         setLoading(true);
-        // Busca OS, equipamentos e locais em paralelo
         const [osRes, equipsRes, locaisRes] = await Promise.all([
           getOsById(id),
           getEquipamentos(),
@@ -27,7 +66,9 @@ function VisualizarOsPage() {
         ]);
         setOrdemServico(osRes.data);
 
-        // Busca o equipamento e local pelo id do DTO da OS
+        const statusConvertido = mapStatusToOptionValue(osRes.data.status);
+        setNovoStatus(statusConvertido);
+
         const equip = equipsRes.data.find(e => e.id === osRes.data.equipamentoId);
         setEquipamento(equip || null);
 
@@ -44,6 +85,40 @@ function VisualizarOsPage() {
 
     fetchAll();
   }, [id]);
+
+  const handleStatusChange = async (e) => {
+    const valor = e.target.value;
+    setNovoStatus(valor);
+    setAlterandoStatus(true);
+    try {
+      await updateStatusOs(id, { status: valor });
+      setOrdemServico(prev => ({
+        ...prev,
+        status: valor,
+      }));
+      alert('Status alterado com sucesso!');
+    } catch (err) {
+      alert('Falha ao alterar status');
+    } finally {
+      setAlterandoStatus(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("Tem certeza que deseja excluir esta Ordem de Serviço? Essa ação não pode ser desfeita.")) {
+      return;
+    }
+    setExcluindo(true);
+    try {
+      await deleteOrdemServico(id);
+      alert('Ordem de Serviço excluída com sucesso!');
+      navigate('/dashboard');
+    } catch (err) {
+      alert('Falha ao excluir Ordem de Serviço.');
+    } finally {
+      setExcluindo(false);
+    }
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -72,12 +147,27 @@ function VisualizarOsPage() {
           </div>
           <div className="input-group">
             <label>Situação O.S.</label>
-            <input 
-              type="text" 
-              value={ordemServico.status || ''} 
-              disabled 
-              className={`status-input status-${ordemServico.status?.toLowerCase()}-input`} 
-            />
+            {podeTrocarStatus ? (
+              <select
+                value={novoStatus}
+                onChange={handleStatusChange}
+                disabled={alterandoStatus}
+                className={`status-input status-${novoStatus?.toLowerCase()}-input`}
+              >
+                {STATUS_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            ) : (
+              <input 
+                type="text" 
+                value={
+                  (STATUS_OPTIONS.find(opt => opt.value === novoStatus)?.label) || ordemServico.status || ''
+                }
+                disabled 
+                className={`status-input status-${novoStatus?.toLowerCase()}-input`} 
+              />
+            )}
           </div>
         </section>
 
@@ -120,6 +210,17 @@ function VisualizarOsPage() {
           <button type="button" className="button-back" onClick={() => navigate('/dashboard')}>
             Voltar ao Painel
           </button>
+          {podeTrocarStatus && (
+            <button
+              type="button"
+              className="button-delete"
+              style={{ marginLeft: '16px', backgroundColor: '#c0392b', color: '#fff' }}
+              onClick={handleDelete}
+              disabled={excluindo}
+            >
+              {excluindo ? "Excluindo..." : "Excluir OS"}
+            </button>
+          )}
         </footer>
       </div>
     </div>

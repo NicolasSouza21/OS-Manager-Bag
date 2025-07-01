@@ -10,8 +10,8 @@ import java.util.List;
 public class OrdemServicoDTO {
     private Long id;
 
-    private Long equipamentoId; // id do Equipamento relacionado
-    private Long localId;       // id do Local relacionado
+    private Long equipamentoId;
+    private Long localId;
 
     private Prioridade prioridade;
     private Turno turno;
@@ -39,4 +39,6 @@ public class OrdemServicoDTO {
     private LocalDateTime dataAprovacao;
 
     private LocalDateTime dataLimite;
+
+    private StatusOrdemServico status;
 }
