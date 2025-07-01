@@ -25,7 +25,6 @@ public class OrdemServicoController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'LIDER')")
     public ResponseEntity<OrdemServicoDTO> criarOS(@RequestBody CriarOrdemServicoDTO dto) {
-        // Certifique-se de que CriarOrdemServicoDTO tem os campos: equipamentoId e localId
         OrdemServicoDTO osCriada = osService.criarOS(dto);
         return new ResponseEntity<>(osCriada, HttpStatus.CREATED);
     }
@@ -70,4 +69,13 @@ public class OrdemServicoController {
     public ResponseEntity<OrdemServicoDTO> registrarAprovacao(@PathVariable Long id, @RequestBody AprovacaoDTO dto) {
         return ResponseEntity.ok(osService.registrarAprovacao(id, dto));
     }
+
+    // NOVO ENDPOINT PARA ATUALIZAR O STATUS
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO', 'ANALISTA_CQ')")
+    public ResponseEntity<?> atualizarStatus(@PathVariable Long id, @RequestBody StatusUpdateDTO statusUpdate) {
+        osService.atualizarStatus(id, statusUpdate.getStatus());
+        return ResponseEntity.ok().build();
+    }
+  
 }

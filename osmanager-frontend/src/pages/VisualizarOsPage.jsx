@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getOsById, getEquipamentos, getLocais } from '../services/apiService';
+import { getOsById, getEquipamentos, getLocais, updateStatusOs } from '../services/apiService';
 import './VisualizarOsPage.css';
 
+const STATUS_OPTIONS = [
+  { value: 'ABERTA', label: 'Aberta' },
+  { value: 'EM_EXECUCAO', label: 'Em Execução' },
+  { value: 'CONCLUIDA', label: 'Concluída' },
+  { value: 'CANCELADA', label: 'Cancelada' },
+];
+
 function VisualizarOsPage() {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [ordemServico, setOrdemServico] = useState(null);
@@ -12,6 +19,14 @@ function VisualizarOsPage() {
   const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [novoStatus, setNovoStatus] = useState('');
+  const [alterandoStatus, setAlterandoStatus] = useState(false);
+
+  // Pega perfil - garantir que está no mesmo padrão salvo no backend
+  const userRoleRaw = localStorage.getItem("userRole") || "";
+  // Remove prefixo ROLE_ se vier assim
+  const userRole = userRoleRaw.startsWith("ROLE_") ? userRoleRaw.replace("ROLE_", "") : userRoleRaw;
+  const podeTrocarStatus = ['MECANICO', 'ANALISTA_CQ', 'ADMIN'].includes(userRole);
 
   useEffect(() => {
     if (!id) return;
@@ -19,13 +34,24 @@ function VisualizarOsPage() {
     const fetchAll = async () => {
       try {
         setLoading(true);
-        // Busca OS, equipamentos e locais em paralelo
         const [osRes, equipsRes, locaisRes] = await Promise.all([
           getOsById(id),
           getEquipamentos(),
           getLocais()
         ]);
         setOrdemServico(osRes.data);
+
+        // Normaliza status para combinar exatamente com STATUS_OPTIONS
+        let statusPadrao = (osRes.data.status || '').toUpperCase().replace(/\s/g, '_');
+        // Corrige casos de status vindo como "EM EXECUCAO", "EM_EXECUCAO", etc
+        if (statusPadrao === 'EMEXECUCAO' || statusPadrao === 'EM_EXECUÇÃO') statusPadrao = 'EM_EXECUCAO';
+        if (statusPadrao === 'CONCLUÍDA') statusPadrao = 'CONCLUIDA';
+        if (statusPadrao === 'CANCELADA') statusPadrao = 'CANCELADA';
+        // Fallback para primeira opção se não corresponder
+        const valorStatusValido = STATUS_OPTIONS.some(opt => opt.value === statusPadrao)
+          ? statusPadrao
+          : STATUS_OPTIONS[0].value;
+        setNovoStatus(valorStatusValido);
 
         // Busca o equipamento e local pelo id do DTO da OS
         const equip = equipsRes.data.find(e => e.id === osRes.data.equipamentoId);
@@ -44,6 +70,25 @@ function VisualizarOsPage() {
 
     fetchAll();
   }, [id]);
+
+  const handleStatusChange = async (e) => {
+    const valor = e.target.value;
+    setNovoStatus(valor);
+    setAlterandoStatus(true);
+    try {
+      // O backend espera { status: valor }
+      await updateStatusOs(id, { status: valor });
+      setOrdemServico(prev => ({
+        ...prev,
+        status: valor,
+      }));
+      alert('Status alterado com sucesso!');
+    } catch (err) {
+      alert('Falha ao alterar status');
+    } finally {
+      setAlterandoStatus(false);
+    }
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -72,12 +117,27 @@ function VisualizarOsPage() {
           </div>
           <div className="input-group">
             <label>Situação O.S.</label>
-            <input 
-              type="text" 
-              value={ordemServico.status || ''} 
-              disabled 
-              className={`status-input status-${ordemServico.status?.toLowerCase()}-input`} 
-            />
+            {podeTrocarStatus ? (
+              <select
+                value={novoStatus}
+                onChange={handleStatusChange}
+                disabled={alterandoStatus}
+                className={`status-input status-${novoStatus?.toLowerCase()}-input`}
+              >
+                {STATUS_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            ) : (
+              <input 
+                type="text" 
+                value={
+                  (STATUS_OPTIONS.find(opt => opt.value === novoStatus)?.label) || ordemServico.status || ''
+                }
+                disabled 
+                className={`status-input status-${novoStatus?.toLowerCase()}-input`} 
+              />
+            )}
           </div>
         </section>
 

@@ -9,6 +9,8 @@ import com.bag.osmanager.model.enums.StatusVerificacao;
 import com.bag.osmanager.model.enums.Turno;
 import com.bag.osmanager.repository.*;
 import com.bag.osmanager.service.specification.OrdemServicoSpecification;
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -205,4 +207,5 @@ public class OrdemServicoService {
         dto.setStatus(os.getStatus());
         return dto;
     }
+
 }

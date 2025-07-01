@@ -4,24 +4,41 @@ import { getOrdensServico, getEquipamentos, getLocais } from '../services/apiSer
 import { FaSearch } from 'react-icons/fa';
 import './DashBoardPage.css';
 
+const STATUS_OPTIONS = [
+  { value: '', label: 'Todos' },
+  { value: 'ABERTA', label: 'Aberta' },
+  { value: 'EM_EXECUCAO', label: 'Em Execução' },
+  { value: 'CONCLUIDA', label: 'Concluída' },
+  { value: 'CANCELADA', label: 'Cancelada' },
+];
+
 function DashboardPage() {
   const navigate = useNavigate();
 
+  const [ordensOriginais, setOrdensOriginais] = useState([]);
   const [ordens, setOrdens] = useState([]);
   const [equipamentos, setEquipamentos] = useState([]);
   const [locais, setLocais] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Filtros
+  const [statusFilter, setStatusFilter] = useState('');
+  const [localFilter, setLocalFilter] = useState('');
+  const [numeroOS, setNumeroOS] = useState('');
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
+
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const params = { page: 0, size: 20, sort: 'id,desc' };
+        setLoading(true);
         const [osRes, equipsRes, locaisRes] = await Promise.all([
-          getOrdensServico(params),
+          getOrdensServico({ page: 0, size: 100, sort: 'id,desc' }),
           getEquipamentos(),
           getLocais()
         ]);
+        setOrdensOriginais(osRes.data.content);
         setOrdens(osRes.data.content);
         setEquipamentos(equipsRes.data);
         setLocais(locaisRes.data);
@@ -33,6 +50,38 @@ function DashboardPage() {
     };
     fetchAll();
   }, []);
+
+  // Filtro local (front-end)
+  useEffect(() => {
+    let filtradas = ordensOriginais;
+
+    if (statusFilter) {
+      filtradas = filtradas.filter(os => os.status === statusFilter);
+    }
+    if (localFilter) {
+      filtradas = filtradas.filter(os => String(os.localId) === String(localFilter));
+    }
+    if (numeroOS) {
+      filtradas = filtradas.filter(os => String(os.id) === String(numeroOS));
+    }
+    if (dataInicio) {
+      filtradas = filtradas.filter(os => {
+        if (!os.dataSolicitacao) return false;
+        const dataOS = new Date(os.dataSolicitacao).setHours(0,0,0,0);
+        const dataIni = new Date(dataInicio).setHours(0,0,0,0);
+        return dataOS >= dataIni;
+      });
+    }
+    if (dataFim) {
+      filtradas = filtradas.filter(os => {
+        if (!os.dataSolicitacao) return false;
+        const dataOS = new Date(os.dataSolicitacao).setHours(0,0,0,0);
+        const dataF = new Date(dataFim).setHours(0,0,0,0);
+        return dataOS <= dataF;
+      });
+    }
+    setOrdens(filtradas);
+  }, [statusFilter, localFilter, numeroOS, dataInicio, dataFim, ordensOriginais]);
 
   const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A';
@@ -74,6 +123,54 @@ function DashboardPage() {
     <div className="dashboard-container">
       <main>
         <h1 className="dashboard-title">Painel de Ordens de Serviço</h1>
+        <form
+          className="dashboard-filters"
+          onSubmit={e => e.preventDefault()}
+        >
+          <div>
+            <label>Status:</label>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              {STATUS_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Local:</label>
+            <select value={localFilter} onChange={e => setLocalFilter(e.target.value)}>
+              <option value="">Todos</option>
+              {locais.map(l => (
+                <option key={l.id} value={l.id}>{l.nome}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Nº O.S.:</label>
+            <input
+              type="number"
+              value={numeroOS}
+              onChange={e => setNumeroOS(e.target.value)}
+              placeholder="Ex: 123"
+              min="1"
+            />
+          </div>
+          <div>
+            <label>Data Inicial:</label>
+            <input
+              type="date"
+              value={dataInicio}
+              onChange={e => setDataInicio(e.target.value)}
+            />
+          </div>
+          <div>
+            <label>Data Final:</label>
+            <input
+              type="date"
+              value={dataFim}
+              onChange={e => setDataFim(e.target.value)}
+            />
+          </div>
+        </form>
         <div className="table-container">
           <table className="os-table">
             <thead>

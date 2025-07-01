@@ -59,7 +59,14 @@ export const logout = () => {
   localStorage.removeItem('userRole');
 };
 
+/** Atualiza status da OS */
+export const updateStatusOs = (id, { status }) =>
+  api.put(`/ordens-servico/${id}/status`, { status });
+
+/** Atualiza equipamento */
 export const updateEquipamento = (id, equipamentoData) => api.put(`/equipamentos/${id}`, equipamentoData);
+
+/** Deleta equipamento */
 export const deleteEquipamento = (id) => api.delete(`/equipamentos/${id}`);
 
 export default api;

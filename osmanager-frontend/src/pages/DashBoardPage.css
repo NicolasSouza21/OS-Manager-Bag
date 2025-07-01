@@ -126,3 +126,34 @@
 .error {
   color: #dc3545;
 }
+
+.dashboard-filters {
+  display: flex;
+  gap: 1.5em;
+  align-items: flex-end;
+  margin-bottom: 1.5em;
+}
+.dashboard-filters label {
+  display: block;
+  font-size: 0.95em;
+  margin-bottom: 0.2em;
+}
+.dashboard-filters input,
+.dashboard-filters select {
+  padding: 0.3em 0.7em;
+  border-radius: 6px;
+  border: 1px solid #bdbdbd;
+}
+.filter-button {
+  padding: 0.45em 1.2em;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.filter-button:hover {
+  background: #1257a8;
+}
