@@ -178,6 +178,7 @@ function DashboardPage() {
                 <th>Status</th>
                 <th>Nº O.S.</th>
                 <th>Data e Hora Abertura</th>
+                <th>Data e Hora Final</th>
                 <th>Equipamento</th>
                 <th>Nº Equipamento</th>
                 <th>Local</th>
@@ -197,6 +198,7 @@ function DashboardPage() {
                     </td>
                     <td>{os.id}</td>
                     <td>{formatDateTime(os.dataSolicitacao)}</td>
+                    <td>{formatDateTime(os.dataLimite)}</td>
                     <td>{getEquipamentoNome(os.equipamentoId)}</td>
                     <td>{getEquipamentoTag(os.equipamentoId)}</td>
                     <td>{getLocalNome(os.localId)}</td>
@@ -215,7 +217,7 @@ function DashboardPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="no-os-message">
+                  <td colSpan="10" className="no-os-message">
                     Nenhuma ordem de serviço encontrada.
                   </td>
                 </tr>

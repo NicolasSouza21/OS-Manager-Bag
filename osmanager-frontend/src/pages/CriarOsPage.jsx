@@ -1,21 +1,21 @@
-// Local: src/pages/CriarOsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrdemServico, getEquipamentos, getLocais } from '../services/apiService';
 import './CriarOsPage.css';
-
 
 function CriarOsPage() {
     const navigate = useNavigate();
 
     // --- Estados do Formulário ---
     const [tipoManutencao, setTipoManutencao] = useState('CORRETIVA');
-    const [prioridade, setPrioridade] = useState(''); // Era 'criticidade' no seu design
+    const [prioridade, setPrioridade] = useState('');
     const [solicitante, setSolicitante] = useState('');
     const [descricaoProblema, setDescricaoProblema] = useState('');
     const [observacao, setObservacao] = useState('');
     const [equipamentoId, setEquipamentoId] = useState('');
     const [localId, setLocalId] = useState('');
+    const [dataSolicitacao, setDataSolicitacao] = useState('');
+    const [dataLimite, setDataLimite] = useState('');
     const [listaEquipamentos, setListaEquipamentos] = useState([]);
     const [listaLocais, setListaLocais] = useState([]);
     const [error, setError] = useState(null);
@@ -38,7 +38,6 @@ function CriarOsPage() {
             }
         };
         carregarDadosIniciais();
-        // Assume que o nome do utilizador logado está guardado no localStorage
         setSolicitante(localStorage.getItem('userName') || 'Utilizador');
     }, []);
 
@@ -46,20 +45,27 @@ function CriarOsPage() {
         evento.preventDefault();
         setError(null);
 
-        if (!prioridade || !equipamentoId || !localId) {
+        // dataLimite não é mais obrigatório!
+        if (!prioridade || !equipamentoId || !localId || !dataSolicitacao) {
             alert('Por favor, preencha todos os campos obrigatórios.');
             return;
         }
 
         const dadosParaApi = {
-            tipoManutencao,
-            equipamentoId,
-            localId,
-            prioridade,
+            tipoManutencao, // enum string: 'CORRETIVA', 'PREVENTIVA' etc
+            prioridade, // enum string: 'ALTA', 'MEDIA', 'BAIXA'
+            equipamentoId: Number(equipamentoId),
+            localId: Number(localId),
             solicitante,
             descricaoProblema,
-            observacao,
+            observacao, // OBS: não está no DTO, mas pode ser ignorado no backend
+            dataSolicitacao,
         };
+
+        // Só envia dataLimite se preenchida
+        if (dataLimite) {
+            dadosParaApi.dataLimite = dataLimite;
+        }
 
         try {
             await createOrdemServico(dadosParaApi);
@@ -74,7 +80,6 @@ function CriarOsPage() {
         <div className="os-page-container">
             <form className="os-form-container" onSubmit={handleSubmit}>
                 <header className="os-form-header">
-                   
                     <div className="os-header-title">
                         <h1>ORDEM DE SERVIÇO DE MANUTENÇÃO</h1>
                     </div>
@@ -96,7 +101,12 @@ function CriarOsPage() {
                         </div>
                         <div className="input-group">
                             <label>DATA DE ABERTURA:</label>
-                            <input type="text" value={new Date().toLocaleDateString('pt-BR')} disabled />
+                            <input
+                                type="datetime-local"
+                                value={dataSolicitacao}
+                                onChange={e => setDataSolicitacao(e.target.value)}
+                                required
+                            />
                         </div>
                         <div className="input-group">
                             <label>SITUAÇÃO O.S:</label>
@@ -149,6 +159,15 @@ function CriarOsPage() {
                         <div className="input-group">
                             <label>SOLICITANTE:</label>
                             <input type="text" value={solicitante} disabled />
+                        </div>
+                        <div className="input-group">
+                            <label>DATA FINAL:</label>
+                            <input
+                                type="datetime-local"
+                                value={dataLimite}
+                                onChange={e => setDataLimite(e.target.value)}
+                                // não é mais required!
+                            />
                         </div>
                     </div>
 
