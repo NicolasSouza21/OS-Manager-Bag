@@ -62,25 +62,33 @@
   background-color: #F8F9FA;
 }
 
-/* --- Estilos do Status Pill --- */
 .status-pill {
-  padding: 4px 10px;
-  border-radius: 12px; /* Pílula bem arredondada */
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  color: #fff;
   display: inline-block;
-  text-align: center;
-  min-width: 70px;
+  padding: 0.2em 1em;
+  border-radius: 16px;
+  font-weight: bold;
+  color: #fff;
+  font-size: 0.95em;
+  letter-spacing: 0.04em;
+  text-transform: capitalize;
 }
 
-/* Cores específicas para cada status */
-.status-aberto { background-color: #28a745; } /* Verde para Aberto */
-.status-pendente { background-color: #ffc107; color: #333; } /* Amarelo para Pendente */
-.status-em_andamento { background-color: #007bff; } /* Azul para Em Andamento */
-.status-concluido { background-color: #6c757d; } /* Cinza para Concluído */
-.status-cancelado { background-color: #dc3545; } /* Vermelho para Cancelado */
+/* Exemplo de cores para cada status */
+.status-aberta {
+  color: #388e3c;
+  background: #ffffff; /* Azul */
+}
+.status-em_execucao,
+.status-em-execucao {
+  background: #fbc02d; /* Amarelo/Ouro */
+  color: #222;
+}
+.status-concluida {
+  background: #388e3c; /* Verde */
+}
+.status-cancelada {
+  background: #d32f2f; /* Vermelho */
+}
 
 /* Estilos do botão de visualizar */
 .view-button {
