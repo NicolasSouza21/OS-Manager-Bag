@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getOsById, getEquipamentos, getLocais, updateStatusOs } from '../services/apiService';
+import {
+  getOsById,
+  getEquipamentos,
+  getLocais,
+  updateStatusOs,
+  deleteOrdemServico
+} from '../services/apiService';
 import './VisualizarOsPage.css';
 
 const STATUS_OPTIONS = [
@@ -9,6 +15,25 @@ const STATUS_OPTIONS = [
   { value: 'CONCLUIDA', label: 'Concluída' },
   { value: 'CANCELADA', label: 'Cancelada' },
 ];
+
+// Função auxiliar para normalizar o status
+function mapStatusToOptionValue(status) {
+  if (!status) return STATUS_OPTIONS[0].value;
+  const normalized = status
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .toUpperCase()
+    .replace(/\s/g, "_"); // troca espaços por underline
+
+  const match = STATUS_OPTIONS.find(opt => opt.value === normalized);
+  if (match) return match.value;
+
+  const looseMatch = STATUS_OPTIONS.find(opt =>
+    opt.value.replace(/_/g, "") === normalized.replace(/_/g, "")
+  );
+  if (looseMatch) return looseMatch.value;
+
+  return STATUS_OPTIONS[0].value;
+}
 
 function VisualizarOsPage() {
   const { id } = useParams();
@@ -21,10 +46,10 @@ function VisualizarOsPage() {
   const [error, setError] = useState(null);
   const [novoStatus, setNovoStatus] = useState('');
   const [alterandoStatus, setAlterandoStatus] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
 
   // Pega perfil - garantir que está no mesmo padrão salvo no backend
   const userRoleRaw = localStorage.getItem("userRole") || "";
-  // Remove prefixo ROLE_ se vier assim
   const userRole = userRoleRaw.startsWith("ROLE_") ? userRoleRaw.replace("ROLE_", "") : userRoleRaw;
   const podeTrocarStatus = ['MECANICO', 'ANALISTA_CQ', 'ADMIN'].includes(userRole);
 
@@ -41,19 +66,9 @@ function VisualizarOsPage() {
         ]);
         setOrdemServico(osRes.data);
 
-        // Normaliza status para combinar exatamente com STATUS_OPTIONS
-        let statusPadrao = (osRes.data.status || '').toUpperCase().replace(/\s/g, '_');
-        // Corrige casos de status vindo como "EM EXECUCAO", "EM_EXECUCAO", etc
-        if (statusPadrao === 'EMEXECUCAO' || statusPadrao === 'EM_EXECUÇÃO') statusPadrao = 'EM_EXECUCAO';
-        if (statusPadrao === 'CONCLUÍDA') statusPadrao = 'CONCLUIDA';
-        if (statusPadrao === 'CANCELADA') statusPadrao = 'CANCELADA';
-        // Fallback para primeira opção se não corresponder
-        const valorStatusValido = STATUS_OPTIONS.some(opt => opt.value === statusPadrao)
-          ? statusPadrao
-          : STATUS_OPTIONS[0].value;
-        setNovoStatus(valorStatusValido);
+        const statusConvertido = mapStatusToOptionValue(osRes.data.status);
+        setNovoStatus(statusConvertido);
 
-        // Busca o equipamento e local pelo id do DTO da OS
         const equip = equipsRes.data.find(e => e.id === osRes.data.equipamentoId);
         setEquipamento(equip || null);
 
@@ -76,7 +91,6 @@ function VisualizarOsPage() {
     setNovoStatus(valor);
     setAlterandoStatus(true);
     try {
-      // O backend espera { status: valor }
       await updateStatusOs(id, { status: valor });
       setOrdemServico(prev => ({
         ...prev,
@@ -87,6 +101,22 @@ function VisualizarOsPage() {
       alert('Falha ao alterar status');
     } finally {
       setAlterandoStatus(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("Tem certeza que deseja excluir esta Ordem de Serviço? Essa ação não pode ser desfeita.")) {
+      return;
+    }
+    setExcluindo(true);
+    try {
+      await deleteOrdemServico(id);
+      alert('Ordem de Serviço excluída com sucesso!');
+      navigate('/dashboard');
+    } catch (err) {
+      alert('Falha ao excluir Ordem de Serviço.');
+    } finally {
+      setExcluindo(false);
     }
   };
 
@@ -180,6 +210,17 @@ function VisualizarOsPage() {
           <button type="button" className="button-back" onClick={() => navigate('/dashboard')}>
             Voltar ao Painel
           </button>
+          {podeTrocarStatus && (
+            <button
+              type="button"
+              className="button-delete"
+              style={{ marginLeft: '16px', backgroundColor: '#c0392b', color: '#fff' }}
+              onClick={handleDelete}
+              disabled={excluindo}
+            >
+              {excluindo ? "Excluindo..." : "Excluir OS"}
+            </button>
+          )}
         </footer>
       </div>
     </div>

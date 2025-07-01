@@ -77,5 +77,12 @@ public class OrdemServicoController {
         osService.atualizarStatus(id, statusUpdate.getStatus());
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{id}")
+@PreAuthorize("hasAnyRole('ADMIN', 'LIDER')") // ou só ADMIN, como preferir
+public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
+    osService.deletarOrdemServico(id); // Implemente esse método no service
+    return ResponseEntity.noContent().build();
+}
   
 }

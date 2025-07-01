@@ -69,4 +69,10 @@ export const updateEquipamento = (id, equipamentoData) => api.put(`/equipamentos
 /** Deleta equipamento */
 export const deleteEquipamento = (id) => api.delete(`/equipamentos/${id}`);
 
+
+export const deleteOrdemServico = (id) => api.delete(`/ordens-servico/${id}`);
+
+
+
 export default api;
+

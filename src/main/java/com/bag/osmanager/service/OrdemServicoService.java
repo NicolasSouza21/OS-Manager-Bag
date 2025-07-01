@@ -176,6 +176,13 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
+    @Transactional
+    public void deletarOrdemServico(Long id) {
+        OrdemServico os = osRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
+        osRepository.delete(os);
+    }
+
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto);
