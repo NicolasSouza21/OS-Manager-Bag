@@ -54,7 +54,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://192.168.0.11:5173"));
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:5173",
+            "http://192.168.0.11:5173",
+            "http://192.168.56.1:5173"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList(
             "Authorization",
@@ -77,17 +81,17 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // <-- LIBERA TODAS AS OPTIONS
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 // Proteja os endpoints de LOCAIS conforme regra de negócio:
                 .requestMatchers(HttpMethod.POST, "/api/locais").hasAnyRole("ADMIN", "MECANICO")
-                .requestMatchers(HttpMethod.GET, "/api/locais").authenticated() // ou .permitAll() se quiser listar para todos
+                .requestMatchers(HttpMethod.GET, "/api/locais").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/locais/**").hasAnyRole("ADMIN", "MECANICO")
                 .requestMatchers(HttpMethod.DELETE, "/api/locais/**").hasAnyRole("ADMIN", "MECANICO")
                 .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
                 .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated()
-                // Adicione a linha abaixo para proteger o endpoint de troca de status:
                 .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_QC")
                 .anyRequest().authenticated()
             )
