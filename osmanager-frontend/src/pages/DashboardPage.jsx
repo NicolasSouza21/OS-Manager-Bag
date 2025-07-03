@@ -19,6 +19,7 @@ function DashboardPage() {
   const [ordens, setOrdens] = useState([]);
   const [equipamentos, setEquipamentos] = useState([]);
   const [locais, setLocais] = useState([]);
+  const [funcionariosNomes, setFuncionariosNomes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -42,6 +43,11 @@ function DashboardPage() {
         setOrdens(osRes.data.content);
         setEquipamentos(equipsRes.data);
         setLocais(locaisRes.data);
+
+        // Recupera nomes dos funcionários do localStorage
+        const nomes = JSON.parse(localStorage.getItem('nomesFuncionarios') || '[]');
+        setFuncionariosNomes(nomes);
+
         setLoading(false);
       } catch (err) {
         setError('Falha ao carregar as ordens de serviço.');
@@ -123,6 +129,7 @@ function DashboardPage() {
     <div className="dashboard-container">
       <main>
         <h1 className="dashboard-title">Painel de Ordens de Serviço</h1>
+
         <form
           className="dashboard-filters"
           onSubmit={e => e.preventDefault()}

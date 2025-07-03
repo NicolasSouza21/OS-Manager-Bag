@@ -1,7 +1,7 @@
-// Local: src/pages/LoginPage.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../services/apiService';
+import { jwtDecode } from "jwt-decode"; // Import correto para Vite/ESModules
 import './LoginPage.css';
 
 function LoginPage() {
@@ -17,15 +17,20 @@ function LoginPage() {
     try {
       const credentials = { email, senha };
       const response = await login(credentials);
-      
-      // 1. Extraímos o token E o cargo da resposta da API
-      const { token, role } = response.data;
 
-      // 2. Guardamos AMBAS as informações no localStorage
+      const { token, role, nome, fullName } = response.data;
+      let userName = nome || fullName;
+      if (!userName && token) {
+        // Decodifica o token se nome não veio direto
+        const decoded = jwtDecode(token);
+        userName = decoded.fullName || decoded.nome || "";
+      }
+
       localStorage.setItem('authToken', token);
-      localStorage.setItem('userRole', role); // <-- A LINHA ESSENCIAL QUE FALTAVA
+      localStorage.setItem('userRole', role);
+      localStorage.setItem('userName', userName);
 
-      console.log(`Login bem-sucedido! Role: ${role}, Token: ${token}`);
+      console.log(`Login bem-sucedido! Role: ${role}, Nome: ${userName}, Token: ${token}`);
       
       alert('Login bem-sucedido! Redirecionando...');
       navigate('/dashboard');

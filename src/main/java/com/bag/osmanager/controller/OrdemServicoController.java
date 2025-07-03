@@ -23,7 +23,7 @@ public class OrdemServicoController {
     private final OrdemServicoService osService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIDER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO', 'LIDER', 'ANALISTA_CQ')")
     public ResponseEntity<OrdemServicoDTO> criarOS(@RequestBody CriarOrdemServicoDTO dto) {
         OrdemServicoDTO osCriada = osService.criarOS(dto);
         return new ResponseEntity<>(osCriada, HttpStatus.CREATED);
