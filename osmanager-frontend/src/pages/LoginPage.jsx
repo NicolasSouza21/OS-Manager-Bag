@@ -1,7 +1,7 @@
-import { useState } from 'react';
+// Local: src/pages/LoginPage.jsx
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../services/apiService';
-import { jwtDecode } from "jwt-decode"; // Import correto para Vite/ESModules
 import './LoginPage.css';
 
 function LoginPage() {
@@ -18,26 +18,31 @@ function LoginPage() {
       const credentials = { email, senha };
       const response = await login(credentials);
 
-      const { token, role, nome, fullName } = response.data;
-      let userName = nome || fullName;
-      if (!userName && token) {
-        // Decodifica o token se nome não veio direto
-        const decoded = jwtDecode(token);
-        userName = decoded.fullName || decoded.nome || "";
+      // --- 👇👇 LÓGICA DE LOGIN CORRIGIDA E SIMPLIFICADA 👇👇 ---
+      
+      // 1. Extraímos o token e o objeto 'userInfo' que o backend nos envia.
+      const { token, userInfo } = response.data;
+
+      // 2. Verificamos se recebemos os dados esperados.
+      if (!token || !userInfo) {
+        throw new Error("Resposta da API incompleta. Contacte o administrador.");
       }
 
+      // 3. Guardamos o token e o objeto userInfo inteiro no localStorage.
+      //    Guardar o objeto inteiro dá-nos acesso ao ID, nome, cargo, etc. em outras páginas.
       localStorage.setItem('authToken', token);
-      localStorage.setItem('userRole', role);
-      localStorage.setItem('userName', userName);
+      localStorage.setItem('userInfo', JSON.stringify(userInfo)); // Guardamos como texto JSON
 
-      console.log(`Login bem-sucedido! Role: ${role}, Nome: ${userName}, Token: ${token}`);
+      console.log('Login bem-sucedido!');
+      console.log('Informações do Utilizador Guardadas:', userInfo);
       
-      alert('Login bem-sucedido! Redirecionando...');
       navigate('/dashboard');
 
     } catch (err) {
       console.error('Erro no login:', err);
-      setError('Email ou senha inválidos. Tente novamente.');
+      // Pega a mensagem de erro da resposta da API, se existir, ou mostra uma mensagem padrão.
+      const errorMessage = err.response?.data?.message || 'Email ou senha inválidos. Tente novamente.';
+      setError(errorMessage);
     }
   };
 

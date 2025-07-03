@@ -39,6 +39,16 @@ public class OrdemServicoDTO {
     private LocalDateTime dataAprovacao;
 
     private LocalDateTime dataLimite;
+    private String tagEquipamento;
+
+private String nomeEquipamento;
+
+private String nomeLocal;
 
     private StatusOrdemServico status;
+
+    // ======= Campos para Ciência do Líder =======
+    private Long liderCienciaId;
+    private String cienciaLider; // "SIM" ou "NAO"
+    private LocalDateTime dataCienciaLider;
 }

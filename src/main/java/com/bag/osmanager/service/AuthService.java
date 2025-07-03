@@ -1,11 +1,12 @@
-// Local do ficheiro: src/main/java/com/bag/osmanager/service/AuthService.java
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.AuthRequestDTO;
 import com.bag.osmanager.dto.AuthResponseDTO;
-import com.bag.osmanager.model.Funcionario; // 👈 1. IMPORTE A ENTIDADE FUNCIONARIO
+import com.bag.osmanager.dto.FuncionarioDTO; // Importa o FuncionarioDTO
+import com.bag.osmanager.model.Funcionario;
 import com.bag.osmanager.repository.FuncionarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,27 +21,32 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthResponseDTO login(AuthRequestDTO request) {
-        // Autentica o utilizador com as credenciais fornecidas
+        // Autentica o utilizador
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getSenha())
         );
 
-        // Se a autenticação for bem-sucedida, busca o funcionário completo
-        // 👇 2. ALTERADO PARA BUSCAR A ENTIDADE FUNCIONARIO DIRETAMENTE 👇
+        // Busca o funcionário completo do banco de dados
         Funcionario funcionario = funcionarioRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("Utilizador não encontrado com o email: " + request.getEmail()));
 
         // Gera o token JWT
         String token = jwtService.generateToken(funcionario);
         
-        // 👇 3. OBTÉM O CARGO (ROLE) DO FUNCIONÁRIO 👇
-        String role = funcionario.getTipoFuncionario().name();
+        // --- 👇👇 LÓGICA CORRIGIDA AQUI 👇👇 ---
+
+        // 1. Cria um FuncionarioDTO para ser enviado na resposta
+        FuncionarioDTO userInfo = new FuncionarioDTO();
+        BeanUtils.copyProperties(funcionario, userInfo);
+        
+        // 2. Remove a senha do DTO por segurança!
+        userInfo.setSenha(null);
 
         System.out.println("******************************************************");
-        System.out.println("AUTENTICAÇÃO BEM-SUCEDIDA PARA: " + request.getEmail() + " | CARGO: " + role);
+        System.out.println("AUTENTICAÇÃO BEM-SUCEDIDA PARA: " + request.getEmail() + " | CARGO: " + userInfo.getTipoFuncionario());
         System.out.println("******************************************************");
 
-        // 👇 4. RETORNA O DTO COM O TOKEN E O CARGO 👇
-        return new AuthResponseDTO(token, role);
+        // 3. Retorna o DTO de resposta com o token e as informações do utilizador
+        return new AuthResponseDTO(token, userInfo);
     }
 }

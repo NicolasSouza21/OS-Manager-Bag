@@ -1,3 +1,4 @@
+// Local: src/pages/VisualizarOsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -6,9 +7,10 @@ import {
   getLocais,
   updateStatusOs,
   deleteOrdemServico,
-  patchCienciaLider // <--- ADICIONE esta função no seu apiService
+  patchCienciaLider
 } from '../services/apiService';
 import './VisualizarOsPage.css';
+
 
 const STATUS_OPTIONS = [
   { value: 'ABERTA', label: 'Aberta' },
@@ -23,7 +25,7 @@ function mapStatusToOptionValue(status) {
   const normalized = status
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
     .toUpperCase()
-    .replace(/\s/g, "_"); // troca espaços por underline
+    .replace(/\s/g, "_");
 
   const match = STATUS_OPTIONS.find(opt => opt.value === normalized);
   if (match) return match.value;
@@ -48,14 +50,13 @@ function VisualizarOsPage() {
   const [novoStatus, setNovoStatus] = useState('');
   const [alterandoStatus, setAlterandoStatus] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
-
-  // Estado para ciência do líder
   const [cienciaLider, setCienciaLider] = useState(null);
   const [cienciaLoading, setCienciaLoading] = useState(false);
 
-  // Pega perfil - garantir que está no mesmo padrão salvo no backend
-  const userRoleRaw = localStorage.getItem("userRole") || "";
-  const userRole = userRoleRaw.startsWith("ROLE_") ? userRoleRaw.replace("ROLE_", "") : userRoleRaw;
+  // Pega as informações do utilizador do localStorage
+  const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+  const userRole = userInfo?.role || "";
+  
   const podeTrocarStatus = ['MECANICO', 'ANALISTA_CQ', 'ADMIN'].includes(userRole);
   const podeDarCiencia = userRole === 'LIDER';
 
@@ -128,16 +129,30 @@ function VisualizarOsPage() {
     }
   };
 
-  // Função para dar ciência
+  // --- 👇👇 FUNÇÃO CORRIGIDA PARA ENVIAR O ID DO LÍDER 👇👇 ---
   const handleCiencia = async (valor) => {
-    setCienciaLoading(true);
-    try {
-      await patchCienciaLider(id, { ciencia: valor }); // PATCH para backend
-      setCienciaLider(valor);
-    } catch (e) {
-      alert('Erro ao dar ciência.');
+    if (!userInfo || !userInfo.id) {
+        alert("Erro: Não foi possível identificar o líder logado. Por favor, faça login novamente.");
+        return;
     }
-    setCienciaLoading(false);
+
+    setCienciaLoading(true);
+    
+    const dadosCiencia = {
+        liderId: userInfo.id,
+        ciencia: valor
+    };
+
+    try {
+        await patchCienciaLider(id, dadosCiencia);
+        setCienciaLider(valor);
+        alert("Ciência registrada com sucesso!");
+    } catch (e) {
+        alert('Erro ao dar ciência.');
+        console.error(e);
+    } finally {
+        setCienciaLoading(false);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -226,7 +241,6 @@ function VisualizarOsPage() {
           </div>
         </section>
 
-        {/* Ciência do Líder */}
         <section className="form-section ciencia-lider-section" style={{ marginTop: 20 }}>
           <div className="input-group">
             <label>Ciência do Líder</label>
@@ -244,7 +258,6 @@ function VisualizarOsPage() {
               disabled
             />
           </div>
-          {/* Botões só para Líder */}
           {podeDarCiencia && (
             <div style={{ marginTop: 8 }}>
               <span>Dar ciência: </span>

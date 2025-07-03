@@ -1,6 +1,8 @@
 // Local do ficheiro: src/main/java/com/bag/osmanager/dto/AuthResponseDTO.java
 package com.bag.osmanager.dto;
 
+import com.bag.osmanager.model.Funcionario;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

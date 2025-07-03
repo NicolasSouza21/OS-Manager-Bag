@@ -77,4 +77,7 @@ export const deleteOrdemServico = (id) => api.delete(`/ordens-servico/${id}`);
 export const patchCienciaLider = (osId, { ciencia }) =>
   api.patch(`/ordens-servico/${osId}/ciencia-lider`, { ciencia });
 
+export const updateFuncionario = (id, data) => api.put(`/funcionarios/${id}`, data);
+export const deleteFuncionario = (id) => api.delete(`/funcionarios/${id}`);
+
 export default api;

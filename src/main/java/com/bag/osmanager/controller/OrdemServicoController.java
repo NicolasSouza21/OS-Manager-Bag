@@ -48,7 +48,7 @@ public class OrdemServicoController {
 
     @PutMapping("/{id}/ciencia")
     @PreAuthorize("hasRole('MECANICO')")
-    public ResponseEntity<OrdemServicoDTO> registrarCiencia(@PathVariable Long id, @RequestBody CienciaDTO dto) {
+    public ResponseEntity<OrdemServicoDTO> registrarCiencia(@PathVariable Long id, @RequestBody CienciaLiderDTO dto) {
         return ResponseEntity.ok(osService.registrarCiencia(id, dto));
     }
 
@@ -79,10 +79,17 @@ public class OrdemServicoController {
     }
 
     @DeleteMapping("/{id}")
-@PreAuthorize("hasAnyRole('ADMIN', 'LIDER')") // ou só ADMIN, como preferir
-public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
-    osService.deletarOrdemServico(id); // Implemente esse método no service
-    return ResponseEntity.noContent().build();
-}
-  
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIDER')")
+    public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
+        osService.deletarOrdemServico(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // PATCH para ciência do líder
+    @PatchMapping("/{id}/ciencia-lider")
+    @PreAuthorize("hasRole('LIDER')")
+    public ResponseEntity<OrdemServicoDTO> registrarCienciaLider(@PathVariable Long id, @RequestBody CienciaLiderDTO dto) {
+        OrdemServicoDTO osAtualizada = osService.registrarCienciaLider(id, dto);
+        return ResponseEntity.ok(osAtualizada);
+    }
 }

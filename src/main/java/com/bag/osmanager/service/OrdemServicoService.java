@@ -1,3 +1,4 @@
+// Local: src/main/java/com/bag/osmanager/service/OrdemServicoService.java
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.*;
@@ -37,29 +38,23 @@ public class OrdemServicoService {
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
 
-        // Copie apenas campos simples do DTO
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId");
 
         LocalDateTime agora = LocalDateTime.now();
         os.setDataSolicitacao(agora);
         os.setStatusVerificacao(StatusVerificacao.PENDENTE);
-
-        // Ao criar, status sempre ABERTA
         os.setStatus(StatusOrdemServico.ABERTA);
 
-        // Associa o equipamento existente pelo ID
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
         os.setEquipamento(equipamento);
 
-        // Associa o local existente pelo ID (opcional)
         if (dto.getLocalId() != null) {
             Local local = localRepository.findById(dto.getLocalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Local com ID " + dto.getLocalId() + " não encontrado!"));
             os.setLocal(local);
         }
 
-        // Lógica de tolerância
         switch (dto.getPrioridade()) {
             case ALTA:
                 os.setDataLimite(agora.with(LocalTime.MAX));
@@ -84,7 +79,7 @@ public class OrdemServicoService {
             Pageable pageable) {
 
         Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(
-            numeroMaquina, prioridade, status, turno
+                numeroMaquina, prioridade, status, turno
         );
 
         Page<OrdemServico> paginaDeOS = osRepository.findAll(spec, pageable);
@@ -107,11 +102,11 @@ public class OrdemServicoService {
     }
 
     @Transactional
-    public OrdemServicoDTO registrarCiencia(Long osId, CienciaDTO dto) {
+    public OrdemServicoDTO registrarCiencia(Long osId, CienciaLiderDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        Funcionario mecanico = funcionarioRepository.findById(dto.getMecanicoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Mecânico com ID " + dto.getMecanicoId() + " não encontrado!"));
+        Funcionario mecanico = funcionarioRepository.findById(dto.getLiderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Mecânico com ID " + dto.getLiderId() + " não encontrado!"));
         os.setMecanicoCiencia(mecanico);
         os.setDataCiencia(LocalDateTime.now());
         OrdemServico osAtualizada = osRepository.save(os);
@@ -134,7 +129,6 @@ public class OrdemServicoService {
         os.setMaquinaParada(dto.getMaquinaParada());
 
         if (Boolean.TRUE.equals(dto.getTrocaPecas()) && dto.getPecasSubstituidas() != null) {
-            // Substitui a lista de peças substituídas
             if (os.getPecasSubstituidas() == null) {
                 os.setPecasSubstituidas(new ArrayList<>());
             } else {
@@ -177,6 +171,27 @@ public class OrdemServicoService {
     }
 
     @Transactional
+    public OrdemServicoDTO registrarCienciaLider(Long osId, CienciaLiderDTO dto) {
+        // --- 👇👇 CORREÇÃO APLICADA AQUI 👇👇 ---
+        if (dto == null || dto.getLiderId() == null) {
+            throw new IllegalArgumentException("O ID do Líder é obrigatório para dar ciência.");
+        }
+
+        OrdemServico os = osRepository.findById(osId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        
+        Funcionario lider = funcionarioRepository.findById(dto.getLiderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Líder com ID " + dto.getLiderId() + " não encontrado!"));
+
+        os.setLiderCiencia(lider);
+        os.setCienciaLider(dto.getCiencia());
+        os.setDataCienciaLider(LocalDateTime.now());
+        
+        OrdemServico osAtualizada = osRepository.save(os);
+        return converteParaDTO(osAtualizada);
+    }
+
+    @Transactional
     public void deletarOrdemServico(Long id) {
         OrdemServico os = osRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
@@ -186,6 +201,7 @@ public class OrdemServicoService {
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto);
+
         if (os.getMecanicoCiencia() != null) {
             dto.setMecanicoCienciaId(os.getMecanicoCiencia().getId());
         }
@@ -198,6 +214,12 @@ public class OrdemServicoService {
         if (os.getAprovadoPor() != null) {
             dto.setAprovadoPorId(os.getAprovadoPor().getId());
         }
+        if (os.getLiderCiencia() != null) {
+            dto.setLiderCienciaId(os.getLiderCiencia().getId());
+        }
+        if (os.getCienciaLider() != null) {
+            dto.setCienciaLider(os.getCienciaLider());
+        }
         if (os.getPecasSubstituidas() != null) {
             dto.setPecasSubstituidas(os.getPecasSubstituidas().stream().map(peca -> {
                 PecaSubstituidaDTO pecaDTO = new PecaSubstituidaDTO();
@@ -207,12 +229,15 @@ public class OrdemServicoService {
         }
         if (os.getEquipamento() != null) {
             dto.setEquipamentoId(os.getEquipamento().getId());
+            // Para manter a consistência com o seu design, podemos também passar o nome e tag
+            dto.setNomeEquipamento(os.getEquipamento().getNome());
+            dto.setTagEquipamento(os.getEquipamento().getTag());
         }
         if (os.getLocal() != null) {
             dto.setLocalId(os.getLocal().getId());
+            dto.setNomeLocal(os.getLocal().getNome());
         }
         dto.setStatus(os.getStatus());
         return dto;
     }
-
 }

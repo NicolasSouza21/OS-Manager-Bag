@@ -82,4 +82,13 @@ public class OrdemServico {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusOrdemServico status;
+
+    // ===== Campos para Ciência do Líder =====
+    @ManyToOne
+    @JoinColumn(name = "lider_ciencia_id")
+    private Funcionario liderCiencia;
+
+    private String cienciaLider; // "SIM" ou "NAO"
+
+    private LocalDateTime dataCienciaLider;
 }

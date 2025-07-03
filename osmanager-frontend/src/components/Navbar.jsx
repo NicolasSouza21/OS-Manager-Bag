@@ -11,7 +11,7 @@ function Navbar() {
 
     // 2. Criamos as variáveis booleanas para as verificações de permissão
     const isAdmin = userRole === 'ADMIN';
-    const isMecanico = userRole === 'MECANICO';
+    const isLider = userRole === 'LIDER';
 
     const handleLogout = () => {
         logout();
@@ -41,7 +41,7 @@ function Navbar() {
                 )}
 
                 {/* --- 👇👇 LINK CORRIGIDO AQUI 👇👇 --- */}
-                {(isAdmin || isMecanico) && (
+                {(isAdmin || isLider) && (
                     <li>
                         <Link to="/admin/equipamentos" className="nav-link">
                             Gerenciar Equipamentos
