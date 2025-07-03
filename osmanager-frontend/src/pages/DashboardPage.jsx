@@ -122,6 +122,14 @@ function DashboardPage() {
     return loc ? loc.nome : 'N/A';
   };
 
+  // --- NOVO: Renderização do campo ciência do líder na tabela ---
+  const renderCienciaLider = (ciencia) => {
+    if (ciencia == null) return <span className="ciencia-pendente">Pendente</span>;
+    if (ciencia === "SIM") return <span className="ciencia-sim">Sim</span>;
+    if (ciencia === "NAO") return <span className="ciencia-nao">Não</span>;
+    return <span>{ciencia}</span>;
+  };
+
   if (loading) return <div className="loading">Carregando...</div>;
   if (error) return <div className="error">{error}</div>;
 
@@ -191,6 +199,7 @@ function DashboardPage() {
                 <th>Local</th>
                 <th>Criticidade</th>
                 <th>Solicitante</th>
+                <th>Ciência do Líder</th> {/* --- NOVA COLUNA --- */}
                 <th>Visualizar</th>
               </tr>
             </thead>
@@ -211,6 +220,7 @@ function DashboardPage() {
                     <td>{getLocalNome(os.localId)}</td>
                     <td>{os.prioridade || 'N/A'}</td>
                     <td>{os.solicitante || 'N/A'}</td>
+                    <td>{renderCienciaLider(os.cienciaLider)}</td> {/* --- NOVA COLUNA --- */}
                     <td>
                       <button
                         className="view-button"
@@ -224,7 +234,7 @@ function DashboardPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="10" className="no-os-message">
+                  <td colSpan="11" className="no-os-message">
                     Nenhuma ordem de serviço encontrada.
                   </td>
                 </tr>

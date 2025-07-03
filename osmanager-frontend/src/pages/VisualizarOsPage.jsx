@@ -5,7 +5,8 @@ import {
   getEquipamentos,
   getLocais,
   updateStatusOs,
-  deleteOrdemServico
+  deleteOrdemServico,
+  patchCienciaLider // <--- ADICIONE esta função no seu apiService
 } from '../services/apiService';
 import './VisualizarOsPage.css';
 
@@ -48,10 +49,15 @@ function VisualizarOsPage() {
   const [alterandoStatus, setAlterandoStatus] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
 
+  // Estado para ciência do líder
+  const [cienciaLider, setCienciaLider] = useState(null);
+  const [cienciaLoading, setCienciaLoading] = useState(false);
+
   // Pega perfil - garantir que está no mesmo padrão salvo no backend
   const userRoleRaw = localStorage.getItem("userRole") || "";
   const userRole = userRoleRaw.startsWith("ROLE_") ? userRoleRaw.replace("ROLE_", "") : userRoleRaw;
   const podeTrocarStatus = ['MECANICO', 'ANALISTA_CQ', 'ADMIN'].includes(userRole);
+  const podeDarCiencia = userRole === 'LIDER';
 
   useEffect(() => {
     if (!id) return;
@@ -74,6 +80,8 @@ function VisualizarOsPage() {
 
         const loc = locaisRes.data.find(l => l.id === osRes.data.localId);
         setLocal(loc || null);
+
+        setCienciaLider(osRes.data.cienciaLider ?? null);
 
         setError(null);
       } catch (err) {
@@ -118,6 +126,18 @@ function VisualizarOsPage() {
     } finally {
       setExcluindo(false);
     }
+  };
+
+  // Função para dar ciência
+  const handleCiencia = async (valor) => {
+    setCienciaLoading(true);
+    try {
+      await patchCienciaLider(id, { ciencia: valor }); // PATCH para backend
+      setCienciaLider(valor);
+    } catch (e) {
+      alert('Erro ao dar ciência.');
+    }
+    setCienciaLoading(false);
   };
 
   const formatDate = (dateString) => {
@@ -204,6 +224,47 @@ function VisualizarOsPage() {
             <label>Observação</label>
             <textarea value={ordemServico.observacao || 'Nenhuma'} rows="4" disabled></textarea>
           </div>
+        </section>
+
+        {/* Ciência do Líder */}
+        <section className="form-section ciencia-lider-section" style={{ marginTop: 20 }}>
+          <div className="input-group">
+            <label>Ciência do Líder</label>
+            <input
+              type="text"
+              value={
+                cienciaLider == null
+                  ? "Pendente"
+                  : cienciaLider === "SIM"
+                  ? "Sim"
+                  : cienciaLider === "NAO"
+                  ? "Não"
+                  : cienciaLider
+              }
+              disabled
+            />
+          </div>
+          {/* Botões só para Líder */}
+          {podeDarCiencia && (
+            <div style={{ marginTop: 8 }}>
+              <span>Dar ciência: </span>
+              <button
+                type="button"
+                disabled={cienciaLoading || cienciaLider === "SIM"}
+                onClick={() => handleCiencia("SIM")}
+                style={{ marginRight: 8 }}
+              >
+                Sim
+              </button>
+              <button
+                type="button"
+                disabled={cienciaLoading || cienciaLider === "NAO"}
+                onClick={() => handleCiencia("NAO")}
+              >
+                Não
+              </button>
+            </div>
+          )}
         </section>
 
         <footer className="form-actions">

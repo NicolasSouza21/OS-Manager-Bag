@@ -57,6 +57,7 @@ export const createEquipamento = (equipamentoData) => api.post('/equipamentos', 
 export const logout = () => {
   localStorage.removeItem('authToken');
   localStorage.removeItem('userRole');
+  localStorage.removeItem('userName');
 };
 
 /** Atualiza status da OS */
@@ -71,5 +72,9 @@ export const deleteEquipamento = (id) => api.delete(`/equipamentos/${id}`);
 
 /** Deleta OS */
 export const deleteOrdemServico = (id) => api.delete(`/ordens-servico/${id}`);
+
+/** PATCH ciência do líder */
+export const patchCienciaLider = (osId, { ciencia }) =>
+  api.patch(`/ordens-servico/${osId}/ciencia-lider`, { ciencia });
 
 export default api;
