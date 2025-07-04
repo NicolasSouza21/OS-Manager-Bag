@@ -78,23 +78,23 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Endpoints públicos
+                        // 1. Endpoints PÚBLICOS
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/funcionarios/register").permitAll()
+                        .requestMatchers("/error").permitAll()
 
-                        // Endpoints protegidos por ROLE
-                        // =========================================================
-                        //           👇👇 A CORREÇÃO FINAL ESTÁ AQUI 👇👇
-                        // =========================================================
+                        // 2. Endpoints ESPECÍFICOS de Ordem de Serviço (do mais específico para o mais geral)
                         .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/ciencia").hasRole("LIDER")
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_CQ", "LIDER")
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/execucao").hasRole("MECANICO")
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/verificacao-cq").hasRole("ANALISTA_CQ")
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/aprovacao").hasRole("LIDER")
                         
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_CQ")
+                        // 3. Outros endpoints com regras de ROLE
                         .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
-                        .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated()
                         
-                        // Permite qualquer outra requisição autenticada (regra geral)
+                        // 4. Regra GERAL (última a ser avaliada)
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

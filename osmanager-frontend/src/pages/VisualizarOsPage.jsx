@@ -6,7 +6,7 @@ import {
   getLocais,
   updateStatusOs,
   deleteOrdemServico,
-  registrarCienciaLider // ✅ 1. Importa a função correta
+  registrarCienciaLider
 } from '../services/apiService';
 import './VisualizarOsPage.css';
 
@@ -39,20 +39,18 @@ function VisualizarOsPage() {
     const [novoStatus, setNovoStatus] = useState('');
     const [alterandoStatus, setAlterandoStatus] = useState(false);
     const [excluindo, setExcluindo] = useState(false);
-    const [cienciaLoading, setCienciaLoading] = useState(false); // Estado para o botão de ciência
+    const [cienciaLoading, setCienciaLoading] = useState(false);
 
-    // ✅ 2. Pega dados do usuário logado do localStorage
     const userRole = localStorage.getItem("userRole");
     const liderIdLogado = localStorage.getItem("userId");
 
-    // ✅ 3. Cria flags para controlar a exibição do botão
     const ehLider = userRole === 'LIDER';
-    const cienciaPendente = ordemServico?.mecanicoCienciaId == null;
+    // ✅ CORRIGIDO: Usa a nomenclatura correta 'liderCienciaId'
+    const cienciaPendente = ordemServico?.liderCienciaId == null;
     const podeTrocarStatus = ['MECANICO', 'ANALISTA_CQ', 'ADMIN', 'LIDER'].includes(userRole);
 
     useEffect(() => {
         if (!id) return;
-
         const fetchAll = async () => {
             try {
                 setLoading(true);
@@ -75,21 +73,18 @@ function VisualizarOsPage() {
                 setLoading(false);
             }
         };
-
         fetchAll();
     }, [id]);
 
-    // ✅ 4. Nova função para registrar a ciência
     const handleDarCiencia = async () => {
         if (!liderIdLogado) {
             alert("Erro: ID do líder não encontrado. Faça o login novamente.");
             return;
         }
-
         setCienciaLoading(true);
         try {
             const response = await registrarCienciaLider(id, liderIdLogado);
-            setOrdemServico(response.data); // Atualiza o estado da OS com o retorno da API
+            setOrdemServico(response.data);
             alert('Ciência registrada com sucesso!');
         } catch (error) {
             console.error("Erro ao registrar ciência:", error);
@@ -99,19 +94,25 @@ function VisualizarOsPage() {
         }
     };
 
-
     const handleStatusChange = async (e) => {
         const valor = e.target.value;
         setNovoStatus(valor);
         setAlterandoStatus(true);
         try {
-            await updateStatusOs(id, valor); // Passa apenas a string do status
+            // =========================================================
+            //           👇👇 A CORREÇÃO ESSENCIAL ESTÁ AQUI 👇👇
+            // =========================================================
+            // Envia o status como um objeto JSON, como o backend espera
+            await updateStatusOs(id, { status: valor });
+            
             setOrdemServico(prev => ({ ...prev, status: valor }));
             alert('Status alterado com sucesso!');
         } catch (err) {
             alert('Falha ao alterar status');
             // Reverte o status no select em caso de erro
-            setNovoStatus(ordemServico.status);
+            if (ordemServico) {
+                setNovoStatus(ordemServico.status);
+            }
         } finally {
             setAlterandoStatus(false);
         }
@@ -149,13 +150,11 @@ function VisualizarOsPage() {
                     <h1>Detalhes da Ordem de Serviço</h1>
                 </header>
 
-                {/* Seção de dados somente leitura */}
                 <section className="form-section read-only-section">
                     <div className="input-group">
                         <label>Nº O.S.</label>
                         <input type="text" value={ordemServico.id} disabled />
                     </div>
-                    {/* ... outros campos ... */}
                     <div className="input-group">
                         <label>Situação O.S.</label>
                         {podeTrocarStatus ? (
@@ -168,7 +167,6 @@ function VisualizarOsPage() {
                     </div>
                 </section>
 
-                {/* Seção de detalhes */}
                 <section className="form-section">
                     {/* ... outros campos de detalhes ... */}
                      <div className="input-group full-width">
@@ -181,18 +179,17 @@ function VisualizarOsPage() {
                     </div>
                 </section>
                 
-                {/* ✅ 5. Seção de Ciência do Líder */}
                 <section className="form-section ciencia-lider-section">
                     <div className="input-group">
                         <label>Ciência do Líder</label>
                         <input
                             type="text"
-                            value={cienciaPendente ? "Pendente de ciência" : `Ciência registrada pelo líder ID: ${ordemServico.mecanicoCienciaId}`}
+                            // ✅ CORRIGIDO: Usa a nomenclatura correta 'liderCienciaNome'
+                            value={cienciaPendente ? "Pendente de ciência" : `Ciência registrada por: ${ordemServico.liderCienciaNome}`}
                             disabled
                         />
                     </div>
                     
-                    {/* Botão só aparece para o líder e se a ciência estiver pendente */}
                     {ehLider && cienciaPendente && (
                         <div style={{ marginTop: 8 }}>
                             <button
@@ -206,7 +203,6 @@ function VisualizarOsPage() {
                         </div>
                     )}
                 </section>
-
 
                 <footer className="form-actions">
                     <button type="button" className="button-back" onClick={() => navigate('/dashboard')}>Voltar ao Painel</button>

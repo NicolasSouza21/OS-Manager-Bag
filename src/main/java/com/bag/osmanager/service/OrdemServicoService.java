@@ -29,26 +29,23 @@ public class OrdemServicoService {
     private final EquipamentoRepository equipamentoRepository;
     private final LocalRepository localRepository;
 
+    // ... (Seu código de criarOS, buscarComFiltros, etc. está correto)
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId");
-
         LocalDateTime agora = LocalDateTime.now();
         os.setDataSolicitacao(agora);
         os.setStatusVerificacao(StatusVerificacao.PENDENTE);
         os.setStatus(StatusOrdemServico.ABERTA);
-
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
         os.setEquipamento(equipamento);
-
         if (dto.getLocalId() != null) {
             Local local = localRepository.findById(dto.getLocalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Local com ID " + dto.getLocalId() + " não encontrado!"));
             os.setLocal(local);
         }
-
         switch (dto.getPrioridade()) {
             case ALTA:
                 os.setDataLimite(agora.with(LocalTime.MAX));
@@ -60,7 +57,6 @@ public class OrdemServicoService {
                 os.setDataLimite(agora.plusDays(7));
                 break;
         }
-
         OrdemServico osSalva = osRepository.save(os);
         return converteParaDTO(osSalva);
     }
@@ -71,11 +67,9 @@ public class OrdemServicoService {
             StatusVerificacao status,
             Turno turno,
             Pageable pageable) {
-
         Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(
             numeroMaquina, prioridade, status, turno
         );
-
         Page<OrdemServico> paginaDeOS = osRepository.findAll(spec, pageable);
         return paginaDeOS.map(this::converteParaDTO);
     }
@@ -85,31 +79,18 @@ public class OrdemServicoService {
                 .map(this::converteParaDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
     }
-
-    @Transactional
-    public OrdemServicoDTO atualizarStatus(Long osId, StatusOrdemServico novoStatus) {
-        OrdemServico os = osRepository.findById(osId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        os.setStatus(novoStatus);
-        OrdemServico osAtualizada = osRepository.save(os);
-        return converteParaDTO(osAtualizada);
-    }
-
+    
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, CienciaDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-
         Funcionario lider = funcionarioRepository.findById(dto.getLiderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Líder com ID " + dto.getLiderId() + " não encontrado!"));
-
         if (lider.getTipoFuncionario() != TipoFuncionario.LIDER) {
             throw new IllegalStateException("Ação não permitida. O funcionário com ID " + dto.getLiderId() + " não é um líder.");
         }
-
         os.setMecanicoCiencia(lider);
         os.setDataCiencia(LocalDateTime.now());
-        
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
     }
@@ -183,36 +164,46 @@ public class OrdemServicoService {
         osRepository.delete(os);
     }
 
+    @Transactional
+    public OrdemServicoDTO atualizarStatus(Long osId, StatusOrdemServico novoStatus) {
+        // A validação que você já tem. Ela está correta.
+        if (novoStatus == null) {
+            throw new IllegalArgumentException("O novo status não pode ser nulo.");
+        }
+        OrdemServico os = osRepository.findById(osId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        os.setStatus(novoStatus);
+        OrdemServico osAtualizada = osRepository.save(os);
+        return converteParaDTO(osAtualizada);
+    }
+
+
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto, 
-            "mecanicoCiencia", "executadoPor", "verificadoPor", 
-            "aprovadoPor", "pecasSubstituidas", "equipamento", "local"
+            "mecanicoCiencia", // Campo da entidade que não deve ser copiado diretamente
+            "executadoPor", 
+            "verificadoPor", 
+            "aprovadoPor", 
+            "pecasSubstituidas", 
+            "equipamento", 
+            "local"
         );
 
-        // =========================================================
-        //           👇👇 A CORREÇÃO FINAL ESTÁ AQUI 👇👇
-        // =========================================================
         if (os.getMecanicoCiencia() != null) {
+            // ✅ CORREÇÃO: Usa os nomes corretos do DTO que você definiu (liderCienciaNome)
             dto.setLiderCienciaId(os.getMecanicoCiencia().getId());
-            // ✅ ADICIONA O NOME DO LÍDER NO DTO
             dto.setLiderCienciaNome(os.getMecanicoCiencia().getNome());
         }
 
         if (os.getExecutadoPor() != null) {
             dto.setExecutadoPorId(os.getExecutadoPor().getId());
-            // Aqui você pode adicionar o nome do executante também, se precisar
-            // dto.setExecutadoPorNome(os.getExecutadoPor().getNome());
         }
         if (os.getVerificadoPor() != null) {
             dto.setVerificadoPorId(os.getVerificadoPor().getId());
-            // E o nome de quem verificou
-            // dto.setVerificadoPorNome(os.getVerificadoPor().getNome());
         }
         if (os.getAprovadoPor() != null) {
             dto.setAprovadoPorId(os.getAprovadoPor().getId());
-            // E o nome de quem aprovou
-            // dto.setAprovadoPorNome(os.getAprovadoPor().getNome());
         }
         if (os.getPecasSubstituidas() != null) {
             dto.setPecasSubstituidas(os.getPecasSubstituidas().stream().map(peca -> {

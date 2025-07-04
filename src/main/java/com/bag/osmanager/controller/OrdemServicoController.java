@@ -29,8 +29,6 @@ public class OrdemServicoController {
         return new ResponseEntity<>(osCriada, HttpStatus.CREATED);
     }
 
-    
-
     @GetMapping
     public ResponseEntity<Page<OrdemServicoDTO>> buscarComFiltros(
             @RequestParam(required = false) String numeroMaquina,
@@ -72,19 +70,23 @@ public class OrdemServicoController {
         return ResponseEntity.ok(osService.registrarAprovacao(id, dto));
     }
 
-    // NOVO ENDPOINT PARA ATUALIZAR O STATUS
+    // =========================================================
+    //           👇👇 AS CORREÇÕES ESTÃO AQUI 👇👇
+    // =========================================================
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO', 'ANALISTA_CQ')")
-    public ResponseEntity<?> atualizarStatus(@PathVariable Long id, @RequestBody StatusUpdateDTO statusUpdate) {
-        osService.atualizarStatus(id, statusUpdate.getStatus());
-        return ResponseEntity.ok().build();
+    // 1. Adicionado 'LIDER' às permissões
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO', 'ANALISTA_CQ', 'LIDER')") 
+    // 2. Retorna o DTO completo para manter o frontend sincronizado
+    public ResponseEntity<OrdemServicoDTO> atualizarStatus(@PathVariable Long id, @RequestBody StatusUpdateDTO statusUpdate) {
+        OrdemServicoDTO osAtualizada = osService.atualizarStatus(id, statusUpdate.getStatus());
+        return ResponseEntity.ok(osAtualizada);
     }
 
     @DeleteMapping("/{id}")
-@PreAuthorize("hasAnyRole('ADMIN', 'LIDER')") // ou só ADMIN, como preferir
-public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
-    osService.deletarOrdemServico(id); // Implemente esse método no service
-    return ResponseEntity.noContent().build();
-}
-  
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIDER')")
+    public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
+        osService.deletarOrdemServico(id);
+        return ResponseEntity.noContent().build();
+    }
+ 
 }
