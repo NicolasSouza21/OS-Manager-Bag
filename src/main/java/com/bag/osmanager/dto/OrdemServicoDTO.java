@@ -41,4 +41,13 @@ public class OrdemServicoDTO {
     private LocalDateTime dataLimite;
 
     private StatusOrdemServico status;
+
+    // 👇 RENOMEADO DE 'mecanicoCienciaId' PARA 'liderCienciaId' 👇
+    private Long liderCienciaId; 
+    // 👇 RENOMEADO DE 'mecanicoCienciaNome' PARA 'liderCienciaNome' 👇
+    private String liderCienciaNome; 
+    
+
+
+
 }

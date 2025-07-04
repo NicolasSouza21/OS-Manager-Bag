@@ -183,6 +183,8 @@ function DashboardPage() {
                 <th>Local</th>
                 <th>Criticidade</th>
                 <th>Solicitante</th>
+                {/* ✅ 1. ADICIONA A NOVA COLUNA NO CABEÇALHO */}
+                <th>Ciência Por</th>
                 <th>Visualizar</th>
               </tr>
             </thead>
@@ -202,6 +204,10 @@ function DashboardPage() {
                     <td>{getLocalNome(os.localId)}</td>
                     <td>{os.prioridade || 'N/A'}</td>
                     <td>{os.solicitante || 'N/A'}</td>
+                    
+                    {/* ✅ 2. ADICIONA A NOVA CÉLULA COM O NOME DO LÍDER */}
+                    <td>{os.liderCienciaNome || 'Pendente'}</td>
+
                     <td>
                       <button
                         className="view-button"
@@ -215,7 +221,8 @@ function DashboardPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="no-os-message">
+                  {/* ✅ 3. ATUALIZA O COLSPAN PARA O NOVO NÚMERO DE COLUNAS */}
+                  <td colSpan="10" className="no-os-message">
                     Nenhuma ordem de serviço encontrada.
                   </td>
                 </tr>

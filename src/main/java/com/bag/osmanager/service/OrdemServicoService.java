@@ -32,7 +32,6 @@ public class OrdemServicoService {
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
-
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId");
 
         LocalDateTime agora = LocalDateTime.now();
@@ -101,16 +100,14 @@ public class OrdemServicoService {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
 
-        // ✅ Busca o funcionário pelo ID e o nomeia corretamente como 'lider'
         Funcionario lider = funcionarioRepository.findById(dto.getLiderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Líder com ID " + dto.getLiderId() + " não encontrado!"));
 
-        // 🚨 VALIDAÇÃO ADICIONADA: Verifica se o funcionário tem a role de LÍDER
         if (lider.getTipoFuncionario() != TipoFuncionario.LIDER) {
             throw new IllegalStateException("Ação não permitida. O funcionário com ID " + dto.getLiderId() + " não é um líder.");
         }
 
-        os.setMecanicoCiencia(lider); // Associa o líder que deu ciência
+        os.setMecanicoCiencia(lider);
         os.setDataCiencia(LocalDateTime.now());
         
         OrdemServico osAtualizada = osRepository.save(os);
@@ -193,17 +190,29 @@ public class OrdemServicoService {
             "aprovadoPor", "pecasSubstituidas", "equipamento", "local"
         );
 
+        // =========================================================
+        //           👇👇 A CORREÇÃO FINAL ESTÁ AQUI 👇👇
+        // =========================================================
         if (os.getMecanicoCiencia() != null) {
-            dto.setMecanicoCienciaId(os.getMecanicoCiencia().getId());
+            dto.setLiderCienciaId(os.getMecanicoCiencia().getId());
+            // ✅ ADICIONA O NOME DO LÍDER NO DTO
+            dto.setLiderCienciaNome(os.getMecanicoCiencia().getNome());
         }
+
         if (os.getExecutadoPor() != null) {
             dto.setExecutadoPorId(os.getExecutadoPor().getId());
+            // Aqui você pode adicionar o nome do executante também, se precisar
+            // dto.setExecutadoPorNome(os.getExecutadoPor().getNome());
         }
         if (os.getVerificadoPor() != null) {
             dto.setVerificadoPorId(os.getVerificadoPor().getId());
+            // E o nome de quem verificou
+            // dto.setVerificadoPorNome(os.getVerificadoPor().getNome());
         }
         if (os.getAprovadoPor() != null) {
             dto.setAprovadoPorId(os.getAprovadoPor().getId());
+            // E o nome de quem aprovou
+            // dto.setAprovadoPorNome(os.getAprovadoPor().getNome());
         }
         if (os.getPecasSubstituidas() != null) {
             dto.setPecasSubstituidas(os.getPecasSubstituidas().stream().map(peca -> {
