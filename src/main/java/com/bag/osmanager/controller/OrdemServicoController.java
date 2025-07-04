@@ -22,8 +22,12 @@ public class OrdemServicoController {
 
     private final OrdemServicoService osService;
 
+    // =========================================================
+    //           👇👇 A CORREÇÃO FINAL ESTÁ AQUI 👇👇
+    // =========================================================
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIDER')")
+    // Permite que todos os cargos autenticados criem uma OS
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIDER', 'ANALISTA_CQ', 'MECANICO')")
     public ResponseEntity<OrdemServicoDTO> criarOS(@RequestBody CriarOrdemServicoDTO dto) {
         OrdemServicoDTO osCriada = osService.criarOS(dto);
         return new ResponseEntity<>(osCriada, HttpStatus.CREATED);
@@ -70,23 +74,10 @@ public class OrdemServicoController {
         return ResponseEntity.ok(osService.registrarAprovacao(id, dto));
     }
 
-    // =========================================================
-    //           👇👇 AS CORREÇÕES ESTÃO AQUI 👇👇
-    // =========================================================
-    @PutMapping("/{id}/status")
-    // 1. Adicionado 'LIDER' às permissões
-    @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO', 'ANALISTA_CQ', 'LIDER')") 
-    // 2. Retorna o DTO completo para manter o frontend sincronizado
-    public ResponseEntity<OrdemServicoDTO> atualizarStatus(@PathVariable Long id, @RequestBody StatusUpdateDTO statusUpdate) {
-        OrdemServicoDTO osAtualizada = osService.atualizarStatus(id, statusUpdate.getStatus());
-        return ResponseEntity.ok(osAtualizada);
-    }
-
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIDER')")
     public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
         osService.deletarOrdemServico(id);
         return ResponseEntity.noContent().build();
     }
- 
 }

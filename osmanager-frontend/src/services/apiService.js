@@ -81,6 +81,9 @@ export const registrarCienciaLider = (osId, liderId) => {
 // ❗ A função patchCienciaLider pode ser removida ou substituída por esta.
 // export const patchCienciaLider = .
 
+export const registrarVerificacaoCQ = (osId, verificacaoData) => {
+  return api.put(`/ordens-servico/${osId}/verificacao-cq`, verificacaoData);
+};
 
 
 export default api;

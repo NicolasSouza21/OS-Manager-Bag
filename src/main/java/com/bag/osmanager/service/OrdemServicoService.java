@@ -29,7 +29,6 @@ public class OrdemServicoService {
     private final EquipamentoRepository equipamentoRepository;
     private final LocalRepository localRepository;
 
-    // ... (Seu código de criarOS, buscarComFiltros, etc. está correto)
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
@@ -91,6 +90,29 @@ public class OrdemServicoService {
         }
         os.setMecanicoCiencia(lider);
         os.setDataCiencia(LocalDateTime.now());
+        os.setStatus(StatusOrdemServico.EM_EXECUCAO);
+        
+        OrdemServico osAtualizada = osRepository.save(os);
+        return converteParaDTO(osAtualizada);
+    }
+
+    @Transactional
+    public OrdemServicoDTO registrarVerificacaoCQ(Long osId, VerificacaoCQDTO dto) {
+        OrdemServico os = osRepository.findById(osId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        
+        Funcionario analista = funcionarioRepository.findById(dto.getAnalistaId())
+                 .orElseThrow(() -> new ResourceNotFoundException("Analista de CQ com ID " + dto.getAnalistaId() + " não encontrado!"));
+        
+        os.setVerificadoPor(analista);
+        os.setStatusVerificacao(dto.getStatusVerificacao());
+
+        if (dto.getStatusVerificacao() == StatusVerificacao.APROVADO) {
+            os.setStatus(StatusOrdemServico.CONCLUIDA);
+        } else if (dto.getStatusVerificacao() == StatusVerificacao.REPROVADO) {
+            os.setStatus(StatusOrdemServico.CANCELADA);
+        }
+
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
     }
@@ -130,20 +152,6 @@ public class OrdemServicoService {
     }
 
     @Transactional
-    public OrdemServicoDTO registrarVerificacaoCQ(Long osId, VerificacaoCQDTO dto) {
-        OrdemServico os = osRepository.findById(osId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        
-        Funcionario analista = funcionarioRepository.findById(dto.getAnalistaId())
-                 .orElseThrow(() -> new ResourceNotFoundException("Analista de CQ com ID " + dto.getAnalistaId() + " não encontrado!"));
-        
-        os.setVerificadoPor(analista);
-        os.setStatusVerificacao(dto.getStatusVerificacao());
-        OrdemServico osAtualizada = osRepository.save(os);
-        return converteParaDTO(osAtualizada);
-    }
-
-    @Transactional
     public OrdemServicoDTO registrarAprovacao(Long osId, AprovacaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
@@ -163,55 +171,36 @@ public class OrdemServicoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
         osRepository.delete(os);
     }
-
-    @Transactional
-    public OrdemServicoDTO atualizarStatus(Long osId, StatusOrdemServico novoStatus) {
-        // A validação que você já tem. Ela está correta.
-        if (novoStatus == null) {
-            throw new IllegalArgumentException("O novo status não pode ser nulo.");
-        }
-        OrdemServico os = osRepository.findById(osId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        os.setStatus(novoStatus);
-        OrdemServico osAtualizada = osRepository.save(os);
-        return converteParaDTO(osAtualizada);
-    }
-
-
+    
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto, 
-            "mecanicoCiencia", // Campo da entidade que não deve ser copiado diretamente
-            "executadoPor", 
-            "verificadoPor", 
-            "aprovadoPor", 
-            "pecasSubstituidas", 
-            "equipamento", 
-            "local"
-        );
+        BeanUtils.copyProperties(os, dto); // Copia todos os campos com nomes iguais
+
+        // =========================================================
+        //           👇👇 PREENCHIMENTO DOS NOMES AQUI 👇👇
+        // =========================================================
 
         if (os.getMecanicoCiencia() != null) {
-            // ✅ CORREÇÃO: Usa os nomes corretos do DTO que você definiu (liderCienciaNome)
             dto.setLiderCienciaId(os.getMecanicoCiencia().getId());
             dto.setLiderCienciaNome(os.getMecanicoCiencia().getNome());
         }
 
         if (os.getExecutadoPor() != null) {
             dto.setExecutadoPorId(os.getExecutadoPor().getId());
+            dto.setVerificadoPorNome(os.getExecutadoPor().getNome());
         }
+
+        // ✅ CORREÇÃO: Adiciona o nome do analista de CQ
         if (os.getVerificadoPor() != null) {
             dto.setVerificadoPorId(os.getVerificadoPor().getId());
+            dto.setVerificadoPorNome(os.getVerificadoPor().getNome());
         }
+
         if (os.getAprovadoPor() != null) {
             dto.setAprovadoPorId(os.getAprovadoPor().getId());
+            dto.setVerificadoPorNome(os.getAprovadoPor().getNome());
         }
-        if (os.getPecasSubstituidas() != null) {
-            dto.setPecasSubstituidas(os.getPecasSubstituidas().stream().map(peca -> {
-                PecaSubstituidaDTO pecaDTO = new PecaSubstituidaDTO();
-                BeanUtils.copyProperties(peca, pecaDTO);
-                return pecaDTO;
-            }).collect(Collectors.toList()));
-        }
+
         if (os.getEquipamento() != null) {
             dto.setEquipamentoId(os.getEquipamento().getId());
         }
@@ -219,7 +208,14 @@ public class OrdemServicoService {
             dto.setLocalId(os.getLocal().getId());
         }
         
-        dto.setStatus(os.getStatus());
+        if (os.getPecasSubstituidas() != null) {
+            dto.setPecasSubstituidas(os.getPecasSubstituidas().stream().map(peca -> {
+                PecaSubstituidaDTO pecaDTO = new PecaSubstituidaDTO();
+                BeanUtils.copyProperties(peca, pecaDTO);
+                return pecaDTO;
+            }).collect(Collectors.toList()));
+        }
+        
         return dto;
     }
 }

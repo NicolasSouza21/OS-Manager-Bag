@@ -47,6 +47,10 @@ public class OrdemServicoDTO {
     // 👇 RENOMEADO DE 'mecanicoCienciaNome' PARA 'liderCienciaNome' 👇
     private String liderCienciaNome; 
     
+    private String verificadoPorNome; // ✅ GARANTA QUE ESTA LINHA EXISTA
+   
+
+    
 
 
 
