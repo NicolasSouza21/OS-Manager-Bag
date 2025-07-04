@@ -55,15 +55,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // ✅ 1. CORREÇÃO PRINCIPAL: Adicionado o IP correto do erro
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://192.168.56.1:5173", // IP que apareceu no erro
-            "http://localhost:5173"     // Mantido para desenvolvimento local
+            "http://192.168.56.1:5173",
+            "http://localhost:5173"
         ));
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         
-        // ✅ 2. Lista de headers simplificada para o essencial
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         
         configuration.setAllowCredentials(true);
@@ -86,11 +84,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/funcionarios/register").permitAll()
 
                         // Endpoints protegidos por ROLE
+                        // =========================================================
+                        //           👇👇 A CORREÇÃO FINAL ESTÁ AQUI 👇👇
+                        // =========================================================
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/ciencia").hasRole("LIDER")
+                        
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_CQ")
                         .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
                         .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated()
-                        // ✅ 3. CORREÇÃO DA ROLE: ANALISTA_QC -> ANALISTA_CQ
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_CQ")
                         
                         // Permite qualquer outra requisição autenticada (regra geral)
                         .anyRequest().authenticated()

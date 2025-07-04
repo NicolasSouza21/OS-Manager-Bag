@@ -49,7 +49,7 @@ public class OrdemServicoController {
     }
 
     @PutMapping("/{id}/ciencia")
-    @PreAuthorize("hasRole('MECANICO')")
+    @PreAuthorize("hasRole('LIDER')")
     public ResponseEntity<OrdemServicoDTO> registrarCiencia(@PathVariable Long id, @RequestBody CienciaDTO dto) {
         return ResponseEntity.ok(osService.registrarCiencia(id, dto));
     }
