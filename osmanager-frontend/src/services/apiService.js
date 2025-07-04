@@ -72,6 +72,15 @@ export const deleteEquipamento = (id) => api.delete(`/equipamentos/${id}`);
 
 export const deleteOrdemServico = (id) => api.delete(`/ordens-servico/${id}`);
 
+// 👇 FUNÇÃO CORRIGIDA/ADICIONADA 👇
+/** Registra a ciência do líder em uma OS */
+export const registrarCienciaLider = (osId, liderId) => {
+  return api.put(`/ordens-servico/${osId}/ciencia`, { liderId });
+};
+
+// ❗ A função patchCienciaLider pode ser removida ou substituída por esta.
+// export const patchCienciaLider = .
+
 
 
 export default api;

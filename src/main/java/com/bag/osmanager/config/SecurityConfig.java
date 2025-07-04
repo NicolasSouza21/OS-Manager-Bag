@@ -54,17 +54,20 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://192.168.0.11:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization",
-            "Content-Type",
-            "Cache-Control",
-            "Access-Control-Request-Headers",
-            "Access-Control-Allow-Origin",
-            "Access-Control-Allow-Headers"
+        
+        // ✅ 1. CORREÇÃO PRINCIPAL: Adicionado o IP correto do erro
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://192.168.56.1:5173", // IP que apareceu no erro
+            "http://localhost:5173"     // Mantido para desenvolvimento local
         ));
+        
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        
+        // ✅ 2. Lista de headers simplificada para o essencial
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        
         configuration.setAllowCredentials(true);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -73,26 +76,27 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/error").permitAll()
-                // Proteja os endpoints de LOCAIS conforme regra de negócio:
-                .requestMatchers(HttpMethod.POST, "/api/locais").hasAnyRole("ADMIN", "MECANICO")
-                .requestMatchers(HttpMethod.GET, "/api/locais").authenticated() // ou .permitAll() se quiser listar para todos
-                .requestMatchers(HttpMethod.PUT, "/api/locais/**").hasAnyRole("ADMIN", "MECANICO")
-                .requestMatchers(HttpMethod.DELETE, "/api/locais/**").hasAnyRole("ADMIN", "MECANICO")
-                .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
-                .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated()
-                // Adicione a linha abaixo para proteger o endpoint de troca de status:
-                .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_QC")
-                .anyRequest().authenticated()
-            )
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                        // Endpoints públicos
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/funcionarios/register").permitAll()
+
+                        // Endpoints protegidos por ROLE
+                        .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
+                        .requestMatchers(HttpMethod.POST, "/api/ordens-servico").authenticated()
+                        // ✅ 3. CORREÇÃO DA ROLE: ANALISTA_QC -> ANALISTA_CQ
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_CQ")
+                        
+                        // Permite qualquer outra requisição autenticada (regra geral)
+                        .anyRequest().authenticated()
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

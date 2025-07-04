@@ -4,5 +4,6 @@ import lombok.Data;
 
 @Data
 public class CienciaDTO {
-    private Long mecanicoId;
+    // 👇 Campo renomeado para seguir o padrão Java (camelCase) 👇
+    private Long liderId;
 }

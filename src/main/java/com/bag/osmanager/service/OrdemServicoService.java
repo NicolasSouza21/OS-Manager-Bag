@@ -3,14 +3,10 @@ package com.bag.osmanager.service;
 import com.bag.osmanager.dto.*;
 import com.bag.osmanager.exception.ResourceNotFoundException;
 import com.bag.osmanager.model.*;
-import com.bag.osmanager.model.enums.Prioridade;
-import com.bag.osmanager.model.enums.StatusOrdemServico;
-import com.bag.osmanager.model.enums.StatusVerificacao;
-import com.bag.osmanager.model.enums.Turno;
+import com.bag.osmanager.model.enums.*;
 import com.bag.osmanager.repository.*;
 import com.bag.osmanager.service.specification.OrdemServicoSpecification;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -37,29 +33,23 @@ public class OrdemServicoService {
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
 
-        // Copie apenas campos simples do DTO
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId");
 
         LocalDateTime agora = LocalDateTime.now();
         os.setDataSolicitacao(agora);
         os.setStatusVerificacao(StatusVerificacao.PENDENTE);
-
-        // Ao criar, status sempre ABERTA
         os.setStatus(StatusOrdemServico.ABERTA);
 
-        // Associa o equipamento existente pelo ID
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
         os.setEquipamento(equipamento);
 
-        // Associa o local existente pelo ID (opcional)
         if (dto.getLocalId() != null) {
             Local local = localRepository.findById(dto.getLocalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Local com ID " + dto.getLocalId() + " não encontrado!"));
             os.setLocal(local);
         }
 
-        // Lógica de tolerância
         switch (dto.getPrioridade()) {
             case ALTA:
                 os.setDataLimite(agora.with(LocalTime.MAX));
@@ -110,10 +100,19 @@ public class OrdemServicoService {
     public OrdemServicoDTO registrarCiencia(Long osId, CienciaDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        Funcionario mecanico = funcionarioRepository.findById(dto.getMecanicoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Mecânico com ID " + dto.getMecanicoId() + " não encontrado!"));
-        os.setMecanicoCiencia(mecanico);
+
+        // ✅ Busca o funcionário pelo ID e o nomeia corretamente como 'lider'
+        Funcionario lider = funcionarioRepository.findById(dto.getLiderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Líder com ID " + dto.getLiderId() + " não encontrado!"));
+
+        // 🚨 VALIDAÇÃO ADICIONADA: Verifica se o funcionário tem a role de LÍDER
+        if (lider.getTipoFuncionario() != TipoFuncionario.LIDER) {
+            throw new IllegalStateException("Ação não permitida. O funcionário com ID " + dto.getLiderId() + " não é um líder.");
+        }
+
+        os.setMecanicoCiencia(lider); // Associa o líder que deu ciência
         os.setDataCiencia(LocalDateTime.now());
+        
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
     }
@@ -122,6 +121,7 @@ public class OrdemServicoService {
     public OrdemServicoDTO registrarExecucao(Long osId, ExecucaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        
         Funcionario executante = funcionarioRepository.findById(dto.getMecanicoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Mecânico executante com ID " + dto.getMecanicoId() + " não encontrado!"));
 
@@ -134,7 +134,6 @@ public class OrdemServicoService {
         os.setMaquinaParada(dto.getMaquinaParada());
 
         if (Boolean.TRUE.equals(dto.getTrocaPecas()) && dto.getPecasSubstituidas() != null) {
-            // Substitui a lista de peças substituídas
             if (os.getPecasSubstituidas() == null) {
                 os.setPecasSubstituidas(new ArrayList<>());
             } else {
@@ -156,8 +155,10 @@ public class OrdemServicoService {
     public OrdemServicoDTO registrarVerificacaoCQ(Long osId, VerificacaoCQDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        
         Funcionario analista = funcionarioRepository.findById(dto.getAnalistaId())
                  .orElseThrow(() -> new ResourceNotFoundException("Analista de CQ com ID " + dto.getAnalistaId() + " não encontrado!"));
+        
         os.setVerificadoPor(analista);
         os.setStatusVerificacao(dto.getStatusVerificacao());
         OrdemServico osAtualizada = osRepository.save(os);
@@ -168,8 +169,10 @@ public class OrdemServicoService {
     public OrdemServicoDTO registrarAprovacao(Long osId, AprovacaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        
         Funcionario lider = funcionarioRepository.findById(dto.getLiderId())
                  .orElseThrow(() -> new ResourceNotFoundException("Líder com ID " + dto.getLiderId() + " não encontrado!"));
+        
         os.setAprovadoPor(lider);
         os.setDataAprovacao(LocalDateTime.now());
         OrdemServico osAtualizada = osRepository.save(os);
@@ -185,7 +188,11 @@ public class OrdemServicoService {
 
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto);
+        BeanUtils.copyProperties(os, dto, 
+            "mecanicoCiencia", "executadoPor", "verificadoPor", 
+            "aprovadoPor", "pecasSubstituidas", "equipamento", "local"
+        );
+
         if (os.getMecanicoCiencia() != null) {
             dto.setMecanicoCienciaId(os.getMecanicoCiencia().getId());
         }
@@ -211,8 +218,8 @@ public class OrdemServicoService {
         if (os.getLocal() != null) {
             dto.setLocalId(os.getLocal().getId());
         }
+        
         dto.setStatus(os.getStatus());
         return dto;
     }
-
 }
