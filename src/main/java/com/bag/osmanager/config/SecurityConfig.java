@@ -23,6 +23,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Collections; // Importe a classe Collections
 
 @Configuration
 @EnableWebSecurity
@@ -33,6 +34,7 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
+    // ... (Seus outros beans: passwordEncoder, authenticationProvider, etc. permanecem iguais)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -50,24 +52,23 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
+    
+    // =========================================================
+    //           👇👇 A CORREÇÃO ESTÁ AQUI 👇👇
+    // =========================================================
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://192.168.56.1:5173",
-            "http://localhost:5173"
-        ));
+        // 1. Permite qualquer origem. O "*" é um curinga.
+        configuration.setAllowedOrigins(Collections.singletonList("*"));
         
+        // 2. Permite todos os métodos e headers comuns.
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         
-        configuration.setAllowCredentials(true);
-        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", configuration); // Aplica a configuração a todos os endpoints
         return source;
     }
 
@@ -78,23 +79,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // 1. Endpoints PÚBLICOS
+                        // Suas regras de autorização permanecem as mesmas
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/funcionarios/register").permitAll()
                         .requestMatchers("/error").permitAll()
-
-                        // 2. Endpoints ESPECÍFICOS de Ordem de Serviço (do mais específico para o mais geral)
                         .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/ciencia").hasRole("LIDER")
                         .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_CQ", "LIDER")
                         .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/execucao").hasRole("MECANICO")
                         .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/verificacao-cq").hasRole("ANALISTA_CQ")
                         .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/aprovacao").hasRole("LIDER")
-                        
-                        // 3. Outros endpoints com regras de ROLE
                         .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
-                        
-                        // 4. Regra GERAL (última a ser avaliada)
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
