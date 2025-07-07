@@ -32,30 +32,39 @@ public class OrdemServicoService {
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
+        // Copia todos os campos, incluindo as novas datas da preventiva
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId");
+        
         LocalDateTime agora = LocalDateTime.now();
         os.setDataSolicitacao(agora);
         os.setStatusVerificacao(StatusVerificacao.PENDENTE);
         os.setStatus(StatusOrdemServico.ABERTA);
+
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
         os.setEquipamento(equipamento);
+
         if (dto.getLocalId() != null) {
             Local local = localRepository.findById(dto.getLocalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Local com ID " + dto.getLocalId() + " não encontrado!"));
             os.setLocal(local);
         }
-        switch (dto.getPrioridade()) {
-            case ALTA:
-                os.setDataLimite(agora.with(LocalTime.MAX));
-                break;
-            case MEDIA:
-                os.setDataLimite(agora.plusDays(4));
-                break;
-            case BAIXA:
-                os.setDataLimite(agora.plusDays(7));
-                break;
+
+        // A lógica de data limite só se aplica se não for uma preventiva
+        if (dto.getTipoManutencao() != TipoManutencao.PREVENTIVA) {
+            switch (dto.getPrioridade()) {
+                case ALTA:
+                    os.setDataLimite(agora.with(LocalTime.MAX));
+                    break;
+                case MEDIA:
+                    os.setDataLimite(agora.plusDays(4));
+                    break;
+                case BAIXA:
+                    os.setDataLimite(agora.plusDays(7));
+                    break;
+            }
         }
+
         OrdemServico osSalva = osRepository.save(os);
         return converteParaDTO(osSalva);
     }
@@ -174,12 +183,10 @@ public class OrdemServicoService {
     
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto); // Copia todos os campos com nomes iguais
+        BeanUtils.copyProperties(os, dto); // Copia todos os campos simples primeiro
 
-        // =========================================================
-        //           👇👇 PREENCHIMENTO DOS NOMES AQUI 👇👇
-        // =========================================================
-
+        // Agora, preenche os campos que precisam de lógica (como pegar nomes de entidades relacionadas)
+        
         if (os.getMecanicoCiencia() != null) {
             dto.setLiderCienciaId(os.getMecanicoCiencia().getId());
             dto.setLiderCienciaNome(os.getMecanicoCiencia().getNome());
@@ -187,27 +194,26 @@ public class OrdemServicoService {
 
         if (os.getExecutadoPor() != null) {
             dto.setExecutadoPorId(os.getExecutadoPor().getId());
-            dto.setVerificadoPorNome(os.getExecutadoPor().getNome());
+            dto.setVerificadoPorNome(os.getExecutadoPor().getNome()); // ✅ CORREÇÃO
         }
 
-        // ✅ CORREÇÃO: Adiciona o nome do analista de CQ
         if (os.getVerificadoPor() != null) {
             dto.setVerificadoPorId(os.getVerificadoPor().getId());
-            dto.setVerificadoPorNome(os.getVerificadoPor().getNome());
+            dto.setVerificadoPorNome(os.getVerificadoPor().getNome()); // ✅ CORREÇÃO
         }
 
         if (os.getAprovadoPor() != null) {
             dto.setAprovadoPorId(os.getAprovadoPor().getId());
-            dto.setVerificadoPorNome(os.getAprovadoPor().getNome());
+            dto.setVerificadoPorNome(os.getAprovadoPor().getNome()); // ✅ CORREÇÃO
         }
-
+        
         if (os.getEquipamento() != null) {
             dto.setEquipamentoId(os.getEquipamento().getId());
         }
         if (os.getLocal() != null) {
             dto.setLocalId(os.getLocal().getId());
         }
-        
+
         if (os.getPecasSubstituidas() != null) {
             dto.setPecasSubstituidas(os.getPecasSubstituidas().stream().map(peca -> {
                 PecaSubstituidaDTO pecaDTO = new PecaSubstituidaDTO();

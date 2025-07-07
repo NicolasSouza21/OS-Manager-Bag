@@ -3,6 +3,7 @@ package com.bag.osmanager.dto;
 import com.bag.osmanager.model.enums.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -41,6 +42,8 @@ public class OrdemServicoDTO {
     private LocalDateTime dataLimite;
 
     private StatusOrdemServico status;
+        private LocalDate dataInicioPreventiva;
+    private LocalDate dataFimPreventiva;
 
     // 👇 RENOMEADO DE 'mecanicoCienciaId' PARA 'liderCienciaId' 👇
     private Long liderCienciaId; 

@@ -12,6 +12,15 @@ const STATUS_OPTIONS = [
   { value: 'CANCELADA', label: 'Cancelada' },
 ];
 
+// ✅ 1. OPÇÕES PARA O NOVO FILTRO DE MANUTENÇÃO
+const TIPO_MANUTENCAO_OPTIONS = [
+    { value: '', label: 'Todos' },
+    { value: 'CORRETIVA', label: 'Corretiva' },
+    { value: 'PREVENTIVA', label: 'Preventiva' },
+    { value: 'PREDITIVA', label: 'Preditiva' },
+];
+
+
 // Função que agrupa as Ordens de Serviço por data
 const groupOrdensByDate = (ordens) => {
     const groups = {};
@@ -56,16 +65,18 @@ function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Filtros existentes
+    // Filtros
     const [statusFilter, setStatusFilter] = useState('');
     const [localFilter, setLocalFilter] = useState('');
     const [numeroOS, setNumeroOS] = useState('');
     const [dataInicio, setDataInicio] = useState('');
     const [dataFim, setDataFim] = useState('');
-
-    // ✅ 1. NOVOS STATES PARA OS FILTROS DE PENDÊNCIA
     const [filtroPendenteCiencia, setFiltroPendenteCiencia] = useState(false);
     const [filtroPendenteQualidade, setFiltroPendenteQualidade] = useState(false);
+    
+    // ✅ 2. NOVO STATE PARA O FILTRO DE TIPO DE MANUTENÇÃO
+    const [tipoManutencaoFilter, setTipoManutencaoFilter] = useState('');
+
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -88,11 +99,11 @@ function DashboardPage() {
         fetchAll();
     }, []);
 
-    // ✅ 2. USEEFFECT ATUALIZADO COM A NOVA LÓGICA DE FILTRO
+    // ✅ 3. USEEFFECT ATUALIZADO COM O NOVO FILTRO
     useEffect(() => {
         let filtradas = ordensOriginais;
 
-        // Filtros padrão
+        // Filtros existentes
         if (statusFilter) filtradas = filtradas.filter(os => os.status === statusFilter);
         if (localFilter) filtradas = filtradas.filter(os => String(os.localId) === String(localFilter));
         if (numeroOS) filtradas = filtradas.filter(os => String(os.id) === String(numeroOS));
@@ -108,24 +119,31 @@ function DashboardPage() {
                 return new Date(os.dataSolicitacao) <= new Date(dataFim).setHours(23, 59, 59, 999);
             });
         }
-
-        // Novos filtros de pendência
         if (filtroPendenteCiencia) {
             filtradas = filtradas.filter(os => os.status === 'ABERTA' && !os.liderCienciaId);
         }
-        
         if (filtroPendenteQualidade) {
             filtradas = filtradas.filter(os => os.status === 'EM_EXECUCAO' && os.statusVerificacao === 'PENDENTE');
+        }
+
+        // Novo filtro de tipo de manutenção
+        if (tipoManutencaoFilter) {
+            filtradas = filtradas.filter(os => os.tipoManutencao === tipoManutencaoFilter);
         }
         
         setGroupedOrdens(groupOrdensByDate(filtradas));
 
-    }, [statusFilter, localFilter, numeroOS, dataInicio, dataFim, ordensOriginais, filtroPendenteCiencia, filtroPendenteQualidade]);
+    }, [statusFilter, localFilter, numeroOS, dataInicio, dataFim, ordensOriginais, filtroPendenteCiencia, filtroPendenteQualidade, tipoManutencaoFilter]);
 
     const formatDateTime = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
         return date.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    };
+    
+    const formatLabel = (status) => {
+        if (!status) return '';
+        return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     };
 
     const handleViewDetails = (osId) => navigate(`/os/${osId}`);
@@ -133,7 +151,6 @@ function DashboardPage() {
     const getEquipamentoTag = (id) => equipamentos.find(e => e.id === id)?.tag || 'N/A';
     const getLocalNome = (id) => locais.find(l => l.id === id)?.nome || 'N/A';
     
-    // Função para ordenar as chaves de data
     const orderKeys = (keys) => {
         return keys.sort((a, b) => {
             if (a === 'Hoje') return -1;
@@ -144,11 +161,6 @@ function DashboardPage() {
             const dateB = b.split('/').reverse().join('-');
             return dateB.localeCompare(dateA);
         });
-    };
-    
-    const formatStatusLabel = (status) => {
-        if (!status) return '';
-        return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     };
 
     if (loading) return <div className="loading">Carregando...</div>;
@@ -162,57 +174,49 @@ function DashboardPage() {
                 <form className="dashboard-filters" onSubmit={e => e.preventDefault()}>
                     {/* Filtros existentes */}
                     <div>
-                         <label>Status:</label>
-                         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-                             {STATUS_OPTIONS.map(opt => (
-                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
-                             ))}
-                         </select>
-                     </div>
-                     <div>
-                         <label>Local:</label>
-                         <select value={localFilter} onChange={e => setLocalFilter(e.target.value)}>
-                             <option value="">Todos</option>
-                             {locais.map(l => (
-                                 <option key={l.id} value={l.id}>{l.nome}</option>
-                             ))}
-                         </select>
-                     </div>
-                     <div>
-                         <label>Nº O.S.:</label>
-                         <input
-                             type="number"
-                             value={numeroOS}
-                             onChange={e => setNumeroOS(e.target.value)}
-                             placeholder="Ex: 123"
-                             min="1"
-                         />
-                     </div>
-                     <div>
-                         <label>Data Inicial:</label>
-                         <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
-                     </div>
-                     <div>
-                         <label>Data Final:</label>
-                         <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} />
-                     </div>
-                    {/* ✅ 3. NOVOS CHECKBOXES ADICIONADOS */}
-                     <div className="filter-checkbox">
-                        <input 
-                            type="checkbox"
-                            id="pendenteCiencia"
-                            checked={filtroPendenteCiencia}
-                            onChange={(e) => setFiltroPendenteCiencia(e.target.checked)}
-                        />
+                        <label>Status:</label>
+                        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                            {STATUS_OPTIONS.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                    {/* ✅ 4. NOVO FILTRO ADICIONADO AO FORMULÁRIO */}
+                    <div>
+                        <label>Tipo Manutenção:</label>
+                        <select value={tipoManutencaoFilter} onChange={e => setTipoManutencaoFilter(e.target.value)}>
+                            {TIPO_MANUTENCAO_OPTIONS.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Local:</label>
+                        <select value={localFilter} onChange={e => setLocalFilter(e.target.value)}>
+                            <option value="">Todos</option>
+                            {locais.map(l => (
+                                <option key={l.id} value={l.id}>{l.nome}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Nº O.S.:</label>
+                        <input type="number" value={numeroOS} onChange={e => setNumeroOS(e.target.value)} placeholder="Ex: 123" min="1" />
+                    </div>
+                    <div>
+                        <label>Data Inicial:</label>
+                        <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
+                    </div>
+                    <div>
+                        <label>Data Final:</label>
+                        <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} />
+                    </div>
+                    <div className="filter-checkbox">
+                        <input type="checkbox" id="pendenteCiencia" checked={filtroPendenteCiencia} onChange={(e) => setFiltroPendenteCiencia(e.target.checked)} />
                         <label htmlFor="pendenteCiencia">Pendente Ciência</label>
                     </div>
                     <div className="filter-checkbox">
-                        <input 
-                            type="checkbox"
-                            id="pendenteQualidade"
-                            checked={filtroPendenteQualidade}
-                            onChange={(e) => setFiltroPendenteQualidade(e.target.checked)}
-                        />
+                        <input type="checkbox" id="pendenteQualidade" checked={filtroPendenteQualidade} onChange={(e) => setFiltroPendenteQualidade(e.target.checked)} />
                         <label htmlFor="pendenteQualidade">Pendente Qualidade</label>
                     </div>
                 </form>
@@ -228,13 +232,12 @@ function DashboardPage() {
                                             <tr>
                                                 <th>Status</th>
                                                 <th>Nº O.S.</th>
+                                                <th>Tipo</th>
                                                 <th>Hora</th>
                                                 <th>Equipamento</th>
-                                                <th>Nº Equip.</th>
                                                 <th>Local</th>
                                                 <th>Solicitante</th>
                                                 <th>Ciência Por</th>
-                                                {/* ✅ 4. NOVA COLUNA PARA VERIFICAÇÃO */}
                                                 <th>Verificado Por</th>
                                                 <th>Visualizar</th>
                                             </tr>
@@ -242,15 +245,15 @@ function DashboardPage() {
                                         <tbody>
                                             {groupedOrdens[dateKey].map(os => (
                                                 <tr key={os.id}>
-                                                    <td><span className={`status-pill status-${os.status?.toLowerCase()}`}>{formatStatusLabel(os.status)}</span></td>
+                                                    <td><span className={`status-pill status-${os.status?.toLowerCase()}`}>{formatLabel(os.status)}</span></td>
                                                     <td>{os.id}</td>
+                                                    {/* ✅ 5. NOVA COLUNA COM O TIPO DE MANUTENÇÃO */}
+                                                    <td>{formatLabel(os.tipoManutencao)}</td>
                                                     <td>{formatDateTime(os.dataSolicitacao)}</td>
                                                     <td>{getEquipamentoNome(os.equipamentoId)}</td>
-                                                    <td>{getEquipamentoTag(os.equipamentoId)}</td>
                                                     <td>{getLocalNome(os.localId)}</td>
                                                     <td>{os.solicitante || 'N/A'}</td>
                                                     <td>{os.liderCienciaNome || 'Pendente'}</td>
-                                                    {/* ✅ 5. CÉLULA COM O NOME DO ANALISTA */}
                                                     <td>{os.verificadoPorNome || 'Pendente'}</td>
                                                     <td>
                                                         <button className="view-button" title="Visualizar Detalhes" onClick={() => handleViewDetails(os.id)}>

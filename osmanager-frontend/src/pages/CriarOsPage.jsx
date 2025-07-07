@@ -1,6 +1,6 @@
-// Local: src/pages/CriarOsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+// Corrigido para corresponder à sua chamada de função
 import { createOrdemServico, getEquipamentos, getLocais } from '../services/apiService';
 import './CriarOsPage.css';
 
@@ -10,7 +10,7 @@ function CriarOsPage() {
 
     // --- Estados do Formulário ---
     const [tipoManutencao, setTipoManutencao] = useState('CORRETIVA');
-    const [prioridade, setPrioridade] = useState(''); // Era 'criticidade' no seu design
+    const [prioridade, setPrioridade] = useState('');
     const [solicitante, setSolicitante] = useState('');
     const [descricaoProblema, setDescricaoProblema] = useState('');
     const [observacao, setObservacao] = useState('');
@@ -19,6 +19,11 @@ function CriarOsPage() {
     const [listaEquipamentos, setListaEquipamentos] = useState([]);
     const [listaLocais, setListaLocais] = useState([]);
     const [error, setError] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+
+    // ✅ 1. NOVOS STATES PARA OS CAMPOS DE DATA DA PREVENTIVA
+    const [dataInicioPreventiva, setDataInicioPreventiva] = useState('');
+    const [dataFimPreventiva, setDataFimPreventiva] = useState('');
 
     // Encontra o nome do equipamento selecionado para exibir o N° (tag)
     const equipamentoSelecionado = listaEquipamentos.find(e => e.id === Number(equipamentoId));
@@ -38,27 +43,41 @@ function CriarOsPage() {
             }
         };
         carregarDadosIniciais();
-        // Assume que o nome do utilizador logado está guardado no localStorage
-        setSolicitante(localStorage.getItem('userName') || 'Utilizador');
+        setSolicitante(localStorage.getItem('userName') || 'Usuário');
     }, []);
 
     const handleSubmit = async (evento) => {
         evento.preventDefault();
         setError(null);
+        setSubmitting(true);
 
+        // Validações básicas
         if (!prioridade || !equipamentoId || !localId) {
             alert('Por favor, preencha todos os campos obrigatórios.');
+            setSubmitting(false);
+            return;
+        }
+
+        // Validação específica para preventiva
+        if (tipoManutencao === 'PREVENTIVA' && (!dataInicioPreventiva || !dataFimPreventiva)) {
+            alert('Para manutenção preventiva, as datas de início e fim são obrigatórias.');
+            setSubmitting(false);
             return;
         }
 
         const dadosParaApi = {
             tipoManutencao,
-            equipamentoId,
-            localId,
+            equipamentoId: Number(equipamentoId),
+            localId: Number(localId),
             prioridade,
             solicitante,
             descricaoProblema,
             observacao,
+            // ✅ 2. ADICIONA AS DATAS CONDICIONALMENTE AO PAYLOAD
+            ...(tipoManutencao === 'PREVENTIVA' && {
+                dataInicioPreventiva,
+                dataFimPreventiva
+            })
         };
 
         try {
@@ -66,7 +85,10 @@ function CriarOsPage() {
             alert('Ordem de Serviço criada com sucesso!');
             navigate('/dashboard');
         } catch (err) {
+            console.error("Erro ao criar OS:", err)
             alert('Falha ao criar a Ordem de Serviço.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -74,7 +96,6 @@ function CriarOsPage() {
         <div className="os-page-container">
             <form className="os-form-container" onSubmit={handleSubmit}>
                 <header className="os-form-header">
-                   
                     <div className="os-header-title">
                         <h1>ORDEM DE SERVIÇO DE MANUTENÇÃO</h1>
                     </div>
@@ -92,6 +113,7 @@ function CriarOsPage() {
                             <select id="tipoManutencao" value={tipoManutencao} onChange={(e) => setTipoManutencao(e.target.value)}>
                                 <option value="CORRETIVA">CORRETIVA</option>
                                 <option value="PREVENTIVA">PREVENTIVA</option>
+                                <option value="PREDITIVA">PREDITIVA</option>
                             </select>
                         </div>
                         <div className="input-group">
@@ -103,6 +125,33 @@ function CriarOsPage() {
                             <input type="text" value="ABERTO" disabled />
                         </div>
                     </div>
+                    
+                    {/* ✅ 3. RENDERIZAÇÃO CONDICIONAL DOS CAMPOS DE DATA */}
+                    {tipoManutencao === 'PREVENTIVA' && (
+                        <div className="form-row">
+                            <div className="input-group">
+                                <label htmlFor="dataInicioPreventiva">INÍCIO PREVENTIVA:</label>
+                                <input
+                                    type="date"
+                                    id="dataInicioPreventiva"
+                                    value={dataInicioPreventiva}
+                                    onChange={(e) => setDataInicioPreventiva(e.target.value)}
+                                    required
+                                />
+                            </div>
+                             <div className="input-group">
+                                <label htmlFor="dataFimPreventiva">FIM PREVENTIVA:</label>
+                                <input
+                                    type="date"
+                                    id="dataFimPreventiva"
+                                    value={dataFimPreventiva}
+                                    onChange={(e) => setDataFimPreventiva(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        </div>
+                    )}
+
 
                     <div className="form-row">
                         <div className="input-group">
@@ -131,7 +180,7 @@ function CriarOsPage() {
 
                     <div className="form-row">
                         <div className="input-group full-width">
-                            <label htmlFor="descricaoProblema">DESCRIÇÃO DO PROBLEMA:</label>
+                            <label htmlFor="descricaoProblema">DESCRIÇÃO DO PROBLEMA/SERVIÇO:</label>
                             <textarea id="descricaoProblema" rows="3" value={descricaoProblema} onChange={(e) => setDescricaoProblema(e.target.value)} required></textarea>
                         </div>
                     </div>
@@ -162,11 +211,11 @@ function CriarOsPage() {
 
                 <footer className="os-form-footer">
                     <div className="form-actions">
-                        <button type="submit" className="button-save">Salvar</button>
+                        <button type="submit" className="button-save" disabled={submitting}>{submitting ? 'Salvando...' : 'Salvar'}</button>
                         <button type="button" className="button-cancel" onClick={() => navigate(-1)}>CANCELAR</button>
                     </div>
                     <div className="footer-info">
-                        <span>FO 012 - ORDEM DE SERVIÇO DE MANUTENÇÃO CORRETIVA</span>
+                        <span>FO 012 - ORDEM DE SERVIÇO DE MANUTENÇÃO</span>
                         <span>REV01</span>
                         <span>DATA: {new Date().toLocaleDateString('pt-BR')}</span>
                     </div>
