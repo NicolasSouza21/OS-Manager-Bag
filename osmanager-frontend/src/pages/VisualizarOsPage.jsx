@@ -10,15 +10,6 @@ import {
 } from '../services/apiService';
 import './VisualizarOsPage.css';
 
-// Funções e constantes que não mudam
-function mapStatusToOptionValue(status) {
-    if (!status) return 'ABERTA';
-    const normalized = status.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\s/g, "_");
-    const STATUS_OPTIONS = ['ABERTA', 'EM_EXECUCAO', 'CONCLUIDA', 'CANCELADA'];
-    return STATUS_OPTIONS.find(opt => opt === normalized) || 'ABERTA';
-}
-
-
 function VisualizarOsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -33,20 +24,13 @@ function VisualizarOsPage() {
     const [verificacaoStatus, setVerificacaoStatus] = useState('');
     const [verificacaoLoading, setVerificacaoLoading] = useState(false);
     
-    // Removido 'novoStatus' e 'alterandoStatus' que eram da lógica manual
-    
     const userRole = localStorage.getItem("userRole");
     const userId = localStorage.getItem("userId");
 
     // Flags de controle de visibilidade
     const ehLider = userRole === 'LIDER';
     const ehAnalistaCQ = userRole === 'ANALISTA_CQ';
-    
-    // =========================================================
-    //           👇👇 A LÓGICA FOI ALTERADA AQUI 👇👇
-    // =========================================================
-    const osEmExecucao = ordemServico?.status === 'EM_EXECUCAO'; // ✅ A condição agora é para EM_EXECUCAO
-    
+    const osEmExecucao = ordemServico?.status === 'EM_EXECUCAO';
     const verificacaoPendente = ordemServico?.statusVerificacao === 'PENDENTE';
     const cienciaPendente = ordemServico?.liderCienciaId == null;
     const podeExcluir = ['ADMIN', 'LIDER'].includes(userRole);
@@ -97,8 +81,6 @@ function VisualizarOsPage() {
         }
     };
 
-    // A função `handleStatusChange` foi removida pois o status é automático
-
     const handleVerificacaoSubmit = async () => {
         if (!verificacaoStatus) {
             return alert('Por favor, selecione um status para a verificação.');
@@ -111,7 +93,7 @@ function VisualizarOsPage() {
             };
             const response = await registrarVerificacaoCQ(id, payload);
             setOrdemServico(response.data);
-            alert(`Verificação registrada! O status da OS foi atualizado para "${response.data.status}".`);
+            alert(`Verificação registrada! O status da OS foi atualizado para "${formatStatusLabel(response.data.status)}".`);
         } catch (error) {
             console.error("Erro ao registrar verificação de CQ:", error);
             alert('Falha ao registrar verificação.');
@@ -134,12 +116,27 @@ function VisualizarOsPage() {
         }
     };
 
+    const formatDateTime = (dateTimeString) => {
+        if (!dateTimeString) return "—";
+        return new Date(dateTimeString).toLocaleString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '—';
+        const dateParts = dateString.split('-');
+        const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+        return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+    };
+
     const formatStatusLabel = (status) => {
-        if (!status) return '';
+        if (!status) return 'Pendente';
         return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     };
 
-    if (loading) return <div className="loading-details">Carregando detalhes da OS...</div>;
+    if (loading) return <div className="loading-details">Carregando...</div>;
     if (error) return <div className="error-details">{error}</div>;
     if (!ordemServico) return <div className="no-data-details">Ordem de Serviço não encontrada.</div>;
 
@@ -147,109 +144,130 @@ function VisualizarOsPage() {
         <div className="view-os-page">
             <div className="view-os-form">
                 <header className="form-header-main">
-                    <h1>Detalhes da Ordem de Serviço</h1>
+                    <h1>Detalhes da Ordem de Serviço #{ordemServico.id}</h1>
+                    <div className={`status-display status-${ordemServico.status?.toLowerCase()}`}>
+                        {formatStatusLabel(ordemServico.status)}
+                    </div>
                 </header>
 
-                <section className="form-section read-only-section">
-                     <div className="input-group">
-                        <label>Nº O.S.</label>
-                        <input type="text" value={ordemServico.id} disabled />
+                <section className="form-section">
+                    <header><h2>Abertura e Detalhes</h2></header>
+                    <div className="grid-container">
+                        <div className="input-group">
+                            <label>Tipo de Manutenção</label>
+                            <input type="text" value={formatStatusLabel(ordemServico.tipoManutencao)} disabled />
+                        </div>
+                        <div className="input-group">
+                            <label>Solicitante</label>
+                            <input type="text" value={ordemServico.solicitante || '—'} disabled />
+                        </div>
+                        <div className="input-group">
+                            <label>Data da Solicitação</label>
+                            <input type="text" value={formatDateTime(ordemServico.dataSolicitacao)} disabled />
+                        </div>
+                        <div className="input-group">
+                            <label>Equipamento</label>
+                            <input type="text" value={equipamento?.nome || '—'} disabled />
+                        </div>
+                        <div className="input-group">
+                            <label>Local</label>
+                            <input type="text" value={local?.nome || '—'} disabled />
+                        </div>
                     </div>
-                     <div className="input-group">
-                        <label>Situação O.S.</label>
-                        <input
-                            type="text"
-                            value={formatStatusLabel(ordemServico.status)}
-                            disabled
-                            className={`status-input status-${ordemServico.status?.toLowerCase()}-input`}
-                        />
+                    <div className="input-group full-width">
+                        <label>Descrição do Problema/Serviço</label>
+                        <textarea value={ordemServico.descricaoProblema || 'Nenhuma'} rows="3" disabled></textarea>
                     </div>
                 </section>
 
+                {ordemServico.tipoManutencao === 'PREVENTIVA' && (
+                    <section className="form-section preventiva-details">
+                        <header><h2>Programação da Preventiva</h2></header>
+                         <div className="grid-container">
+                             <div className="input-group">
+                                <label>Data de Início Programada</label>
+                                <input type="text" value={formatDate(ordemServico.dataInicioPreventiva)} disabled />
+                            </div>
+                            <div className="input-group">
+                                <label>Data de Fim Programada</label>
+                                <input type="text" value={formatDate(ordemServico.dataFimPreventiva)} disabled />
+                            </div>
+                        </div>
+                    </section>
+                )}
+
                 <section className="form-section">
-                     <div className="input-group full-width">
-                        <label>Descrição do Problema</label>
-                        <textarea value={ordemServico.descricaoProblema || ''} rows="4" disabled></textarea>
+                     <header><h2>Ciência do Líder</h2></header>
+                     <div className="grid-container">
+                        <div className="input-group">
+                            <label>Responsável</label>
+                            <input type="text" value={ordemServico.liderCienciaNome || "Pendente"} disabled />
+                        </div>
+                        <div className="input-group">
+                            <label>Data e Hora</label>
+                            <input type="text" value={formatDateTime(ordemServico.dataCiencia)} disabled />
+                        </div>
                     </div>
-                    <div className="input-group full-width">
-                        <label>Observação</label>
-                        <textarea value={ordemServico.observacao || 'Nenhuma'} rows="4" disabled></textarea>
-                    </div>
-                </section>
-                
-                <section className="form-section ciencia-lider-section">
-                    <div className="input-group">
-                        <label>Ciência do Líder</label>
-                        <input
-                            type="text"
-                            value={cienciaPendente ? "Pendente de ciência" : `Ciência registrada por: ${ordemServico.liderCienciaNome}`}
-                            disabled
-                        />
-                    </div>
-                    
                     {ehLider && ordemServico.status === 'ABERTA' && (
-                        <div style={{ marginTop: 8 }}>
-                            <button
-                                type="button"
-                                className="button-save"
-                                disabled={cienciaLoading}
-                                onClick={handleDarCiencia}
-                            >
+                        <div style={{ marginTop: '1rem' }}>
+                            <button onClick={handleDarCiencia} className="button-action" disabled={cienciaLoading}>
                                 {cienciaLoading ? 'Registrando...' : 'Dar Ciência'}
                             </button>
                         </div>
                     )}
                 </section>
                 
-                {/* ✅ A CONDIÇÃO AQUI FOI ALTERADA */}
-                {ehAnalistaCQ && osEmExecucao && (
-                    <section className="form-section cq-section">
-                        <header>
-                            <h2>Verificação de Qualidade (CQ)</h2>
-                        </header>
-                        
+                <section className="form-section">
+                    <header><h2>Execução do Serviço</h2></header>
+                    <div className="grid-container">
+                         <div className="input-group">
+                            <label>Executado por</label>
+                            <input type="text" value={ordemServico.executadoPorNome || "Pendente"} disabled />
+                        </div>
                         <div className="input-group">
-                            <label>Status da Verificação</label>
-                            {verificacaoPendente ? (
-                                <select
-                                    value={verificacaoStatus}
-                                    onChange={(e) => setVerificacaoStatus(e.target.value)}
-                                    disabled={verificacaoLoading}
-                                >
+                            <label>Data da Execução</label>
+                            <input type="text" value={formatDateTime(ordemServico.dataExecucao)} disabled />
+                        </div>
+                    </div>
+                     <div className="input-group full-width">
+                        <label>Ação Realizada</label>
+                        <textarea value={ordemServico.acaoRealizada || 'Não informado.'} rows="3" disabled></textarea>
+                    </div>
+                </section>
+
+                <section className="form-section cq-section">
+                    <header><h2>Verificação de Qualidade (CQ)</h2></header>
+                    <div className="grid-container">
+                        <div className="input-group">
+                            <label>Verificado por</label>
+                            <input type="text" value={ordemServico.verificadoPorNome || "Pendente"} disabled />
+                        </div>
+                        <div className="input-group">
+                            <label>Resultado da Verificação</label>
+                            {ehAnalistaCQ && osEmExecucao && verificacaoPendente ? (
+                                <select value={verificacaoStatus} onChange={(e) => setVerificacaoStatus(e.target.value)}>
                                     <option value="">Selecione...</option>
                                     <option value="APROVADO">Aprovado</option>
                                     <option value="REPROVADO">Reprovado</option>
                                 </select>
                             ) : (
-                                <input 
-                                    type="text"
-                                    value={formatStatusLabel(ordemServico.statusVerificacao)}
-                                    disabled
-                                    className={`status-input status-${ordemServico.statusVerificacao?.toLowerCase()}-input`}
-                                />
+                                <input type="text" value={formatStatusLabel(ordemServico.statusVerificacao)} disabled />
                             )}
                         </div>
-
-                        {verificacaoPendente && (
-                            <div style={{ marginTop: '1rem' }}>
-                                <button
-                                    type="button"
-                                    className="button-save"
-                                    onClick={handleVerificacaoSubmit}
-                                    disabled={verificacaoLoading || !verificacaoStatus}
-                                >
-                                    {verificacaoLoading ? 'Salvando...' : 'Salvar Verificação'}
-                                </button>
-                            </div>
-                        )}
-                    </section>
-                )}
-
+                    </div>
+                    {ehAnalistaCQ && osEmExecucao && verificacaoPendente && (
+                        <div style={{ marginTop: '1rem' }}>
+                            <button onClick={handleVerificacaoSubmit} className="button-action" disabled={verificacaoLoading || !verificacaoStatus}>
+                                {verificacaoLoading ? 'Salvando...' : 'Salvar Verificação'}
+                            </button>
+                        </div>
+                    )}
+                </section>
 
                 <footer className="form-actions">
-                    <button type="button" className="button-back" onClick={() => navigate('/dashboard')}>Voltar ao Painel</button>
+                    <button type="button" className="button-back" onClick={() => navigate('/dashboard')}>Voltar</button>
                     {podeExcluir && (
-                        <button type="button" className="button-delete" style={{ marginLeft: '16px' }} onClick={handleDelete} disabled={excluindo}>
+                        <button type="button" className="button-delete" onClick={handleDelete} disabled={excluindo}>
                             {excluindo ? "Excluindo..." : "Excluir OS"}
                         </button>
                     )}
