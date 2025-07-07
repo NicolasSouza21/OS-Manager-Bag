@@ -271,3 +271,31 @@
 .filter-checkbox input[type="checkbox"]:checked + label::after {
   transform: translateY(-50%) scale(1); /* Faz o "check" aparecer */
 }
+
+/* Contêiner do grupo (cabeçalho da data + tabela) */
+.os-date-group {
+  margin-top: 2rem; /* Adiciona um espaço extra acima de cada novo grupo de data */
+}
+
+.os-date-group:first-of-type {
+  margin-top: 0; /* Remove o espaço do primeiro grupo */
+}
+
+/* O cabeçalho da data (ex: "Hoje", "Ontem", "02/07/2025") */
+.date-header {
+  background-color: #e9ecef; /* Um fundo cinza claro e neutro */
+  color: #34495e; /* Cor de texto profissional (azul-acinzentado escuro) */
+  padding: 10px 20px;
+  margin-bottom: 0; /* Remove a margem padrão do h2 para colar na tabela */
+  font-size: 1rem; /* Tamanho de fonte equilibrado */
+  font-weight: 600; /* Semi-negrito para destaque */
+  text-transform: uppercase; /* Deixa o texto em maiúsculas */
+  letter-spacing: 0.5px; /* Leve espaçamento entre as letras */
+  border-bottom: 3px solid #dee2e6; /* Uma borda inferior mais espessa para separar */
+  border-radius: 6px 6px 0 0; /* Arredonda apenas os cantos superiores */
+}
+
+/* Garante que a tabela cole no cabeçalho arredondado */
+.os-date-group .table-container {
+  border-top: none;
+}

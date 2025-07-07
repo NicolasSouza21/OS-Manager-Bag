@@ -87,3 +87,14 @@ transition: background-color 0.3s ease;
 .button-save:hover {
 background-color: #2563eb;
 }
+
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-content {
+  flex-grow: 1; /* Faz com que o conteúdo principal ocupe o espaço disponível */
+}
