@@ -60,7 +60,7 @@ function Footer() {
 
       {/* Ícone flutuante do WhatsApp */}
       <a 
-        href="https://wa.me/5519997402156" 
+        href="https://wa.me/551934564909" 
         className="whatsapp-float" 
         target="_blank" 
         rel="noopener noreferrer"
