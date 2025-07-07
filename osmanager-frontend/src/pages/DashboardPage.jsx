@@ -56,12 +56,16 @@ function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // States de filtro
+    // Filtros existentes
     const [statusFilter, setStatusFilter] = useState('');
     const [localFilter, setLocalFilter] = useState('');
     const [numeroOS, setNumeroOS] = useState('');
     const [dataInicio, setDataInicio] = useState('');
     const [dataFim, setDataFim] = useState('');
+
+    // ✅ 1. NOVOS STATES PARA OS FILTROS DE PENDÊNCIA
+    const [filtroPendenteCiencia, setFiltroPendenteCiencia] = useState(false);
+    const [filtroPendenteQualidade, setFiltroPendenteQualidade] = useState(false);
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -84,10 +88,11 @@ function DashboardPage() {
         fetchAll();
     }, []);
 
-    // useEffect para filtrar e agrupar
+    // ✅ 2. USEEFFECT ATUALIZADO COM A NOVA LÓGICA DE FILTRO
     useEffect(() => {
         let filtradas = ordensOriginais;
 
+        // Filtros padrão
         if (statusFilter) filtradas = filtradas.filter(os => os.status === statusFilter);
         if (localFilter) filtradas = filtradas.filter(os => String(os.localId) === String(localFilter));
         if (numeroOS) filtradas = filtradas.filter(os => String(os.id) === String(numeroOS));
@@ -103,10 +108,19 @@ function DashboardPage() {
                 return new Date(os.dataSolicitacao) <= new Date(dataFim).setHours(23, 59, 59, 999);
             });
         }
+
+        // Novos filtros de pendência
+        if (filtroPendenteCiencia) {
+            filtradas = filtradas.filter(os => os.status === 'ABERTA' && !os.liderCienciaId);
+        }
+        
+        if (filtroPendenteQualidade) {
+            filtradas = filtradas.filter(os => os.status === 'EM_EXECUCAO' && os.statusVerificacao === 'PENDENTE');
+        }
         
         setGroupedOrdens(groupOrdensByDate(filtradas));
 
-    }, [statusFilter, localFilter, numeroOS, dataInicio, dataFim, ordensOriginais]);
+    }, [statusFilter, localFilter, numeroOS, dataInicio, dataFim, ordensOriginais, filtroPendenteCiencia, filtroPendenteQualidade]);
 
     const formatDateTime = (dateString) => {
         if (!dateString) return 'N/A';
@@ -116,6 +130,7 @@ function DashboardPage() {
 
     const handleViewDetails = (osId) => navigate(`/os/${osId}`);
     const getEquipamentoNome = (id) => equipamentos.find(e => e.id === id)?.nome || 'N/A';
+    const getEquipamentoTag = (id) => equipamentos.find(e => e.id === id)?.tag || 'N/A';
     const getLocalNome = (id) => locais.find(l => l.id === id)?.nome || 'N/A';
     
     // Função para ordenar as chaves de data
@@ -130,6 +145,11 @@ function DashboardPage() {
             return dateB.localeCompare(dateA);
         });
     };
+    
+    const formatStatusLabel = (status) => {
+        if (!status) return '';
+        return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    };
 
     if (loading) return <div className="loading">Carregando...</div>;
     if (error) return <div className="error">{error}</div>;
@@ -140,7 +160,7 @@ function DashboardPage() {
                 <h1 className="dashboard-title">Painel de Ordens de Serviço</h1>
                 
                 <form className="dashboard-filters" onSubmit={e => e.preventDefault()}>
-                    {/* Seus filtros aqui */}
+                    {/* Filtros existentes */}
                     <div>
                          <label>Status:</label>
                          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
@@ -176,6 +196,25 @@ function DashboardPage() {
                          <label>Data Final:</label>
                          <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} />
                      </div>
+                    {/* ✅ 3. NOVOS CHECKBOXES ADICIONADOS */}
+                     <div className="filter-checkbox">
+                        <input 
+                            type="checkbox"
+                            id="pendenteCiencia"
+                            checked={filtroPendenteCiencia}
+                            onChange={(e) => setFiltroPendenteCiencia(e.target.checked)}
+                        />
+                        <label htmlFor="pendenteCiencia">Pendente Ciência</label>
+                    </div>
+                    <div className="filter-checkbox">
+                        <input 
+                            type="checkbox"
+                            id="pendenteQualidade"
+                            checked={filtroPendenteQualidade}
+                            onChange={(e) => setFiltroPendenteQualidade(e.target.checked)}
+                        />
+                        <label htmlFor="pendenteQualidade">Pendente Qualidade</label>
+                    </div>
                 </form>
 
                 <div className="os-groups-container">
@@ -191,10 +230,11 @@ function DashboardPage() {
                                                 <th>Nº O.S.</th>
                                                 <th>Hora</th>
                                                 <th>Equipamento</th>
+                                                <th>Nº Equip.</th>
                                                 <th>Local</th>
                                                 <th>Solicitante</th>
                                                 <th>Ciência Por</th>
-                                                {/* ✅ 1. NOVA COLUNA ADICIONADA */}
+                                                {/* ✅ 4. NOVA COLUNA PARA VERIFICAÇÃO */}
                                                 <th>Verificado Por</th>
                                                 <th>Visualizar</th>
                                             </tr>
@@ -202,14 +242,15 @@ function DashboardPage() {
                                         <tbody>
                                             {groupedOrdens[dateKey].map(os => (
                                                 <tr key={os.id}>
-                                                    <td><span className={`status-pill status-${os.status?.toLowerCase()}`}>{os.status}</span></td>
+                                                    <td><span className={`status-pill status-${os.status?.toLowerCase()}`}>{formatStatusLabel(os.status)}</span></td>
                                                     <td>{os.id}</td>
                                                     <td>{formatDateTime(os.dataSolicitacao)}</td>
                                                     <td>{getEquipamentoNome(os.equipamentoId)}</td>
+                                                    <td>{getEquipamentoTag(os.equipamentoId)}</td>
                                                     <td>{getLocalNome(os.localId)}</td>
                                                     <td>{os.solicitante || 'N/A'}</td>
                                                     <td>{os.liderCienciaNome || 'Pendente'}</td>
-                                                    {/* ✅ 2. CÉLULA COM O NOME DO ANALISTA */}
+                                                    {/* ✅ 5. CÉLULA COM O NOME DO ANALISTA */}
                                                     <td>{os.verificadoPorNome || 'Pendente'}</td>
                                                     <td>
                                                         <button className="view-button" title="Visualizar Detalhes" onClick={() => handleViewDetails(os.id)}>

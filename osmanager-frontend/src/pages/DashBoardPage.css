@@ -157,3 +157,117 @@
 .filter-button:hover {
   background: #1257a8;
 }
+
+/* ========================================================= */
+/* 👇👇 ESTILIZAÇÃO DOS NOVOS FILTROS 👇👇           */
+/* ========================================================= */
+
+/* Contêiner principal dos filtros */
+.dashboard-filters {
+  background-color: #f8f9fa; /* Um fundo levemente cinza para destacar */
+  padding: 20px;
+  border-radius: 8px; /* Bordas arredondadas */
+  border: 1px solid #dee2e6; /* Borda sutil */
+  display: flex; /* Usa Flexbox para alinhar os itens */
+  flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha */
+  gap: 20px; /* Espaço entre os filtros */
+  margin-bottom: 2rem; /* Espaço abaixo dos filtros */
+  align-items: flex-end; /* Alinha todos os itens na base */
+}
+
+/* Grupo de cada filtro (label + input) */
+.dashboard-filters > div {
+  display: flex;
+  flex-direction: column; /* Coloca o label acima do input */
+  gap: 5px; /* Espaço entre o label e o input */
+}
+
+/* Estilo para os labels dos filtros */
+.dashboard-filters label {
+  font-weight: 500; /* Deixa o texto do label um pouco mais forte */
+  font-size: 0.875rem; /* Tamanho de fonte um pouco menor */
+  color: #495057; /* Cor do texto mais suave */
+  margin-bottom: 4px; /* Pequeno espaço abaixo do label */
+}
+
+/* Estilo geral para todos os inputs e selects */
+.dashboard-filters input[type="date"],
+.dashboard-filters input[type="number"],
+.dashboard-filters select {
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px; /* Bordas levemente arredondadas */
+  font-size: 1rem;
+  min-width: 150px; /* Largura mínima para manter a organização */
+  transition: border-color 0.2s, box-shadow 0.2s; /* Transição suave */
+}
+
+/* Efeito de foco para indicar campo ativo */
+.dashboard-filters input:focus,
+.dashboard-filters select:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* --- Estilização customizada para os Checkboxes de Pendência --- */
+
+.filter-checkbox {
+  display: flex;
+  flex-direction: row !important; /* Mantém o checkbox e o label na mesma linha */
+  align-items: center;
+  gap: 10px !important;
+  cursor: pointer;
+  padding-bottom: 10px; /* Alinha a base do checkbox com os outros inputs */
+  user-select: none; /* Impede que o texto do label seja selecionado */
+}
+
+/* Esconde o checkbox padrão do navegador */
+.filter-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+/* Cria o novo "visual" do checkbox */
+.filter-checkbox label {
+  position: relative;
+  padding-left: 30px; /* Espaço para o nosso checkbox customizado */
+  margin-bottom: 0 !important; /* Remove margem extra do label */
+  font-weight: normal !important; /* Deixa o texto do label normal */
+}
+
+/* A caixinha do nosso checkbox */
+.filter-checkbox label::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid #adb5bd;
+  border-radius: 3px;
+  background-color: #fff;
+  transition: all 0.2s;
+}
+
+/* O "check" (sinal de visto) que aparece quando marcado */
+.filter-checkbox label::after {
+  content: '✔';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%) scale(0); /* Começa invisível e pequeno */
+  font-size: 16px;
+  color: #fff;
+  transition: transform 0.2s;
+}
+
+/* Estilos quando o checkbox está MARCADO */
+.filter-checkbox input[type="checkbox"]:checked + label::before {
+  background-color: #007bff; /* Cor de fundo azul */
+  border-color: #007bff; /* Cor da borda azul */
+}
+
+.filter-checkbox input[type="checkbox"]:checked + label::after {
+  transform: translateY(-50%) scale(1); /* Faz o "check" aparecer */
+}
