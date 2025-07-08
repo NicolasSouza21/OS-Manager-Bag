@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate; // Importe a classe LocalDate
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -82,4 +83,13 @@ public class OrdemServico {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusOrdemServico status;
+
+    // =========================================================
+    //           👇👇 CAMPOS FALTANTES ADICIONADOS AQUI 👇👇
+    // =========================================================
+    @Column(nullable = true)
+    private LocalDate dataInicioPreventiva;
+
+    @Column(nullable = true)
+    private LocalDate dataFimPreventiva;
 }

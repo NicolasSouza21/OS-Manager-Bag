@@ -116,6 +116,7 @@ function VisualizarOsPage() {
         }
     };
 
+    // Formata data e hora
     const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return "—";
         return new Date(dateTimeString).toLocaleString('pt-BR', {
@@ -124,13 +125,15 @@ function VisualizarOsPage() {
         });
     };
 
+    // Formata apenas a data (para as preventivas)
     const formatDate = (dateString) => {
         if (!dateString) return '—';
-        const dateParts = dateString.split('-');
-        const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-        return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        const date = new Date(dateString);
+        // Corrige o problema de fuso horário que pode fazer a data aparecer um dia antes
+        return new Date(date.getTime() + date.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR');
     };
 
+    // Formata os labels de status (ex: EM_EXECUCAO -> Em Execução)
     const formatStatusLabel = (status) => {
         if (!status) return 'Pendente';
         return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
@@ -150,6 +153,7 @@ function VisualizarOsPage() {
                     </div>
                 </header>
 
+                {/* Seção de Abertura */}
                 <section className="form-section">
                     <header><h2>Abertura e Detalhes</h2></header>
                     <div className="grid-container">
@@ -180,6 +184,7 @@ function VisualizarOsPage() {
                     </div>
                 </section>
 
+                {/* Seção Condicional para Manutenção Preventiva */}
                 {ordemServico.tipoManutencao === 'PREVENTIVA' && (
                     <section className="form-section preventiva-details">
                         <header><h2>Programação da Preventiva</h2></header>
@@ -196,6 +201,7 @@ function VisualizarOsPage() {
                     </section>
                 )}
 
+                {/* Seção de Ciência do Líder */}
                 <section className="form-section">
                      <header><h2>Ciência do Líder</h2></header>
                      <div className="grid-container">
@@ -217,6 +223,7 @@ function VisualizarOsPage() {
                     )}
                 </section>
                 
+                {/* Seção de Execução */}
                 <section className="form-section">
                     <header><h2>Execução do Serviço</h2></header>
                     <div className="grid-container">
@@ -235,6 +242,7 @@ function VisualizarOsPage() {
                     </div>
                 </section>
 
+                {/* Seção de Verificação de Qualidade */}
                 <section className="form-section cq-section">
                     <header><h2>Verificação de Qualidade (CQ)</h2></header>
                     <div className="grid-container">

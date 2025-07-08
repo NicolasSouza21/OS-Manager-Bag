@@ -1,16 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Corrigido para corresponder à sua chamada de função
 import { createOrdemServico, getEquipamentos, getLocais } from '../services/apiService';
 import './CriarOsPage.css';
 
+// ✅ 1. FUNÇÃO AUXILIAR PARA FORMATAR A DATA NO PADRÃO yyyy-MM-dd
+const formatDateForInput = (date) => {
+  const d = new Date(date);
+  let month = '' + (d.getMonth() + 1);
+  let day = '' + d.getDate();
+  const year = d.getFullYear();
+
+  if (month.length < 2) 
+      month = '0' + month;
+  if (day.length < 2) 
+      day = '0' + day;
+
+  return [year, month, day].join('-');
+}
 
 function CriarOsPage() {
     const navigate = useNavigate();
 
     // --- Estados do Formulário ---
     const [tipoManutencao, setTipoManutencao] = useState('CORRETIVA');
-    const [prioridade, setPrioridade] = useState('');
+    const [prioridade, setPrioridade] = useState('MEDIA'); // Definindo um valor padrão
     const [solicitante, setSolicitante] = useState('');
     const [descricaoProblema, setDescricaoProblema] = useState('');
     const [observacao, setObservacao] = useState('');
@@ -21,11 +34,10 @@ function CriarOsPage() {
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    // ✅ 1. NOVOS STATES PARA OS CAMPOS DE DATA DA PREVENTIVA
-    const [dataInicioPreventiva, setDataInicioPreventiva] = useState('');
+    // ✅ 2. STATES DAS DATAS DA PREVENTIVA INICIADOS COM VALORES CORRETOS
+    const [dataInicioPreventiva, setDataInicioPreventiva] = useState(formatDateForInput(new Date()));
     const [dataFimPreventiva, setDataFimPreventiva] = useState('');
 
-    // Encontra o nome do equipamento selecionado para exibir o N° (tag)
     const equipamentoSelecionado = listaEquipamentos.find(e => e.id === Number(equipamentoId));
 
     useEffect(() => {
@@ -52,7 +64,7 @@ function CriarOsPage() {
         setSubmitting(true);
 
         // Validações básicas
-        if (!prioridade || !equipamentoId || !localId) {
+        if (!prioridade || !equipamentoId || !localId || !descricaoProblema) {
             alert('Por favor, preencha todos os campos obrigatórios.');
             setSubmitting(false);
             return;
@@ -73,7 +85,7 @@ function CriarOsPage() {
             solicitante,
             descricaoProblema,
             observacao,
-            // ✅ 2. ADICIONA AS DATAS CONDICIONALMENTE AO PAYLOAD
+            // Adiciona as datas condicionalmente ao payload
             ...(tipoManutencao === 'PREVENTIVA' && {
                 dataInicioPreventiva,
                 dataFimPreventiva
@@ -122,11 +134,10 @@ function CriarOsPage() {
                         </div>
                         <div className="input-group">
                             <label>SITUAÇÃO O.S:</label>
-                            <input type="text" value="ABERTO" disabled />
+                            <input type="text" value="ABERTA" disabled />
                         </div>
                     </div>
                     
-                    {/* ✅ 3. RENDERIZAÇÃO CONDICIONAL DOS CAMPOS DE DATA */}
                     {tipoManutencao === 'PREVENTIVA' && (
                         <div className="form-row">
                             <div className="input-group">
@@ -136,7 +147,7 @@ function CriarOsPage() {
                                     id="dataInicioPreventiva"
                                     value={dataInicioPreventiva}
                                     onChange={(e) => setDataInicioPreventiva(e.target.value)}
-                                    required
+                                    required={tipoManutencao === 'PREVENTIVA'}
                                 />
                             </div>
                              <div className="input-group">
@@ -146,7 +157,7 @@ function CriarOsPage() {
                                     id="dataFimPreventiva"
                                     value={dataFimPreventiva}
                                     onChange={(e) => setDataFimPreventiva(e.target.value)}
-                                    required
+                                    required={tipoManutencao === 'PREVENTIVA'}
                                 />
                             </div>
                         </div>

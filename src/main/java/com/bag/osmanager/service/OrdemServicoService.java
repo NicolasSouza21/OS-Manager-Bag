@@ -49,7 +49,6 @@ public class OrdemServicoService {
             os.setLocal(local);
         }
 
-        // A lógica de data limite só se aplica se não for uma preventiva
         if (dto.getTipoManutencao() != TipoManutencao.PREVENTIVA) {
             switch (dto.getPrioridade()) {
                 case ALTA:
@@ -195,19 +194,20 @@ public class OrdemServicoService {
 
         if (os.getExecutadoPor() != null) {
             dto.setExecutadoPorId(os.getExecutadoPor().getId());
-            dto.setExecutadoPorNome(os.getExecutadoPor().getNome()); // Corrigido
+            dto.setExecutadoPorNome(os.getExecutadoPor().getNome());
         }
 
         if (os.getVerificadoPor() != null) {
             dto.setVerificadoPorId(os.getVerificadoPor().getId());
-            dto.setVerificadoPorNome(os.getVerificadoPor().getNome()); // Corrigido
+            dto.setVerificadoPorNome(os.getVerificadoPor().getNome());
         }
 
         if (os.getAprovadoPor() != null) {
             dto.setAprovadoPorId(os.getAprovadoPor().getId());
-            dto.setAprovadoPorNome(os.getAprovadoPor().getNome()); // Corrigido
+            dto.setAprovadoPorNome(os.getAprovadoPor().getNome());
         }
         
+        // Mapeamento das chaves estrangeiras de Equipamento e Local
         if (os.getEquipamento() != null) {
             dto.setEquipamentoId(os.getEquipamento().getId());
         }
