@@ -12,7 +12,6 @@ const STATUS_OPTIONS = [
   { value: 'CANCELADA', label: 'Cancelada' },
 ];
 
-// ✅ 1. OPÇÕES PARA O NOVO FILTRO DE MANUTENÇÃO
 const TIPO_MANUTENCAO_OPTIONS = [
     { value: '', label: 'Todos' },
     { value: 'CORRETIVA', label: 'Corretiva' },
@@ -20,8 +19,6 @@ const TIPO_MANUTENCAO_OPTIONS = [
     { value: 'PREDITIVA', label: 'Preditiva' },
 ];
 
-
-// Função que agrupa as Ordens de Serviço por data
 const groupOrdensByDate = (ordens) => {
     const groups = {};
     const today = new Date();
@@ -54,7 +51,6 @@ const groupOrdensByDate = (ordens) => {
     return groups;
 };
 
-
 function DashboardPage() {
     const navigate = useNavigate();
 
@@ -73,10 +69,7 @@ function DashboardPage() {
     const [dataFim, setDataFim] = useState('');
     const [filtroPendenteCiencia, setFiltroPendenteCiencia] = useState(false);
     const [filtroPendenteQualidade, setFiltroPendenteQualidade] = useState(false);
-    
-    // ✅ 2. NOVO STATE PARA O FILTRO DE TIPO DE MANUTENÇÃO
     const [tipoManutencaoFilter, setTipoManutencaoFilter] = useState('');
-
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -99,14 +92,15 @@ function DashboardPage() {
         fetchAll();
     }, []);
 
-    // ✅ 3. USEEFFECT ATUALIZADO COM O NOVO FILTRO
     useEffect(() => {
         let filtradas = ordensOriginais;
 
-        // Filtros existentes
+        // Lógica de filtros
         if (statusFilter) filtradas = filtradas.filter(os => os.status === statusFilter);
         if (localFilter) filtradas = filtradas.filter(os => String(os.localId) === String(localFilter));
         if (numeroOS) filtradas = filtradas.filter(os => String(os.id) === String(numeroOS));
+        if (tipoManutencaoFilter) filtradas = filtradas.filter(os => os.tipoManutencao === tipoManutencaoFilter);
+        
         if (dataInicio) {
             filtradas = filtradas.filter(os => {
                 if (!os.dataSolicitacao) return false;
@@ -125,22 +119,17 @@ function DashboardPage() {
         if (filtroPendenteQualidade) {
             filtradas = filtradas.filter(os => os.status === 'EM_EXECUCAO' && os.statusVerificacao === 'PENDENTE');
         }
-
-        // Novo filtro de tipo de manutenção
-        if (tipoManutencaoFilter) {
-            filtradas = filtradas.filter(os => os.tipoManutencao === tipoManutencaoFilter);
-        }
         
         setGroupedOrdens(groupOrdensByDate(filtradas));
 
     }, [statusFilter, localFilter, numeroOS, dataInicio, dataFim, ordensOriginais, filtroPendenteCiencia, filtroPendenteQualidade, tipoManutencaoFilter]);
 
-    const formatDateTime = (dateString) => {
+    const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
-        return date.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        return new Date(date.getTime() + date.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR');
     };
-    
+
     const formatLabel = (status) => {
         if (!status) return '';
         return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
@@ -163,6 +152,10 @@ function DashboardPage() {
         });
     };
 
+    // ✅ 1. VERIFICA SE EXISTE ALGUMA OS PREVENTIVA NOS DADOS FILTRADOS
+    const hasPreventivas = Object.values(groupedOrdens).flat().some(os => os.tipoManutencao === 'PREVENTIVA');
+
+
     if (loading) return <div className="loading">Carregando...</div>;
     if (error) return <div className="error">{error}</div>;
 
@@ -172,8 +165,7 @@ function DashboardPage() {
                 <h1 className="dashboard-title">Painel de Ordens de Serviço</h1>
                 
                 <form className="dashboard-filters" onSubmit={e => e.preventDefault()}>
-                    {/* Filtros existentes */}
-                    <div>
+                     <div>
                         <label>Status:</label>
                         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                             {STATUS_OPTIONS.map(opt => (
@@ -181,7 +173,6 @@ function DashboardPage() {
                             ))}
                         </select>
                     </div>
-                    {/* ✅ 4. NOVO FILTRO ADICIONADO AO FORMULÁRIO */}
                     <div>
                         <label>Tipo Manutenção:</label>
                         <select value={tipoManutencaoFilter} onChange={e => setTipoManutencaoFilter(e.target.value)}>
@@ -211,7 +202,7 @@ function DashboardPage() {
                         <label>Data Final:</label>
                         <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} />
                     </div>
-                    <div className="filter-checkbox">
+                     <div className="filter-checkbox">
                         <input type="checkbox" id="pendenteCiencia" checked={filtroPendenteCiencia} onChange={(e) => setFiltroPendenteCiencia(e.target.checked)} />
                         <label htmlFor="pendenteCiencia">Pendente Ciência</label>
                     </div>
@@ -233,10 +224,11 @@ function DashboardPage() {
                                                 <th>Status</th>
                                                 <th>Nº O.S.</th>
                                                 <th>Tipo</th>
-                                                <th>Hora</th>
+                                                <th>Data Abertura</th>
+                                                {/* ✅ 2. RENDERIZA O CABEÇALHO DA COLUNA CONDICIONALMENTE */}
+                                                {hasPreventivas && <th>Data Final</th>}
                                                 <th>Equipamento</th>
                                                 <th>Local</th>
-                                                <th>Solicitante</th>
                                                 <th>Ciência Por</th>
                                                 <th>Verificado Por</th>
                                                 <th>Visualizar</th>
@@ -247,12 +239,16 @@ function DashboardPage() {
                                                 <tr key={os.id}>
                                                     <td><span className={`status-pill status-${os.status?.toLowerCase()}`}>{formatLabel(os.status)}</span></td>
                                                     <td>{os.id}</td>
-                                                    {/* ✅ 5. NOVA COLUNA COM O TIPO DE MANUTENÇÃO */}
                                                     <td>{formatLabel(os.tipoManutencao)}</td>
-                                                    <td>{formatDateTime(os.dataSolicitacao)}</td>
+                                                    <td>{formatDate(os.dataSolicitacao)}</td>
+                                                    {/* ✅ 3. RENDERIZA A CÉLULA DA COLUNA CONDICIONALMENTE */}
+                                                    {hasPreventivas && (
+                                                        <td>
+                                                            {os.tipoManutencao === 'PREVENTIVA' ? formatDate(os.dataFimPreventiva) : 'N/A'}
+                                                        </td>
+                                                    )}
                                                     <td>{getEquipamentoNome(os.equipamentoId)}</td>
                                                     <td>{getLocalNome(os.localId)}</td>
-                                                    <td>{os.solicitante || 'N/A'}</td>
                                                     <td>{os.liderCienciaNome || 'Pendente'}</td>
                                                     <td>{os.verificadoPorNome || 'Pendente'}</td>
                                                     <td>

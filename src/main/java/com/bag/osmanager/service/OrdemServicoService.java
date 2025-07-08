@@ -32,7 +32,6 @@ public class OrdemServicoService {
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
-        // Copia todos os campos, incluindo as novas datas da preventiva
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId");
         
         LocalDateTime agora = LocalDateTime.now();
@@ -183,10 +182,12 @@ public class OrdemServicoService {
     
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto); // Copia todos os campos simples primeiro
+        BeanUtils.copyProperties(os, dto); // Copia todos os campos simples e de mesmo nome
 
-        // Agora, preenche os campos que precisam de lógica (como pegar nomes de entidades relacionadas)
-        
+        // =========================================================
+        //           👇👇 PREENCHIMENTO CORRETO DOS NOMES 👇👇
+        // =========================================================
+
         if (os.getMecanicoCiencia() != null) {
             dto.setLiderCienciaId(os.getMecanicoCiencia().getId());
             dto.setLiderCienciaNome(os.getMecanicoCiencia().getNome());
@@ -194,17 +195,17 @@ public class OrdemServicoService {
 
         if (os.getExecutadoPor() != null) {
             dto.setExecutadoPorId(os.getExecutadoPor().getId());
-            dto.setVerificadoPorNome(os.getExecutadoPor().getNome()); // ✅ CORREÇÃO
+            dto.setExecutadoPorNome(os.getExecutadoPor().getNome()); // Corrigido
         }
 
         if (os.getVerificadoPor() != null) {
             dto.setVerificadoPorId(os.getVerificadoPor().getId());
-            dto.setVerificadoPorNome(os.getVerificadoPor().getNome()); // ✅ CORREÇÃO
+            dto.setVerificadoPorNome(os.getVerificadoPor().getNome()); // Corrigido
         }
 
         if (os.getAprovadoPor() != null) {
             dto.setAprovadoPorId(os.getAprovadoPor().getId());
-            dto.setVerificadoPorNome(os.getAprovadoPor().getNome()); // ✅ CORREÇÃO
+            dto.setAprovadoPorNome(os.getAprovadoPor().getNome()); // Corrigido
         }
         
         if (os.getEquipamento() != null) {
