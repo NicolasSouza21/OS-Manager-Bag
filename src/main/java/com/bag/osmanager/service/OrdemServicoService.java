@@ -49,10 +49,14 @@ public class OrdemServicoService {
             os.setLocal(local);
         }
 
-        if (dto.getTipoManutencao() != TipoManutencao.PREVENTIVA) {
+        // =========================================================
+        //          👇👇 LÓGICA ATUALIZADA AQUI 👇👇
+        // =========================================================
+        // Define a data limite apenas para manutenções CORRETIVAS.
+        if (dto.getTipoManutencao() == TipoManutencao.CORRETIVA) {
             switch (dto.getPrioridade()) {
                 case ALTA:
-                    os.setDataLimite(agora.with(LocalTime.MAX));
+                    os.setDataLimite(agora.with(LocalTime.MAX)); // Urgente, para o mesmo dia.
                     break;
                 case MEDIA:
                     os.setDataLimite(agora.plusDays(4));
@@ -62,6 +66,9 @@ public class OrdemServicoService {
                     break;
             }
         }
+        // Para PREVENTIVA, a data limite não é calculada aqui, 
+        // pois ela virá do formulário (dataInicioProgramado, etc).
+        // O BeanUtils.copyProperties já cuidou de copiar as datas do DTO para a entidade 'os'.
 
         OrdemServico osSalva = osRepository.save(os);
         return converteParaDTO(osSalva);
@@ -181,11 +188,7 @@ public class OrdemServicoService {
     
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto); // Copia todos os campos simples e de mesmo nome
-
-        // =========================================================
-        //           👇👇 PREENCHIMENTO CORRETO DOS NOMES 👇👇
-        // =========================================================
+        BeanUtils.copyProperties(os, dto);
 
         if (os.getMecanicoCiencia() != null) {
             dto.setLiderCienciaId(os.getMecanicoCiencia().getId());
@@ -207,7 +210,6 @@ public class OrdemServicoService {
             dto.setAprovadoPorNome(os.getAprovadoPor().getNome());
         }
         
-        // Mapeamento das chaves estrangeiras de Equipamento e Local
         if (os.getEquipamento() != null) {
             dto.setEquipamentoId(os.getEquipamento().getId());
         }
