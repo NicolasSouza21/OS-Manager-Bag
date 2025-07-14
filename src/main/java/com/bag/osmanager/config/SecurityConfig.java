@@ -27,12 +27,13 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableMethodSecurity // Necessário para @PreAuthorize funcionar
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
+    // ... (outros beans como passwordEncoder, etc., continuam iguais)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -51,17 +52,22 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permite requisições dos endereços do seu frontend
+        
+        // ✅ NOVO ENDEREÇO ADICIONADO AQUI
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173",
-            "http://192.168.0.11:5173" 
+            "http://192.168.0.11:5173",
+            "http://192.168.56.1:5173" // <-- Adicionado para permitir a nova origem
         ));
+        
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -74,24 +80,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Endpoints públicos
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
-
-                        // ✅ REGRAS DE AUTORIZAÇÃO ATUALIZADAS
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/ciencia").hasAnyRole("MECANICO", "LIDER")
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/iniciar-execucao").hasAnyRole("MECANICO", "LIDER")
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/execucao").hasAnyRole("MECANICO", "LIDER")
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/finalizar").hasAnyRole("MECANICO", "LIDER")
-                        
-                        // Endpoint de aprovação (se ainda for usar)
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/aprovacao").hasRole("LIDER")
-
-                        // Outras regras específicas
-                        .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
-                        
-                        // Qualquer outra requisição precisa de autenticação
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
