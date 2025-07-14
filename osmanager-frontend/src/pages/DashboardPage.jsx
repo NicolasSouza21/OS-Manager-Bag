@@ -1,26 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getOrdensServico, getEquipamentos, getLocais } from '../services/apiService';
-import { FaSearch } from 'react-icons/fa';
+import { 
+    getOrdensServico, 
+    getEquipamentos, 
+    getLocais, 
+    registrarCiencia, 
+    iniciarExecucao,
+    registrarExecucao 
+} from '../services/apiService';
+import ExecucaoModal from '../components/ExecucaoModal';
+import { jwtDecode } from 'jwt-decode';
+import { FaSearch, FaCheck, FaTools, FaPlay } from 'react-icons/fa'; // FaPlay já está importado
 import './DashBoardPage.css';
 
 const STATUS_OPTIONS = [
-  { value: '', label: 'Todos' },
-  { value: 'ABERTA', label: 'Aberta' },
-  { value: 'EM_EXECUCAO', label: 'Em Execução' },
-  { value: 'CONCLUIDA', label: 'Concluída' },
-  { value: 'CANCELADA', label: 'Cancelada' },
+    { value: '', label: 'Todos' },
+    { value: 'ABERTA', label: 'Aberta' },
+    { value: 'CIENTE', label: 'Ciente' },
+    { value: 'EM_EXECUCAO', label: 'Em Execução' },
+    { value: 'CONCLUIDA', label: 'Concluída' },
+    { value: 'CANCELADA', label: 'Cancelada' },
 ];
 
 const TIPO_MANUTENCAO_OPTIONS = [
     { value: '', label: 'Todos' },
     { value: 'CORRETIVA', label: 'Corretiva' },
     { value: 'PREVENTIVA', label: 'Preventiva' },
-    { value: 'PREDITIVA', label: 'Preditiva' },
 ];
 
-
-// Função que agrupa as Ordens de Serviço por data
 const groupOrdensByDate = (ordens) => {
     const groups = {};
     const today = new Date();
@@ -36,195 +43,151 @@ const groupOrdensByDate = (ordens) => {
         const osDate = new Date(os.dataSolicitacao);
         let dateKey;
 
-        if (isSameDay(osDate, today)) {
-            dateKey = 'Hoje';
-        } else if (isSameDay(osDate, yesterday)) {
-            dateKey = 'Ontem';
-        } else {
-            dateKey = osDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }
+        if (isSameDay(osDate, today)) { dateKey = 'Hoje'; } 
+        else if (isSameDay(osDate, yesterday)) { dateKey = 'Ontem'; } 
+        else { dateKey = osDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
 
-        if (!groups[dateKey]) {
-            groups[dateKey] = [];
-        }
+        if (!groups[dateKey]) { groups[dateKey] = []; }
         groups[dateKey].push(os);
     });
-
     return groups;
 };
 
-
 function DashboardPage() {
     const navigate = useNavigate();
-
     const [ordensOriginais, setOrdensOriginais] = useState([]);
     const [groupedOrdens, setGroupedOrdens] = useState({});
     const [equipamentos, setEquipamentos] = useState([]);
     const [locais, setLocais] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Filtros
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedOs, setSelectedOs] = useState(null);
+    const [userRoles, setUserRoles] = useState([]);
     const [statusFilter, setStatusFilter] = useState('');
-    const [localFilter, setLocalFilter] = useState('');
-    const [numeroOS, setNumeroOS] = useState('');
-    const [dataInicio, setDataInicio] = useState('');
-    const [dataFim, setDataFim] = useState('');
-    const [filtroPendenteCiencia, setFiltroPendenteCiencia] = useState(false);
-    const [filtroPendenteQualidade, setFiltroPendenteQualidade] = useState(false);
     const [tipoManutencaoFilter, setTipoManutencaoFilter] = useState('');
 
-
+    const fetchAllData = async () => {
+        try {
+            setLoading(true);
+            const [osRes, equipsRes, locaisRes] = await Promise.all([
+                getOrdensServico({ page: 0, size: 100, sort: 'id,desc' }),
+                getEquipamentos(),
+                getLocais()
+            ]);
+            setOrdensOriginais(osRes.data.content);
+            setEquipamentos(equipsRes.data);
+            setLocais(locaisRes.data);
+        } catch (err) {
+            console.error("Erro ao carregar dados:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
     useEffect(() => {
-        const fetchAll = async () => {
-            try {
-                setLoading(true);
-                const [osRes, equipsRes, locaisRes] = await Promise.all([
-                    getOrdensServico({ page: 0, size: 100, sort: 'dataSolicitacao,desc' }),
-                    getEquipamentos(),
-                    getLocais()
-                ]);
-                setOrdensOriginais(osRes.data.content);
-                setEquipamentos(equipsRes.data);
-                setLocais(locaisRes.data);
-                setLoading(false);
-            } catch (err) {
-                setError('Falha ao carregar as ordens de serviço.');
-                setLoading(false);
-            }
-        };
-        fetchAll();
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            setUserRoles(jwtDecode(token).roles || []);
+        }
+        fetchAllData();
     }, []);
-
-    // useEffect atualizado com o novo filtro
+    
     useEffect(() => {
-        let filtradas = ordensOriginais;
-
-        // Filtros existentes
-        if (statusFilter) filtradas = filtradas.filter(os => os.status === statusFilter);
-        if (localFilter) filtradas = filtradas.filter(os => String(os.localId) === String(localFilter));
-        if (numeroOS) filtradas = filtradas.filter(os => String(os.id) === String(numeroOS));
-        if (dataInicio) {
-            filtradas = filtradas.filter(os => {
-                if (!os.dataSolicitacao) return false;
-                return new Date(os.dataSolicitacao) >= new Date(dataInicio);
-            });
+        let filtradas = [...ordensOriginais];
+        if (statusFilter) {
+            filtradas = filtradas.filter(os => os.status === statusFilter);
         }
-        if (dataFim) {
-             filtradas = filtradas.filter(os => {
-                if (!os.dataSolicitacao) return false;
-                return new Date(os.dataSolicitacao) <= new Date(dataFim).setHours(23, 59, 59, 999);
-            });
-        }
-        if (filtroPendenteCiencia) {
-            filtradas = filtradas.filter(os => os.status === 'ABERTA' && !os.liderCienciaId);
-        }
-        if (filtroPendenteQualidade) {
-            filtradas = filtradas.filter(os => os.status === 'EM_EXECUCAO' && os.statusVerificacao === 'PENDENTE');
-        }
-
-        // Novo filtro de tipo de manutenção
         if (tipoManutencaoFilter) {
-            filtradas = filtradas.filter(os => os.tipoManutencao === tipoManutencaoFilter);
+             filtradas = filtradas.filter(os => os.tipoManutencao === tipoManutencaoFilter);
         }
-        
         setGroupedOrdens(groupOrdensByDate(filtradas));
+    }, [statusFilter, tipoManutencaoFilter, ordensOriginais]);
 
-    }, [statusFilter, localFilter, numeroOS, dataInicio, dataFim, ordensOriginais, filtroPendenteCiencia, filtroPendenteQualidade, tipoManutencaoFilter]);
-
-    const formatDateTime = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const handleDarCiencia = async (osId) => {
+        if (!window.confirm("Confirmar ciência desta OS?")) return;
+        try {
+            await registrarCiencia(osId);
+            fetchAllData();
+        } catch (error) {
+            alert(error.response?.data?.message || "Falha ao registrar ciência.");
+        }
     };
+
+    const handleIniciarExecucao = async (osId) => {
+        if (!window.confirm("Iniciar a execução desta OS?")) return;
+        try {
+            await iniciarExecucao(osId);
+            fetchAllData();
+        } catch (error) {
+            alert(error.response?.data?.message || "Falha ao iniciar execução.");
+        }
+    };
+
+    const handleExecucaoSubmit = async (dadosExecucao) => {
+        if (!selectedOs) return;
+        try {
+            await registrarExecucao(selectedOs.id, dadosExecucao);
+            alert(`OS #${selectedOs.id} foi finalizada com sucesso!`);
+            setIsModalOpen(false);
+            setSelectedOs(null);
+            fetchAllData();
+        } catch (error) {
+            alert(error.response?.data?.message || "Falha ao registrar execução.");
+        }
+    };
+
+    const renderAcoes = (os) => {
+        const isMecanicoOrLider = userRoles.includes('ROLE_MECANICO') || userRoles.includes('ROLE_LIDER');
+        
+        return (
+            <div className="actions-cell">
+                {/* ✅ Container para os botões que aparecem e somem */}
+                <div className="dynamic-actions-container">
+                    {isMecanicoOrLider && os.status === 'ABERTA' && (
+                        <button title="Dar Ciência" className="action-button-circle ciencia-btn" onClick={() => handleDarCiencia(os.id)}>
+                            <FaCheck />
+                        </button>
+                    )}
+                    {isMecanicoOrLider && os.status === 'CIENTE' && (
+                        <button title="Iniciar Execução" className="action-button-circle iniciar-btn" onClick={() => handleIniciarExecucao(os.id)}>
+                            <FaPlay />
+                        </button>
+                    )}
+                    {isMecanicoOrLider && os.status === 'EM_EXECUCAO' && (
+                        <button title="Preencher e Finalizar OS" className="action-button-circle executar-btn" onClick={() => { setSelectedOs(os); setIsModalOpen(true); }}>
+                            <FaTools />
+                        </button>
+                    )}
+                </div>
     
-    // ✅ NOVA FUNÇÃO PARA FORMATAR APENAS A DATA
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+                {/* Botão de visualizar fica fora do container dinâmico */}
+                <button title="Visualizar Detalhes" className="view-button" onClick={() => navigate(`/os/${os.id}`)}>
+                    <FaSearch />
+                </button>
+            </div>
+        );
     };
 
-    const formatLabel = (status) => {
-        if (!status) return '';
-        return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-    };
-
-    const handleViewDetails = (osId) => navigate(`/os/${osId}`);
+    const formatLabel = (status) => !status ? '' : status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     const getEquipamentoNome = (id) => equipamentos.find(e => e.id === id)?.nome || 'N/A';
-    const getEquipamentoTag = (id) => equipamentos.find(e => e.id === id)?.tag || 'N/A';
     const getLocalNome = (id) => locais.find(l => l.id === id)?.nome || 'N/A';
-    
     const orderKeys = (keys) => {
         return keys.sort((a, b) => {
-            if (a === 'Hoje') return -1;
-            if (b === 'Hoje') return 1;
-            if (a === 'Ontem') return -1;
-            if (b === 'Ontem') return 1;
+            if (a === 'Hoje') return -1; if (b === 'Hoje') return 1;
+            if (a === 'Ontem') return -1; if (b === 'Ontem') return 1;
             const dateA = a.split('/').reverse().join('-');
             const dateB = b.split('/').reverse().join('-');
             return dateB.localeCompare(dateA);
         });
     };
-
+    
     if (loading) return <div className="loading">Carregando...</div>;
-    if (error) return <div className="error">{error}</div>;
 
     return (
         <div className="dashboard-container">
             <main>
                 <h1 className="dashboard-title">Painel de Ordens de Serviço</h1>
-                
-                <form className="dashboard-filters" onSubmit={e => e.preventDefault()}>
-                    {/* Seus filtros aqui */}
-                    <div>
-                        <label>Status:</label>
-                        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-                            {STATUS_OPTIONS.map(opt => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label>Tipo Manutenção:</label>
-                        <select value={tipoManutencaoFilter} onChange={e => setTipoManutencaoFilter(e.target.value)}>
-                            {TIPO_MANUTENCAO_OPTIONS.map(opt => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label>Local:</label>
-                        <select value={localFilter} onChange={e => setLocalFilter(e.target.value)}>
-                            <option value="">Todos</option>
-                            {locais.map(l => (
-                                <option key={l.id} value={l.id}>{l.nome}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label>Nº O.S.:</label>
-                        <input type="number" value={numeroOS} onChange={e => setNumeroOS(e.target.value)} placeholder="Ex: 123" min="1" />
-                    </div>
-                    <div>
-                        <label>Data Inicial:</label>
-                        <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Data Final:</label>
-                        <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} />
-                    </div>
-                    <div className="filter-checkbox">
-                        <input type="checkbox" id="pendenteCiencia" checked={filtroPendenteCiencia} onChange={(e) => setFiltroPendenteCiencia(e.target.checked)} />
-                        <label htmlFor="pendenteCiencia">Pendente Ciência</label>
-                    </div>
-                    <div className="filter-checkbox">
-                        <input type="checkbox" id="pendenteQualidade" checked={filtroPendenteQualidade} onChange={(e) => setFiltroPendenteQualidade(e.target.checked)} />
-                        <label htmlFor="pendenteQualidade">Pendente Qualidade</label>
-                    </div>
-                </form>
-
-                <div className="os-groups-container">
+                 <div className="os-groups-container">
                     {Object.keys(groupedOrdens).length > 0 ? (
                         orderKeys(Object.keys(groupedOrdens)).map(dateKey => (
                             <div key={dateKey} className="os-date-group">
@@ -236,14 +199,11 @@ function DashboardPage() {
                                                 <th>Status</th>
                                                 <th>Nº O.S.</th>
                                                 <th>Tipo</th>
-                                                <th>Data</th>
-                                                <th>Hora</th>
                                                 <th>Equipamento</th>
-                                                <th>Local</th>
                                                 <th>Solicitante</th>
                                                 <th>Ciência Por</th>
-                                                <th>Verificado Por</th>
-                                                <th>Visualizar</th>
+                                                <th>Executado Por</th>
+                                                <th>Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -252,18 +212,11 @@ function DashboardPage() {
                                                     <td><span className={`status-pill status-${os.status?.toLowerCase()}`}>{formatLabel(os.status)}</span></td>
                                                     <td>{os.id}</td>
                                                     <td>{formatLabel(os.tipoManutencao)}</td>
-                                                    <td>{formatDate(os.dataSolicitacao)}</td>
-                                                    <td>{formatDateTime(os.dataSolicitacao)}</td>
                                                     <td>{getEquipamentoNome(os.equipamentoId)}</td>
-                                                    <td>{getLocalNome(os.localId)}</td>
                                                     <td>{os.solicitante || 'N/A'}</td>
                                                     <td>{os.liderCienciaNome || 'Pendente'}</td>
-                                                    <td>{os.verificadoPorNome || 'Pendente'}</td>
-                                                    <td>
-                                                        <button className="view-button" title="Visualizar Detalhes" onClick={() => handleViewDetails(os.id)}>
-                                                            <FaSearch />
-                                                        </button>
-                                                    </td>
+                                                    <td>{os.executadoPorNome || 'Pendente'}</td>
+                                                    <td>{renderAcoes(os)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -276,6 +229,15 @@ function DashboardPage() {
                     )}
                 </div>
             </main>
+            
+            {isModalOpen && selectedOs && (
+                <ExecucaoModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onSubmit={handleExecucaoSubmit}
+                    os={selectedOs}
+                />
+            )}
         </div>
     );
 }

@@ -299,3 +299,257 @@
 .os-date-group .table-container {
   border-top: none;
 }
+
+/* ESTILOS PARA OS BOTÕES DE AÇÃO */
+.action-button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  transition: background-color 0.2s;
+}
+
+.ciencia-button {
+  background-color: #28a745; /* Verde */
+}
+.ciencia-button:hover {
+  background-color: #218838;
+}
+
+.executar-button {
+  background-color: #ffc107; /* Amarelo */
+  color: #212529;
+}
+.executar-button:hover {
+  background-color: #e0a800;
+}
+
+.cancel-button {
+    background-color: #6c757d; /* Cinza */
+}
+.cancel-button:hover {
+    background-color: #5a6268;
+}
+
+.status-em_execucao,
+.status-em-execucao {
+  background: #fbc02d; /* Amarelo/Ouro */
+  color: #222;
+}
+
+/* ✅ ADICIONE ESTE NOVO BLOCO DE CÓDIGO ABAIXO */
+.status-ciente {
+  background-color: #007bff; /* Azul */
+  color: white;
+}
+
+.status-concluida {
+  background: #388e3c; /* Verde */
+}
+
+/* Novo Estilo da Tabela */
+.os-table-new {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+
+.os-table-new th, .os-table-new td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.os-table-new th {
+  background-color: #f7f7f7;
+  font-weight: 600;
+  color: #555;
+}
+
+.os-table-new tbody tr:nth-of-type(even) {
+  background-color: #fdfdfd;
+}
+
+/* Container principal do Dashboard */
+.dashboard-container {
+  padding: 2rem;
+  background-color: #f4f7fc;
+}
+
+.dashboard-title {
+  font-size: 1.8rem;
+  color: #34495e;
+  margin-bottom: 2rem;
+}
+
+/* Estilos da Tabela */
+.table-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.os-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.os-table th,
+.os-table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid #eef2f9;
+}
+
+.os-table th {
+  background-color: #f8f9fa;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.os-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Pílulas de Status (Pills) */
+.status-pill {
+  padding: 5px 12px;
+  border-radius: 6px; /* Menos arredondado */
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.status-aberta {
+  background-color: rgba(40, 167, 69, 0.1); /* Verde claro (fundo) */
+  color: #28a745; /* Verde escuro (texto) */
+}
+
+.status-ciente {
+  background-color: rgba(0, 123, 255, 0.1); /* Azul claro (fundo) */
+  color: #007bff; /* Azul escuro (texto) */
+}
+
+.status-em_execucao, .status-em-execucao {
+  background-color: rgba(255, 193, 7, 0.15); /* Amarelo claro (fundo) */
+  color: #b98900; /* Amarelo escuro (texto) */
+}
+
+.status-concluida {
+  background-color: rgba(108, 117, 125, 0.1); /* Cinza claro (fundo) */
+  color: #6c757d; /* Cinza escuro (texto) */
+}
+
+.status-cancelada {
+  background-color: rgba(220, 53, 69, 0.1); /* Vermelho claro (fundo) */
+  color: #dc3545; /* Vermelho escuro (texto) */
+}
+
+/* Célula de Ações */
+.actions-cell {
+  display: flex;
+  justify-content: flex-end; /* Alinha os botões à direita */
+  align-items: center;
+  gap: 12px;
+}
+
+/* Botão de Visualizar (Lupa) */
+.view-button {
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.view-button:hover {
+  color: #007bff;
+}
+
+/* Botões de Ação Circulares */
+.action-button-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.action-button-circle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.ciencia-btn {
+  background-color: #28a745; /* Verde */
+}
+
+.iniciar-btn {
+  background-color: #17a2b8; /* Azul Ciano */
+}
+
+.executar-btn {
+  background-color: #007bff; /* Azul Primário */
+}
+
+/* Estilos para o grupo de datas (HOJE, 08/07/2025, etc.) */
+.os-date-group {
+    margin-bottom: 2rem;
+}
+
+.date-header {
+    padding: 0.5rem 1rem;
+    background-color: #e9ecef;
+    color: #495057;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Garante que a tabela não tenha borda superior quando agrupada */
+.os-date-group .table-container {
+    border-radius: 0 0 8px 8px;
+}
+
+.actions-cell {
+  display: flex;
+  justify-content: flex-end; /* Alinha tudo (botões e lupa) para a direita */
+  align-items: center;
+  gap: 8px;
+}
+
+.dynamic-actions-container {
+  /* ✅ Define uma largura mínima para reservar o espaço */
+  min-width: 40px; 
+  /* Isso garante que, mesmo vazio, ele ocupe espaço e não deixe a lupa se mover */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.view-button {
+  /* (Seus estilos para o view-button continuam aqui) */
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 1.1rem;
+  cursor: pointer;
+}

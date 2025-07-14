@@ -1,10 +1,12 @@
 package com.bag.osmanager.controller;
 
 import com.bag.osmanager.dto.*;
+import com.bag.osmanager.model.Funcionario;
 import com.bag.osmanager.model.enums.Prioridade;
 import com.bag.osmanager.model.enums.StatusVerificacao;
 import com.bag.osmanager.model.enums.Turno;
 import com.bag.osmanager.service.OrdemServicoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,11 +25,7 @@ public class OrdemServicoController {
 
     private final OrdemServicoService osService;
 
-    // =========================================================
-    //           👇👇 A CORREÇÃO FINAL ESTÁ AQUI 👇👇
-    // =========================================================
     @PostMapping
-    // Permite que todos os cargos autenticados criem uma OS
     @PreAuthorize("hasAnyRole('ADMIN', 'LIDER', 'ANALISTA_CQ', 'MECANICO')")
     public ResponseEntity<OrdemServicoDTO> criarOS(@RequestBody CriarOrdemServicoDTO dto) {
         OrdemServicoDTO osCriada = osService.criarOS(dto);
@@ -51,27 +50,28 @@ public class OrdemServicoController {
     }
 
     @PutMapping("/{id}/ciencia")
-    @PreAuthorize("hasRole('LIDER')")
-    public ResponseEntity<OrdemServicoDTO> registrarCiencia(@PathVariable Long id, @RequestBody CienciaDTO dto) {
-        return ResponseEntity.ok(osService.registrarCiencia(id, dto));
+    @PreAuthorize("hasAnyRole('LIDER', 'MECANICO')")
+    public ResponseEntity<OrdemServicoDTO> registrarCiencia(@PathVariable Long id, Authentication authentication) {
+        Funcionario userDetails = (Funcionario) authentication.getPrincipal();
+        Long funcionarioId = userDetails.getId();
+        return ResponseEntity.ok(osService.registrarCiencia(id, funcionarioId));
+    }
+
+    // =========================================================
+    //         👇👇 ENDPOINT REINTRODUZIDO AQUI 👇👇
+    // =========================================================
+    @PutMapping("/{id}/iniciar-execucao")
+    @PreAuthorize("hasAnyRole('LIDER', 'MECANICO')")
+    public ResponseEntity<OrdemServicoDTO> iniciarExecucao(@PathVariable Long id) {
+        return ResponseEntity.ok(osService.iniciarExecucao(id));
     }
 
     @PutMapping("/{id}/execucao")
-    @PreAuthorize("hasRole('MECANICO')")
-    public ResponseEntity<OrdemServicoDTO> registrarExecucao(@PathVariable Long id, @RequestBody ExecucaoDTO dto) {
-        return ResponseEntity.ok(osService.registrarExecucao(id, dto));
-    }
-
-    @PutMapping("/{id}/verificacao-cq")
-    @PreAuthorize("hasRole('ANALISTA_CQ')")
-    public ResponseEntity<OrdemServicoDTO> registrarVerificacaoCQ(@PathVariable Long id, @RequestBody VerificacaoCQDTO dto) {
-        return ResponseEntity.ok(osService.registrarVerificacaoCQ(id, dto));
-    }
-
-    @PutMapping("/{id}/aprovacao")
-    @PreAuthorize("hasRole('LIDER')")
-    public ResponseEntity<OrdemServicoDTO> registrarAprovacao(@PathVariable Long id, @RequestBody AprovacaoDTO dto) {
-        return ResponseEntity.ok(osService.registrarAprovacao(id, dto));
+    @PreAuthorize("hasAnyRole('LIDER', 'MECANICO')")
+    public ResponseEntity<OrdemServicoDTO> registrarExecucao(@PathVariable Long id, @Valid @RequestBody ExecucaoDTO dto, Authentication authentication) {
+        Funcionario userDetails = (Funcionario) authentication.getPrincipal();
+        Long executanteId = userDetails.getId();
+        return ResponseEntity.ok(osService.registrarExecucao(id, executanteId, dto));
     }
 
     @DeleteMapping("/{id}")

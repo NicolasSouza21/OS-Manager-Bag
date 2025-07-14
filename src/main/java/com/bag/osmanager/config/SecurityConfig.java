@@ -23,18 +23,16 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.Collections; // Importe a classe Collections
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableMethodSecurity
+@EnableMethodSecurity // Necessário para @PreAuthorize funcionar
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
-    // ... (Seus outros beans: passwordEncoder, authenticationProvider, etc. permanecem iguais)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -52,23 +50,20 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-    
-    // =========================================================
-    //           👇👇 A CORREÇÃO ESTÁ AQUI 👇👇
-    // =========================================================
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // 1. Permite qualquer origem. O "*" é um curinga.
-        configuration.setAllowedOrigins(Collections.singletonList("*"));
-        
-        // 2. Permite todos os métodos e headers comuns.
+        // Permite requisições dos endereços do seu frontend
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:5173",
+            "http://192.168.0.11:5173" 
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Aplica a configuração a todos os endpoints
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
@@ -79,17 +74,24 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Suas regras de autorização permanecem as mesmas
+                        // Endpoints públicos
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/funcionarios/register").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/ciencia").hasRole("LIDER")
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/status").hasAnyRole("ADMIN", "MECANICO", "ANALISTA_CQ", "LIDER")
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/execucao").hasRole("MECANICO")
-                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/verificacao-cq").hasRole("ANALISTA_CQ")
+
+                        // ✅ REGRAS DE AUTORIZAÇÃO ATUALIZADAS
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/ciencia").hasAnyRole("MECANICO", "LIDER")
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/iniciar-execucao").hasAnyRole("MECANICO", "LIDER")
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/execucao").hasAnyRole("MECANICO", "LIDER")
+                        .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/finalizar").hasAnyRole("MECANICO", "LIDER")
+                        
+                        // Endpoint de aprovação (se ainda for usar)
                         .requestMatchers(HttpMethod.PUT, "/api/ordens-servico/*/aprovacao").hasRole("LIDER")
+
+                        // Outras regras específicas
                         .requestMatchers(HttpMethod.POST, "/api/funcionarios").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/equipamentos").hasAnyRole("ADMIN", "MECANICO")
+                        
+                        // Qualquer outra requisição precisa de autenticação
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

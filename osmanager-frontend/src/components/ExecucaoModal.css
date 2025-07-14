@@ -1,0 +1,95 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  }
+  
+  .modal-content h2 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+  }
+  
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  .form-group-inline {
+      display: flex;
+      gap: 1rem;
+  }
+  .form-group-inline .form-group {
+      flex: 1;
+  }
+  
+  .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+  }
+  .checkbox-group input {
+      width: auto;
+  }
+  
+  .pecas-section {
+      border-top: 1px solid #eee;
+      margin-top: 1rem;
+      padding-top: 1rem;
+  }
+  .peca-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 0.5rem;
+  }
+  .peca-item input[type="text"] {
+      flex: 3;
+  }
+  .peca-item input[type="number"] {
+      flex: 1;
+  }
+  .add-peca-btn {
+      background: none;
+      border: 1px dashed #007bff;
+      color: #007bff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+  }
+  
+  .modal-actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }

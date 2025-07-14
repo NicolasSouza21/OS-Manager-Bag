@@ -36,8 +36,8 @@ public class OrdemServicoService {
         
         LocalDateTime agora = LocalDateTime.now();
         os.setDataSolicitacao(agora);
-        os.setStatusVerificacao(StatusVerificacao.PENDENTE);
         os.setStatus(StatusOrdemServico.ABERTA);
+        os.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
 
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
@@ -49,95 +49,71 @@ public class OrdemServicoService {
             os.setLocal(local);
         }
 
-        // =========================================================
-        //          👇👇 LÓGICA ATUALIZADA AQUI 👇👇
-        // =========================================================
-        // Define a data limite apenas para manutenções CORRETIVAS.
         if (dto.getTipoManutencao() == TipoManutencao.CORRETIVA) {
             switch (dto.getPrioridade()) {
-                case ALTA:
-                    os.setDataLimite(agora.with(LocalTime.MAX)); // Urgente, para o mesmo dia.
-                    break;
-                case MEDIA:
-                    os.setDataLimite(agora.plusDays(4));
-                    break;
-                case BAIXA:
-                    os.setDataLimite(agora.plusDays(7));
-                    break;
+                case ALTA: os.setDataLimite(agora.with(LocalTime.MAX)); break;
+                case MEDIA: os.setDataLimite(agora.plusDays(4)); break;
+                case BAIXA: os.setDataLimite(agora.plusDays(7)); break;
             }
         }
-        // Para PREVENTIVA, a data limite não é calculada aqui, 
-        // pois ela virá do formulário (dataInicioProgramado, etc).
-        // O BeanUtils.copyProperties já cuidou de copiar as datas do DTO para a entidade 'os'.
-
         OrdemServico osSalva = osRepository.save(os);
         return converteParaDTO(osSalva);
     }
 
-    public Page<OrdemServicoDTO> buscarComFiltros(
-            String numeroMaquina,
-            Prioridade prioridade,
-            StatusVerificacao status,
-            Turno turno,
-            Pageable pageable) {
-        Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(
-            numeroMaquina, prioridade, status, turno
-        );
-        Page<OrdemServico> paginaDeOS = osRepository.findAll(spec, pageable);
-        return paginaDeOS.map(this::converteParaDTO);
-    }
-
-    public OrdemServicoDTO buscarPorId(Long id) {
-        return osRepository.findById(id)
-                .map(this::converteParaDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
-    }
-    
     @Transactional
-    public OrdemServicoDTO registrarCiencia(Long osId, CienciaDTO dto) {
+    public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        Funcionario lider = funcionarioRepository.findById(dto.getLiderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Líder com ID " + dto.getLiderId() + " não encontrado!"));
-        if (lider.getTipoFuncionario() != TipoFuncionario.LIDER) {
-            throw new IllegalStateException("Ação não permitida. O funcionário com ID " + dto.getLiderId() + " não é um líder.");
+
+        if (os.getStatus() != StatusOrdemServico.ABERTA) {
+            throw new IllegalStateException("Ação não permitida: a OS não está com o status 'ABERTA'.");
         }
-        os.setMecanicoCiencia(lider);
+
+        Funcionario funcionario = funcionarioRepository.findById(funcionarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Funcionário com ID " + funcionarioId + " não encontrado!"));
+        
+        if (funcionario.getTipoFuncionario() != TipoFuncionario.MECANICO && funcionario.getTipoFuncionario() != TipoFuncionario.LIDER) {
+            throw new IllegalStateException("Ação não permitida. O funcionário não tem permissão para dar ciência na OS.");
+        }
+
+        os.setMecanicoCiencia(funcionario);
         os.setDataCiencia(LocalDateTime.now());
-        os.setStatus(StatusOrdemServico.EM_EXECUCAO);
+        os.setStatus(StatusOrdemServico.CIENTE);
         
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
     }
 
     @Transactional
-    public OrdemServicoDTO registrarVerificacaoCQ(Long osId, VerificacaoCQDTO dto) {
+    public OrdemServicoDTO iniciarExecucao(Long osId) {
+        OrdemServico os = osRepository.findById(osId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+
+        if (os.getStatus() != StatusOrdemServico.CIENTE) {
+            throw new IllegalStateException("Ação não permitida: a OS precisa estar com o status 'CIENTE' para iniciar a execução.");
+        }
+        
+        os.setStatus(StatusOrdemServico.EM_EXECUCAO);
+        OrdemServico osAtualizada = osRepository.save(os);
+        return converteParaDTO(osAtualizada);
+    }
+
+    @Transactional
+    public OrdemServicoDTO registrarExecucao(Long osId, Long executanteId, ExecucaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
         
-        Funcionario analista = funcionarioRepository.findById(dto.getAnalistaId())
-                 .orElseThrow(() -> new ResourceNotFoundException("Analista de CQ com ID " + dto.getAnalistaId() + " não encontrado!"));
-        
-        os.setVerificadoPor(analista);
-        os.setStatusVerificacao(dto.getStatusVerificacao());
-
-        if (dto.getStatusVerificacao() == StatusVerificacao.APROVADO) {
-            os.setStatus(StatusOrdemServico.CONCLUIDA);
-        } else if (dto.getStatusVerificacao() == StatusVerificacao.REPROVADO) {
-            os.setStatus(StatusOrdemServico.CANCELADA);
+        if (os.getStatus() != StatusOrdemServico.EM_EXECUCAO) {
+            throw new IllegalStateException("Ação não permitida: a OS precisa estar com status 'EM EXECUÇÃO' para ser finalizada.");
         }
 
-        OrdemServico osAtualizada = osRepository.save(os);
-        return converteParaDTO(osAtualizada);
-    }
+        StatusOrdemServico statusFinal = dto.getStatusFinal();
+        if (statusFinal != StatusOrdemServico.CONCLUIDA && statusFinal != StatusOrdemServico.CANCELADA) {
+            throw new IllegalArgumentException("O status de finalização deve ser 'CONCLUIDA' ou 'CANCELADA'.");
+        }
 
-    @Transactional
-    public OrdemServicoDTO registrarExecucao(Long osId, ExecucaoDTO dto) {
-        OrdemServico os = osRepository.findById(osId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        
-        Funcionario executante = funcionarioRepository.findById(dto.getMecanicoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Mecânico executante com ID " + dto.getMecanicoId() + " não encontrado!"));
+        Funcionario executante = funcionarioRepository.findById(executanteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Mecânico executante com ID " + executanteId + " não encontrado!"));
 
         os.setExecutadoPor(executante);
         os.setDataExecucao(LocalDateTime.now());
@@ -146,6 +122,8 @@ public class OrdemServicoService {
         os.setInicio(dto.getInicio());
         os.setTermino(dto.getTermino());
         os.setMaquinaParada(dto.getMaquinaParada());
+        os.setStatus(statusFinal);
+        os.setStatusVerificacao(statusFinal == StatusOrdemServico.CONCLUIDA ? StatusVerificacao.APROVADO : StatusVerificacao.REPROVADO);
 
         if (Boolean.TRUE.equals(dto.getTrocaPecas()) && dto.getPecasSubstituidas() != null) {
             if (os.getPecasSubstituidas() == null) {
@@ -165,18 +143,16 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
-    @Transactional
-    public OrdemServicoDTO registrarAprovacao(Long osId, AprovacaoDTO dto) {
-        OrdemServico os = osRepository.findById(osId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        
-        Funcionario lider = funcionarioRepository.findById(dto.getLiderId())
-                 .orElseThrow(() -> new ResourceNotFoundException("Líder com ID " + dto.getLiderId() + " não encontrado!"));
-        
-        os.setAprovadoPor(lider);
-        os.setDataAprovacao(LocalDateTime.now());
-        OrdemServico osAtualizada = osRepository.save(os);
-        return converteParaDTO(osAtualizada);
+    public Page<OrdemServicoDTO> buscarComFiltros(String numeroMaquina, Prioridade prioridade, StatusVerificacao status, Turno turno, Pageable pageable) {
+        Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(numeroMaquina, prioridade, status, turno);
+        Page<OrdemServico> paginaDeOS = osRepository.findAll(spec, pageable);
+        return paginaDeOS.map(this::converteParaDTO);
+    }
+
+    public OrdemServicoDTO buscarPorId(Long id) {
+        return osRepository.findById(id)
+                .map(this::converteParaDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
     }
 
     @Transactional
@@ -186,6 +162,7 @@ public class OrdemServicoService {
         osRepository.delete(os);
     }
     
+    // ✅ MÉTODO AGORA COMPLETO E CORRETO
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto);
@@ -194,29 +171,24 @@ public class OrdemServicoService {
             dto.setLiderCienciaId(os.getMecanicoCiencia().getId());
             dto.setLiderCienciaNome(os.getMecanicoCiencia().getNome());
         }
-
         if (os.getExecutadoPor() != null) {
             dto.setExecutadoPorId(os.getExecutadoPor().getId());
             dto.setExecutadoPorNome(os.getExecutadoPor().getNome());
         }
-
         if (os.getVerificadoPor() != null) {
             dto.setVerificadoPorId(os.getVerificadoPor().getId());
             dto.setVerificadoPorNome(os.getVerificadoPor().getNome());
         }
-
         if (os.getAprovadoPor() != null) {
             dto.setAprovadoPorId(os.getAprovadoPor().getId());
             dto.setAprovadoPorNome(os.getAprovadoPor().getNome());
         }
-        
         if (os.getEquipamento() != null) {
             dto.setEquipamentoId(os.getEquipamento().getId());
         }
         if (os.getLocal() != null) {
             dto.setLocalId(os.getLocal().getId());
         }
-
         if (os.getPecasSubstituidas() != null) {
             dto.setPecasSubstituidas(os.getPecasSubstituidas().stream().map(peca -> {
                 PecaSubstituidaDTO pecaDTO = new PecaSubstituidaDTO();
@@ -224,7 +196,6 @@ public class OrdemServicoService {
                 return pecaDTO;
             }).collect(Collectors.toList()));
         }
-        
         return dto;
     }
 }
