@@ -2,6 +2,7 @@ package com.bag.osmanager.dto;
 
 import com.bag.osmanager.model.enums.*;
 import lombok.Data;
+import java.time.LocalDate; // ✅ IMPORT ADICIONADO
 
 @Data
 public class CriarOrdemServicoDTO {
@@ -12,5 +13,10 @@ public class CriarOrdemServicoDTO {
     private TipoManutencao tipoManutencao;
     private String descricaoProblema;
     private String solicitante;
-    // status, datas e outros campos são definidos pelo backend no momento da criação
+    
+    // =========================================================
+    //         👇👇 CAMPOS FALTANTES ADICIONADOS AQUI 👇👇
+    // =========================================================
+    private LocalDate dataInicioPreventiva;
+    private LocalDate dataFimPreventiva;
 }

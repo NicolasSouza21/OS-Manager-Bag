@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrdemServico, getEquipamentos, getLocais } from '../services/apiService';
-import './CriarOsPage.css'; // Vamos precisar adicionar estilos novos aqui
+import './CriarOsPage.css';
 
-// Função auxiliar movida para fora do componente para melhor organização
 const formatDateForInput = (date) => {
     if (!date) return '';
     const d = new Date(date);
-    // Adiciona o fuso horário para evitar problemas de data "um dia antes"
     d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
     let month = '' + (d.getMonth() + 1);
     let day = '' + d.getDate();
@@ -22,7 +20,6 @@ const formatDateForInput = (date) => {
 function CriarOsPage() {
     const navigate = useNavigate();
 
-    // --- Estados do Formulário ---
     const [tipoManutencao, setTipoManutencao] = useState('CORRETIVA');
     const [prioridade, setPrioridade] = useState('MEDIA');
     const [solicitante, setSolicitante] = useState('');
@@ -68,6 +65,10 @@ function CriarOsPage() {
         }
 
         setSubmitting(true);
+        
+        // =========================================================
+        //         👇👇 CORREÇÃO NOS NOMES DOS CAMPOS 👇👇
+        // =========================================================
         const dadosParaApi = {
             tipoManutencao,
             equipamentoId: Number(equipamentoId),
@@ -77,8 +78,8 @@ function CriarOsPage() {
             descricaoProblema,
             observacao,
             ...(tipoManutencao === 'PREVENTIVA' && {
-                dataInicioProgramado: dataInicioPreventiva,
-                dataFimProgramado: dataFimPreventiva
+                dataInicioPreventiva, // Nome correto
+                dataFimPreventiva   // Nome correto
             })
         };
 
@@ -111,15 +112,12 @@ function CriarOsPage() {
                 <main className="os-form-body">
                     <div className="form-section-title">SOLICITAÇÃO</div>
                     
-                    {/* ========================================================= */}
-                    {/* 👇👇 SELETOR ATUALIZADO AQUI 👇👇             */}
-                    {/* ========================================================= */}
                     <div className="form-row">
                         <div className="input-group full-width">
                             <label>TIPO DE MANUTENÇÃO:</label>
                             <div className="maintenance-type-selector">
                                 <button
-                                    type="button" // Importante para não submeter o form
+                                    type="button"
                                     className={`maintenance-btn ${tipoManutencao === 'CORRETIVA' ? 'active' : ''}`}
                                     onClick={() => setTipoManutencao('CORRETIVA')}
                                 >
@@ -136,7 +134,6 @@ function CriarOsPage() {
                         </div>
                     </div>
                     
-                    {/* Campos de data que aparecem apenas para PREVENTIVA */}
                     {tipoManutencao === 'PREVENTIVA' && (
                         <div className="form-row preventiva-fields">
                             <div className="input-group">

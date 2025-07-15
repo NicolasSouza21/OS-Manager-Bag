@@ -552,4 +552,70 @@
   color: #6c757d;
   font-size: 1.1rem;
   cursor: pointer;
+
+/* --- ESTILOS PARA ALINHAMENTO DAS AÇÕES --- */
+
+.actions-cell {
+    display: flex;
+    justify-content: flex-end; /* Alinha todo o conteúdo (botões) para a direita */
+    align-items: center;
+    gap: 8px; /* Espaço entre o grupo de botões e a lupa */
+}
+
+/* O container que reserva o espaço para os botões de ação */
+.dynamic-actions-container {
+    /* Define uma largura mínima para que ele sempre ocupe espaço */
+    min-width: 40px; 
+    display: flex;
+    justify-content: center; /* Centraliza o botão dentro do espaço */
+}
+
+/* Estilo para o botão de visualizar */
+.view-button {
+    background: none;
+    border: none;
+    color: #6c757d;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.2s;
+}
+
+.view-button:hover {
+  color: #343a40;
+}
+
+
+/* Estilos para os botões de ação circulares */
+.action-button-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.action-button-circle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.ciencia-btn {
+  background-color: #28a745; /* Verde */
+}
+
+.iniciar-btn {
+  background-color: #17a2b8; /* Azul Ciano */
+}
+
+.executar-btn {
+  background-color: #007bff; /* Azul Primário */
+}
+
 }
