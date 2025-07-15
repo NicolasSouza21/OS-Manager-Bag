@@ -46,7 +46,7 @@ function LoginPage() {
     return (
         <div className="login-container">
             <form className="login-form" onSubmit={handleSubmit}>
-                <h2>Entrar no Sistema</h2>
+                <h2>Gerenciador de Ordem de Serviço</h2>
                 
                 {error && <p className="error-message">{error}</p>}
                 
