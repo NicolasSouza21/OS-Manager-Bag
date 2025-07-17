@@ -1,15 +1,11 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { logout } from '../services/apiService';
-import './Navbar.css';
+import './Navbar.css'; // O CSS também será atualizado
 
 function Navbar() {
     const navigate = useNavigate();
-
-    // 1. Lemos o cargo do usuário que foi salvo no localStorage
     const userRole = localStorage.getItem('userRole');
-
-    // 2. Criamos as variáveis booleanas para as verificações de permissão
     const isAdmin = userRole === 'ADMIN';
     const isMecanico = userRole === 'MECANICO';
 
@@ -27,8 +23,23 @@ function Navbar() {
                 <li>
                     <Link to="/dashboard" className="nav-link">Dashboard</Link>
                 </li>
-                <li>
-                    <Link to="/criar-os" className="nav-link">Criar OS</Link>
+
+                {/* ✅ NOVO: Dropdown para "Criar OS" */}
+                <li className="nav-item dropdown">
+                    {/* Usamos 'a' em vez de 'Link' para o item principal para não navegar */}
+                    <a href="#" className="nav-link dropdown-toggle">Criar OS</a>
+                    <ul className="dropdown-menu">
+                        <li>
+                            <Link to="/criar-os/corretiva" className="dropdown-item">
+                                🔧 OS Corretiva
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/criar-os/preventiva" className="dropdown-item">
+                                🗓️ OS Preventiva
+                            </Link>
+                        </li>
+                    </ul>
                 </li>
 
                 {/* Mostra o link se o utilizador for ADMIN */}
@@ -40,7 +51,7 @@ function Navbar() {
                     </li>
                 )}
 
-                {/* --- 👇👇 LINK CORRIGIDO AQUI 👇👇 --- */}
+                {/* Link para Gerenciar Equipamentos */}
                 {(isAdmin || isMecanico) && (
                     <li>
                         <Link to="/admin/equipamentos" className="nav-link">
@@ -48,7 +59,6 @@ function Navbar() {
                         </Link>
                     </li>
                 )}
-
             </ul>
             <div className="navbar-actions">
                 <button onClick={handleLogout} className="logout-button">

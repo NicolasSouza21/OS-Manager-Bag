@@ -1,0 +1,51 @@
+/* Local: osmanager-frontend/src/pages/EscolherTipoOsPage.css */
+.escolher-os-container {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+.escolher-os-container h1 {
+    margin-bottom: 0.5rem;
+}
+
+.escolher-os-container > p {
+    margin-bottom: 3rem;
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+
+.options-container {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.option-card {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-decoration: none;
+    color: inherit;
+    width: 320px;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.option-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.option-card h2 {
+    margin-top: 0;
+    color: #007bff;
+}
+
+.option-card p {
+    color: #495057;
+}

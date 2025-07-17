@@ -129,7 +129,7 @@ function DashboardPage() {
         if (token) {
             const decoded = jwtDecode(token);
             setUserRoles(decoded.roles || []);
-            setUserName(decoded.sub || ''); // ou use decoded.name se disponível
+            setUserName(decoded.nome || decoded.name || decoded.sub || ''); // <-- Corrigido aqui
         }
         fetchAllData();
     }, []);
@@ -175,19 +175,16 @@ function DashboardPage() {
         if (showMinhasSolicitacoes && userName) {
             filtradas = filtradas.filter(os => {
                 if (!os.solicitante) return false;
-                // Checa se userName está contido no nome ou vice-versa
-                return (
-                    os.solicitante.toLowerCase().includes(userName.toLowerCase()) ||
-                    userName.toLowerCase().includes(os.solicitante.toLowerCase())
-                );
+                // Igualdade exata, ignorando caixa e espaços
+                return os.solicitante.trim().toLowerCase() === userName.trim().toLowerCase();
             });
         }
 
         // 👨‍🔧 Minhas Tarefas
         if (showMinhasTarefas && userName) {
             filtradas = filtradas.filter(os =>
-                (os.liderCienciaNome && os.liderCienciaNome.toLowerCase() === userName.toLowerCase()) ||
-                (os.executadoPorNome && os.executadoPorNome.toLowerCase() === userName.toLowerCase())
+                (os.liderCienciaNome && os.liderCienciaNome.trim().toLowerCase() === userName.trim().toLowerCase()) ||
+                (os.executadoPorNome && os.executadoPorNome.trim().toLowerCase() === userName.trim().toLowerCase())
             );
         }
 
