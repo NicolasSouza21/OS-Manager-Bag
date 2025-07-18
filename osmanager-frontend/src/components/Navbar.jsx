@@ -1,14 +1,16 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { logout } from '../services/apiService';
-import './Navbar.css'; // O CSS também será atualizado
+import './Navbar.css';
 
 function Navbar() {
     const navigate = useNavigate();
     const userRole = localStorage.getItem('userRole');
+    
+    // ✅ Adicionando verificações para os novos cargos de gestão
     const isAdmin = userRole === 'ADMIN';
-    const isMecanico = userRole === 'MECANICO';
-
+    const isLider = userRole === 'LIDER';
+    const isQualidade = userRole === 'ANALISTA_QC'
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -24,9 +26,8 @@ function Navbar() {
                     <Link to="/dashboard" className="nav-link">Dashboard</Link>
                 </li>
 
-                {/* ✅ NOVO: Dropdown para "Criar OS" */}
+                {/* Dropdown para "Criar OS" - Mantido como está */}
                 <li className="nav-item dropdown">
-                    {/* Usamos 'a' em vez de 'Link' para o item principal para não navegar */}
                     <a href="#" className="nav-link dropdown-toggle">Criar OS</a>
                     <ul className="dropdown-menu">
                         <li>
@@ -42,7 +43,7 @@ function Navbar() {
                     </ul>
                 </li>
 
-                {/* Mostra o link se o utilizador for ADMIN */}
+                {/* Link "Gerenciar Funcionários" - Apenas para ADMIN */}
                 {isAdmin && (
                     <li>
                         <Link to="/admin/funcionarios" className="nav-link admin-link">
@@ -51,8 +52,8 @@ function Navbar() {
                     </li>
                 )}
 
-                {/* Link para Gerenciar Equipamentos */}
-                {(isAdmin || isMecanico) && (
+                {/* ✅Admin, Líder e Qualidade podem gerenciar equipamentos */}
+                {(isAdmin || isLider || isQualidade) && (
                     <li>
                         <Link to="/admin/equipamentos" className="nav-link">
                             Gerenciar Equipamentos

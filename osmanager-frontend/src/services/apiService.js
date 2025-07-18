@@ -71,6 +71,12 @@ export const createEquipamento = (equipamentoData) => api.post('/equipamentos', 
 export const updateEquipamento = (id, equipamentoData) => api.put(`/equipamentos/${id}`, equipamentoData);
 export const deleteEquipamento = (id) => api.delete(`/equipamentos/${id}`);
 
+// Adicione esta função dentro do seu arquivo apiService.js
+
+export const verificarOS = async (osId, dadosVerificacao) => {
+  return api.post(`/ordens-servico/${osId}/verificar`, dadosVerificacao);
+};
+
 
 /** LOCAIS */
 export const getLocais = () => api.get('/locais');

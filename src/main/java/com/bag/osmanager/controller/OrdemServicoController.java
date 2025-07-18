@@ -26,8 +26,10 @@ public class OrdemServicoController {
     private final OrdemServicoService osService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIDER', 'ANALISTA_CQ', 'MECANICO')")
-    public ResponseEntity<OrdemServicoDTO> criarOS(@RequestBody CriarOrdemServicoDTO dto) {
+    // A anotação @PreAuthorize usa "ROLE_ADMIN", mas o SecurityConfig usa "ADMIN". 
+    // Vamos manter a consistência e usar a anotação apenas onde for estritamente necessário.
+    // As permissões principais ficarão no SecurityConfig.
+    public ResponseEntity<OrdemServicoDTO> criarOS(@RequestBody @Valid CriarOrdemServicoDTO dto) {
         OrdemServicoDTO osCriada = osService.criarOS(dto);
         return new ResponseEntity<>(osCriada, HttpStatus.CREATED);
     }
@@ -50,32 +52,35 @@ public class OrdemServicoController {
     }
 
     @PutMapping("/{id}/ciencia")
-    @PreAuthorize("hasAnyRole('LIDER', 'MECANICO')")
     public ResponseEntity<OrdemServicoDTO> registrarCiencia(@PathVariable Long id, Authentication authentication) {
         Funcionario userDetails = (Funcionario) authentication.getPrincipal();
         Long funcionarioId = userDetails.getId();
         return ResponseEntity.ok(osService.registrarCiencia(id, funcionarioId));
     }
 
-    // =========================================================
-    //         👇👇 ENDPOINT REINTRODUZIDO AQUI 👇👇
-    // =========================================================
     @PutMapping("/{id}/iniciar-execucao")
-    @PreAuthorize("hasAnyRole('LIDER', 'MECANICO')")
     public ResponseEntity<OrdemServicoDTO> iniciarExecucao(@PathVariable Long id) {
         return ResponseEntity.ok(osService.iniciarExecucao(id));
     }
 
     @PutMapping("/{id}/execucao")
-    @PreAuthorize("hasAnyRole('LIDER', 'MECANICO')")
     public ResponseEntity<OrdemServicoDTO> registrarExecucao(@PathVariable Long id, @Valid @RequestBody ExecucaoDTO dto, Authentication authentication) {
         Funcionario userDetails = (Funcionario) authentication.getPrincipal();
         Long executanteId = userDetails.getId();
         return ResponseEntity.ok(osService.registrarExecucao(id, executanteId, dto));
     }
 
+    // ✅ NOVO ENDPOINT PARA VERIFICAÇÃO DO ENCARREGADO
+    @PostMapping("/{id}/verificar")
+    public ResponseEntity<OrdemServicoDTO> verificarOS(@PathVariable Long id, @Valid @RequestBody VerificacaoDTO dto, Authentication authentication) {
+        Funcionario userDetails = (Funcionario) authentication.getPrincipal();
+        Long verificadorId = userDetails.getId();
+        OrdemServicoDTO osVerificada = osService.verificarOS(id, verificadorId, dto);
+        return ResponseEntity.ok(osVerificada);
+    }
+
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIDER')")
+    @PreAuthorize("hasAuthority('ADMIN')") // Apenas Admins podem deletar
     public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
         osService.deletarOrdemServico(id);
         return ResponseEntity.noContent().build();

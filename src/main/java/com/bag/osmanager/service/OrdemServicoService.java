@@ -29,6 +29,7 @@ public class OrdemServicoService {
     private final EquipamentoRepository equipamentoRepository;
     private final LocalRepository localRepository;
 
+    // --- O método criarOS permanece o mesmo ---
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
@@ -37,7 +38,7 @@ public class OrdemServicoService {
         LocalDateTime agora = LocalDateTime.now();
         os.setDataSolicitacao(agora);
         os.setStatus(StatusOrdemServico.ABERTA);
-        os.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
+        os.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL); // Por padrão, não se aplica
 
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
@@ -60,6 +61,7 @@ public class OrdemServicoService {
         return converteParaDTO(osSalva);
     }
 
+    // --- O método registrarCiencia permanece o mesmo ---
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
         OrdemServico os = osRepository.findById(osId)
@@ -84,6 +86,7 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
+    // --- O método iniciarExecucao permanece o mesmo ---
     @Transactional
     public OrdemServicoDTO iniciarExecucao(Long osId) {
         OrdemServico os = osRepository.findById(osId)
@@ -98,6 +101,7 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
+    // --- ✅ MÉTODO registrarExecucao MODIFICADO ---
     @Transactional
     public OrdemServicoDTO registrarExecucao(Long osId, Long executanteId, ExecucaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
@@ -107,14 +111,10 @@ public class OrdemServicoService {
             throw new IllegalStateException("Ação não permitida: a OS precisa estar com status 'EM EXECUÇÃO' para ser finalizada.");
         }
 
-        StatusOrdemServico statusFinal = dto.getStatusFinal();
-        if (statusFinal != StatusOrdemServico.CONCLUIDA && statusFinal != StatusOrdemServico.CANCELADA) {
-            throw new IllegalArgumentException("O status de finalização deve ser 'CONCLUIDA' ou 'CANCELADA'.");
-        }
-
         Funcionario executante = funcionarioRepository.findById(executanteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mecânico executante com ID " + executanteId + " não encontrado!"));
 
+        // Preenche os dados da execução
         os.setExecutadoPor(executante);
         os.setDataExecucao(LocalDateTime.now());
         os.setAcaoRealizada(dto.getAcaoRealizada());
@@ -122,8 +122,17 @@ public class OrdemServicoService {
         os.setInicio(dto.getInicio());
         os.setTermino(dto.getTermino());
         os.setMaquinaParada(dto.getMaquinaParada());
-        os.setStatus(statusFinal);
-        os.setStatusVerificacao(statusFinal == StatusOrdemServico.CONCLUIDA ? StatusVerificacao.APROVADO : StatusVerificacao.REPROVADO);
+
+        // Lógica condicional para o status final
+        if (os.getTipoManutencao() == TipoManutencao.PREVENTIVA && dto.getStatusFinal() == StatusOrdemServico.CONCLUIDA) {
+            // Se for PREVENTIVA, ela vai para verificação.
+            os.setStatus(StatusOrdemServico.AGUARDANDO_VERIFICACAO);
+            os.setStatusVerificacao(StatusVerificacao.PENDENTE);
+        } else {
+            // Se for CORRETIVA ou CANCELADA, o fluxo é direto.
+            os.setStatus(dto.getStatusFinal());
+            os.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL); // Corretivas ou canceladas não passam por verificação.
+        }
 
         if (Boolean.TRUE.equals(dto.getTrocaPecas()) && dto.getPecasSubstituidas() != null) {
             if (os.getPecasSubstituidas() == null) {
@@ -142,7 +151,43 @@ public class OrdemServicoService {
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
     }
+    
+    // ✅ NOVO MÉTODO PARA O ENCARREGADO VERIFICAR A OS PREVENTIVA
+    @Transactional
+    public OrdemServicoDTO verificarOS(Long osId, Long verificadorId, VerificacaoDTO dto) {
+        OrdemServico os = osRepository.findById(osId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        
+        if (os.getStatus() != StatusOrdemServico.AGUARDANDO_VERIFICACAO) {
+            throw new IllegalStateException("A OS não está aguardando verificação.");
+        }
 
+        Funcionario verificador = funcionarioRepository.findById(verificadorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Funcionário com ID " + verificadorId + " não encontrado!"));
+        
+        // Regra de negócio: Apenas Encarregados podem verificar.
+        if (verificador.getTipoFuncionario() != TipoFuncionario.ENCARREGADO) {
+            throw new IllegalStateException("Ação não permitida. Apenas ENCARREGADOS podem realizar a verificação.");
+        }
+
+        os.setVerificadoPor(verificador);
+        os.setDataVerificacao(LocalDateTime.now());
+        os.setComentarioVerificacao(dto.getComentarioVerificacao());
+
+        if (dto.getAprovado()) {
+            os.setStatus(StatusOrdemServico.CONCLUIDA);
+            os.setStatusVerificacao(StatusVerificacao.APROVADO);
+        } else {
+            // Se reprovado, a OS volta para o mecânico.
+            os.setStatus(StatusOrdemServico.EM_EXECUCAO); 
+            os.setStatusVerificacao(StatusVerificacao.REPROVADO);
+        }
+
+        OrdemServico osAtualizada = osRepository.save(os);
+        return converteParaDTO(osAtualizada);
+    }
+
+    // --- Os métodos de busca, deleção e conversão permanecem os mesmos ---
     public Page<OrdemServicoDTO> buscarComFiltros(String numeroMaquina, Prioridade prioridade, StatusVerificacao status, Turno turno, Pageable pageable) {
         Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(numeroMaquina, prioridade, status, turno);
         Page<OrdemServico> paginaDeOS = osRepository.findAll(spec, pageable);
@@ -162,7 +207,6 @@ public class OrdemServicoService {
         osRepository.delete(os);
     }
     
-    // ✅ MÉTODO AGORA COMPLETO E CORRETO
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto);

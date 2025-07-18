@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +24,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -33,7 +35,6 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
-    // ... (outros beans como passwordEncoder, etc., continuam iguais)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -52,20 +53,18 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // ✅ NOVO ENDEREÇO ADICIONADO AQUI
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173",
             "http://192.168.0.11:5173",
-            "http://192.168.56.1:5173" // <-- Adicionado para permitir a nova origem
+            "http://192.168.56.1:5173"
         ));
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -76,16 +75,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            
+            .authorizeHttpRequests(authorize -> authorize
+                // 1. Rotas Públicas
+                .requestMatchers("/api/auth/**", "/error").permitAll()
+
+                // 2. Gerenciamento de Funcionários
+                .requestMatchers("/api/funcionarios/**").hasAuthority("ADMIN")
+
+                // ✅ NOVA REGRA DE SEGURANÇA ADICIONADA AQUI
+                // 3. Verificação de OS: Apenas Encarregado e Admin
+                .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar").hasAnyAuthority("ADMIN", "ENCARREGADO")
+
+                // 4. Gerenciamento de OS
+                .requestMatchers("/api/ordens-servico/aprovar/**", "/api/ordens-servico/finalizar/**").hasAnyAuthority("ADMIN", "LIDER", "ENCARREGADO")
+                .requestMatchers("/api/ordens-servico/cq/**").hasAnyAuthority("ADMIN", "LIDER", "ENCARREGADO", "ANALISTA_CQ")
+
+                // 5. Gerenciamento de Equipamentos e Locais
+                .requestMatchers(HttpMethod.GET, "/api/equipamentos/**", "/api/locais/**").authenticated()
+                .requestMatchers("/api/equipamentos/**", "/api/locais/**").hasAnyAuthority("ADMIN", "LIDER", "ENCARREGADO")
+                
+                // 6. Regra final
+                .anyRequest().authenticated()
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -209,3 +209,28 @@
 .error-details {
   color: #dc3545;
 }
+
+.verification-panel {
+  border: 1px solid #ffc107; /* Borda amarela para destaque */
+  background-color: #fffbeb;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+}
+
+.verification-panel header h2 {
+  color: #b38600;
+}
+
+.verification-choice {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+  font-size: 1.1rem;
+}
+
+.verification-choice label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}

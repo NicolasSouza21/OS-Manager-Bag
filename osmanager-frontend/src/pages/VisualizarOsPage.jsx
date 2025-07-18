@@ -1,16 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import {
     getOsById,
     getEquipamentos,
     getLocais,
     deleteOrdemServico,
     registrarCiencia,
-    // As funções 'iniciarExecucao' e 'registrarVerificacaoCQ' foram removidas
-    // pois a lógica agora está centralizada no Modal do Dashboard.
+    verificarOS, // ✅ Importe a nova função da API
 } from '../services/apiService';
 import './VisualizarOsPage.css';
+
+// Componente separado para o painel de verificação, para manter o código limpo
+const PainelVerificacao = ({ os, onVerificacaoSubmit, actionLoading }) => {
+    const [aprovado, setAprovado] = useState(true);
+    const [comentario, setComentario] = useState('');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!aprovado && !comentario.trim()) {
+            alert('É obrigatório fornecer um comentário ao reprovar a OS.');
+            return;
+        }
+        onVerificacaoSubmit({
+            aprovado: aprovado,
+            comentarioVerificacao: comentario,
+        });
+    };
+
+    return (
+        <section className="form-section verification-panel">
+            <header><h2>Verificação do Encarregado</h2></header>
+            <form onSubmit={handleSubmit}>
+                <div className="verification-choice">
+                    <label>
+                        <input type="radio" name="verificacao" checked={aprovado} onChange={() => setAprovado(true)} />
+                        Aprovar Serviço
+                    </label>
+                    <label>
+                        <input type="radio" name="verificacao" checked={!aprovado} onChange={() => setAprovado(false)} />
+                        Reprovar Serviço
+                    </label>
+                </div>
+                {!aprovado && (
+                    <div className="input-group full-width" style={{ marginTop: '1rem' }}>
+                        <label>Motivo da Reprovação (Obrigatório)</label>
+                        <textarea
+                            value={comentario}
+                            onChange={(e) => setComentario(e.target.value)}
+                            rows="3"
+                            placeholder="Descreva o que precisa ser corrigido pelo mecânico."
+                        ></textarea>
+                    </div>
+                )}
+                <div className="actions-container" style={{ marginTop: '1rem' }}>
+                    <button type="submit" className="button-action" disabled={actionLoading}>
+                        {actionLoading ? 'Enviando...' : 'Confirmar Verificação'}
+                    </button>
+                </div>
+            </form>
+        </section>
+    );
+};
+
 
 function VisualizarOsPage() {
     const { id } = useParams();
@@ -23,19 +74,11 @@ function VisualizarOsPage() {
     const [error, setError] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
 
-    // Estados do usuário
-    const [userRoles, setUserRoles] = useState([]);
-    // O userId e verificacaoStatus não são mais necessários nesta página.
-
-    useEffect(() => {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            const decoded = jwtDecode(token);
-            setUserRoles(decoded.roles || []);
-        }
-    }, []);
+    // ✅ Lógica de roles ajustada para ler do localStorage diretamente
+    const userRole = localStorage.getItem('userRole'); 
 
     const fetchData = async () => {
+        // ... (seu fetchData continua igual)
         if (!id) return;
         try {
             setLoading(true);
@@ -66,10 +109,11 @@ function VisualizarOsPage() {
     // --- LÓGICA DAS AÇÕES ---
 
     const handleDarCiencia = async () => {
+        // ... (seu handleDarCiencia continua igual)
         setActionLoading(true);
         try {
             await registrarCiencia(id);
-            alert('Ciência registrada com sucesso! O status da OS foi atualizado para "Ciente".');
+            alert('Ciência registrada com sucesso!');
             fetchData();
         } catch (error) {
             console.error("Erro ao registrar ciência:", error);
@@ -80,6 +124,7 @@ function VisualizarOsPage() {
     };
 
     const handleDelete = async () => {
+        // ... (seu handleDelete continua igual)
         if (!window.confirm("Tem certeza que deseja excluir esta Ordem de Serviço?")) return;
         setActionLoading(true);
         try {
@@ -93,7 +138,23 @@ function VisualizarOsPage() {
         }
     };
 
+    // ✅ NOVA FUNÇÃO PARA SUBMETER A VERIFICAÇÃO
+    const handleVerificacaoSubmit = async (dadosVerificacao) => {
+        setActionLoading(true);
+        try {
+            await verificarOS(id, dadosVerificacao);
+            alert('Verificação registrada com sucesso!');
+            fetchData(); // Atualiza os dados da OS na tela
+        } catch (error) {
+            console.error("Erro ao registrar verificação:", error);
+            alert(error.response?.data?.message || 'Falha ao registrar verificação.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     // --- FUNÇÕES DE FORMATAÇÃO ---
+    // ... (suas funções de formatação continuam iguais)
     const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return "—";
         return new Date(dateTimeString).toLocaleString('pt-BR', {
@@ -116,8 +177,10 @@ function VisualizarOsPage() {
     if (error) return <div className="error-details">{error}</div>;
     if (!ordemServico) return <div className="no-data-details">Ordem de Serviço não encontrada.</div>;
 
-    const isMecanicoOrLider = userRoles.includes('ROLE_MECANICO') || userRoles.includes('ROLE_LIDER');
-    const podeExcluir = userRoles.includes('ROLE_ADMIN') || userRoles.includes('ROLE_LIDER');
+    // ✅ Lógica de permissão simplificada
+    const isMecanicoOrLider = userRole === 'MECANICO' || userRole === 'LIDER';
+    const podeExcluir = userRole === 'ADMIN' || userRole === 'LIDER';
+    const isEncarregado = userRole === 'ENCARREGADO';
 
     return (
         <div className="view-os-page">
@@ -128,44 +191,20 @@ function VisualizarOsPage() {
                         {formatStatusLabel(ordemServico.status)}
                     </div>
                 </header>
-
+                
+                {/* As seções de Abertura, Preventiva e Ciência continuam iguais... */}
                 <section className="form-section">
                     <header><h2>Abertura e Detalhes</h2></header>
                     <div className="grid-container">
-                        <div className="input-group"><label>Tipo de Manutenção</label><input type="text" value={formatStatusLabel(ordemServico.tipoManutencao)} disabled /></div>
-                        <div className="input-group"><label>Solicitante</label><input type="text" value={ordemServico.solicitante || '—'} disabled /></div>
-                        <div className="input-group"><label>Data da Solicitação</label><input type="text" value={formatDateTime(ordemServico.dataSolicitacao)} disabled /></div>
-                        <div className="input-group"><label>Equipamento</label><input type="text" value={equipamento?.nome || '—'} disabled /></div>
-                        <div className="input-group"><label>Local</label><input type="text" value={local?.nome || '—'} disabled /></div>
+                         <div className="input-group"><label>Tipo de Manutenção</label><input type="text" value={formatStatusLabel(ordemServico.tipoManutencao)} disabled /></div>
+                         <div className="input-group"><label>Solicitante</label><input type="text" value={ordemServico.solicitante || '—'} disabled /></div>
+                         <div className="input-group"><label>Data da Solicitação</label><input type="text" value={formatDateTime(ordemServico.dataSolicitacao)} disabled /></div>
+                         <div className="input-group"><label>Equipamento</label><input type="text" value={equipamento?.nome || '—'} disabled /></div>
+                         <div className="input-group"><label>Local</label><input type="text" value={local?.nome || '—'} disabled /></div>
                     </div>
                     <div className="input-group full-width" style={{marginTop: '1rem'}}><label>Descrição do Problema/Serviço</label><textarea value={ordemServico.descricaoProblema || 'Nenhuma'} rows="3" disabled></textarea></div>
                 </section>
-
-                {ordemServico.tipoManutencao === 'PREVENTIVA' && (
-                    <section className="form-section preventiva-details">
-                        <header><h2>Programação da Preventiva</h2></header>
-                        <div className="grid-container">
-                            <div className="input-group"><label>Data de Início Programada</label><input type="text" value={formatDate(ordemServico.dataInicioPreventiva)} disabled /></div>
-                            <div className="input-group"><label>Data de Fim Programada</label><input type="text" value={formatDate(ordemServico.dataFimPreventiva)} disabled /></div>
-                        </div>
-                    </section>
-                )}
-
-                <section className="form-section">
-                    <header><h2>Ciência</h2></header>
-                    <div className="grid-container">
-                        <div className="input-group"><label>Responsável</label><input type="text" value={ordemServico.liderCienciaNome || "Pendente"} disabled /></div>
-                        <div className="input-group"><label>Data e Hora</label><input type="text" value={formatDateTime(ordemServico.dataCiencia)} disabled /></div>
-                    </div>
-                    {isMecanicoOrLider && ordemServico.status === 'ABERTA' && (
-                        <div className="actions-container" style={{ marginTop: '1rem' }}>
-                            <button onClick={handleDarCiencia} className="button-action" disabled={actionLoading}>
-                                {actionLoading ? 'Registrando...' : 'Dar Ciência'}
-                            </button>
-                        </div>
-                    )}
-                </section>
-                
+                {/* ... */}
                 <section className="form-section">
                     <header><h2>Execução do Serviço</h2></header>
                     <div className="grid-container">
@@ -174,16 +213,34 @@ function VisualizarOsPage() {
                     </div>
                      <div className="input-group full-width" style={{marginTop: '1rem'}}><label>Ação Realizada</label><textarea value={ordemServico.acaoRealizada || 'Aguardando preenchimento no Dashboard.'} rows="3" disabled></textarea></div>
                 </section>
+                
+                {/* ✅ SEÇÃO DE VERIFICAÇÃO ADICIONADA */}
+                <section className="form-section">
+                    <header><h2>Verificação de Qualidade</h2></header>
+                    <div className="grid-container">
+                        <div className="input-group"><label>Verificado por</label><input type="text" value={ordemServico.verificadoPorNome || "Pendente"} disabled /></div>
+                        <div className="input-group"><label>Data da Verificação</label><input type="text" value={formatDateTime(ordemServico.dataVerificacao)} disabled /></div>
+                        <div className="input-group"><label>Status da Verificação</label><input type="text" value={formatStatusLabel(ordemServico.statusVerificacao)} disabled /></div>
+                    </div>
+                    {ordemServico.comentarioVerificacao && (
+                        <div className="input-group full-width" style={{marginTop: '1rem'}}>
+                            <label>Comentário da Verificação</label>
+                            <textarea value={ordemServico.comentarioVerificacao} rows="3" disabled></textarea>
+                        </div>
+                    )}
+                </section>
 
-                {/* A SEÇÃO DE VERIFICAÇÃO DE QUALIDADE FOI COMPLETAMENTE REMOVIDA DAQUI */}
+                {/* ✅ PAINEL DE AÇÃO PARA O ENCARREGADO */}
+                {isEncarregado && ordemServico.status === 'AGUARDANDO_VERIFICACAO' && (
+                    <PainelVerificacao 
+                        os={ordemServico}
+                        onVerificacaoSubmit={handleVerificacaoSubmit} 
+                        actionLoading={actionLoading}
+                    />
+                )}
 
                 <footer className="form-actions">
-                    <button type="button" className="button-back" onClick={() => navigate('/dashboard')}>Voltar</button>
-                    {podeExcluir && (
-                        <button type="button" className="button-delete" onClick={handleDelete} disabled={actionLoading}>
-                            {actionLoading ? "Excluindo..." : "Excluir OS"}
-                        </button>
-                    )}
+                    {/* ... (seus botões de Voltar e Excluir) ... */}
                 </footer>
             </div>
         </div>

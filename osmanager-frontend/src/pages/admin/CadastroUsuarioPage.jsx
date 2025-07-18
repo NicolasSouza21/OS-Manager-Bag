@@ -6,19 +6,22 @@ function CadastroUsuarioPage() {
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
-    // 1. O valor inicial agora é 'MECANICO', um padrão mais realista.
-    const [tipoFuncionario, setTipoFuncionario] = useState('MECANICO');
+    // O valor inicial agora é 'SOLICITANTE', que é o cargo com menos permissões.
+    const [tipoFuncionario, setTipoFuncionario] = useState('SOLICITANTE');
     
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false); // Adicionado para feedback no botão
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
+        setIsSubmitting(true);
 
         if (senha.length < 6) {
             setError('A senha deve ter pelo menos 6 caracteres.');
+            setIsSubmitting(false);
             return;
         }
 
@@ -36,10 +39,12 @@ function CadastroUsuarioPage() {
             setNome('');
             setEmail('');
             setSenha('');
-            setTipoFuncionario('MECANICO');
+            setTipoFuncionario('SOLICITANTE');
         } catch (err) {
             console.error('Erro ao cadastrar funcionário:', err);
             setError(err.response?.data?.message || 'Erro ao cadastrar. O email já pode estar em uso.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -85,21 +90,24 @@ function CadastroUsuarioPage() {
                 </div>
                 <div className="input-group">
                     <label htmlFor="tipoFuncionario">Cargo (Permissão)</label>
-                    {/* --- 👇👇 A MUDANÇA ESTÁ AQUI 👇👇 --- */}
+                    {/* ✅ LISTA DE CARGOS ATUALIZADA */}
                     <select
                         id="tipoFuncionario"
                         value={tipoFuncionario}
                         onChange={(e) => setTipoFuncionario(e.target.value)}
                     >
-                        {/* 2. As opções agora refletem todos os cargos do seu sistema */}
+                        {/* As opções agora refletem todos os cargos do backend */}
+                        <option value="SOLICITANTE">Solicitante</option>
                         <option value="MECANICO">Mecânico</option>
-                        <option value="LIDER">Líder</option>
                         <option value="ANALISTA_CQ">Analista de Qualidade</option>
+                        <option value="LIDER">Líder</option>
+                        <option value="ENCARREGADO">Encarregado</option>
                         <option value="ADMIN">Administrador</option>
                     </select>
-                    {/* --- 👆👆 FIM DA MUDANÇA 👆👆 --- */}
                 </div>
-                <button type="submit" className="button-save">Cadastrar Usuário</button>
+                <button type="submit" className="button-save" disabled={isSubmitting}>
+                    {isSubmitting ? 'Cadastrando...' : 'Cadastrar Usuário'}
+                </button>
             </form>
         </div>
     );

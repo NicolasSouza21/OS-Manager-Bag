@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate; // Importe a classe LocalDate
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -69,6 +69,12 @@ public class OrdemServico {
     @ManyToOne
     @JoinColumn(name = "verificado_por_id")
     private Funcionario verificadoPor;
+    
+    // ✅ NOVOS CAMPOS PARA VERIFICAÇÃO ADICIONADOS AQUI
+    private LocalDateTime dataVerificacao;
+
+    @Column(columnDefinition = "TEXT")
+    private String comentarioVerificacao;
 
     @Enumerated(EnumType.STRING)
     private StatusVerificacao statusVerificacao;
@@ -84,9 +90,6 @@ public class OrdemServico {
     @Column(nullable = false)
     private StatusOrdemServico status;
 
-    // =========================================================
-    //           👇👇 CAMPOS FALTANTES ADICIONADOS AQUI 👇👇
-    // =========================================================
     @Column(nullable = true)
     private LocalDate dataInicioPreventiva;
 
