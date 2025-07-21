@@ -5,19 +5,22 @@ import './EquipamentoMenuPage.css';
 function EquipamentoMenuPage() {
   return (
     <div className="equipamento-menu-container">
-      <h1>Gerenciar Equipamentos</h1>
+      <h1>Gerenciar Equipamentos e Planos</h1>
       <p className="equipamento-menu-subtitle">
         Selecione uma das opções abaixo para continuar.
       </p>
       <div className="equipamento-menu-cards">
         <Link to="/admin/equipamentos/gerenciar" className="equipamento-menu-card">
-          <h2 className="equipamento-menu-card-title">Listar Equipamentos</h2>
-          <p>Visualizar, editar e remover equipamentos existentes.</p>
+          <h2 className="equipamento-menu-card-title">Gerenciar Equipamentos e Planos</h2>
+          <p>Cadastrar equipamentos e configurar seus planos de manutenção preventiva.</p>
         </Link>
-        <Link to="/admin/equipamentos/adicionar" className="equipamento-menu-card">
-          <h2 className="equipamento-menu-card-title">Cadastrar Novo Equipamento</h2>
-          <p>Adicionar um novo equipamento ao inventário.</p>
+        
+        {/* ✅ NOVO CARD ADICIONADO AQUI */}
+        <Link to="/admin/equipamentos/servicos" className="equipamento-menu-card">
+          <h2 className="equipamento-menu-card-title">Gerenciar Catálogo de Serviços</h2>
+          <p>Adicionar ou remover os serviços disponíveis para os planos de manutenção.</p>
         </Link>
+
         <Link to="/admin/equipamentos/locais" className="equipamento-menu-card">
           <h2 className="equipamento-menu-card-title">Listar Locais</h2>
           <p>Visualize todos os locais cadastrados.</p>

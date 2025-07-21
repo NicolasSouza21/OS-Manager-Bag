@@ -2,7 +2,7 @@ package com.bag.osmanager.dto;
 
 import com.bag.osmanager.model.enums.*;
 import lombok.Data;
-import java.time.LocalDate; // ✅ IMPORT ADICIONADO
+import java.time.LocalDate;
 
 @Data
 public class CriarOrdemServicoDTO {
@@ -13,10 +13,15 @@ public class CriarOrdemServicoDTO {
     private TipoManutencao tipoManutencao;
     private String descricaoProblema;
     private String solicitante;
-    
-    // =========================================================
-    //         👇👇 CAMPOS FALTANTES ADICIONADOS AQUI 👇👇
-    // =========================================================
     private LocalDate dataInicioPreventiva;
-    private LocalDate dataFimPreventiva;
+    
+    // ✅ --- ALTERAÇÕES APLICADAS AQUI --- ✅
+
+    // O campo 'dataFimPreventiva' foi removido.
+    
+    // Novo campo para receber o ID do serviço selecionado no catálogo.
+    private Long tipoServicoId; 
+
+    // Novo campo para receber a frequência da manutenção.
+    private Frequencia frequencia; 
 }

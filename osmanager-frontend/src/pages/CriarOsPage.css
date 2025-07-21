@@ -1,113 +1,84 @@
-/* Local: src/pages/CriarOsPage.css */
-
+/* --- Layout Geral da Página --- */
 .os-page-container {
-  background-color: #e9eef7;
+  background-color: #f0f2f5;
   padding: 2rem;
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Alinhado ao topo para formulários longos */
+  align-items: flex-start;
   min-height: 100vh;
-  padding-top: 100px; /* Espaço para o header fixo */
-  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* --- Estilo do Card Principal do Formulário --- */
 .os-form-container {
   width: 100%;
-  max-width: 950px;
-  background: #fdfdfd;
-  border: 1px solid #ccc;
-  font-family: Arial, sans-serif;
-  color: #333;
-  border-radius: 8px; /* Bordas arredondadas */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  max-width: 850px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
 }
 
+/* --- Cabeçalho --- */
 .os-form-header {
-  display: flex;
-  align-items: center;
-  border-bottom: 2px solid #333;
-  padding: 10px;
-}
-
-.os-logo {
-  height: 60px;
-  margin-right: 20px;
-}
-
-.os-header-title {
-  flex-grow: 1;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #eeeeee;
   text-align: center;
 }
 
-.os-header-title h1 {
+.os-form-header h1 {
   margin: 0;
-  font-size: 1.4rem;
-  font-weight: bold;
+  font-size: 1.5rem;
+  color: #333;
 }
 
-.os-number-box {
-  border: 1px solid #333;
-  padding: 10px;
-  text-align: center;
-  border-radius: 4px;
-}
-
-.os-number-box label {
-  display: block;
-  font-weight: bold;
-  font-size: 0.9rem;
-}
-
-.os-number-box span {
-  font-size: 0.8rem;
-}
-
+/* --- Corpo do Formulário --- */
 .os-form-body {
-  padding: 20px;
-}
-
-.form-section-title {
-  background-color: #d0d0d0;
-  font-weight: bold;
-  padding: 5px 10px;
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  border-radius: 4px;
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .form-row {
   display: flex;
-  flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha */
-  gap: 20px;
-  margin-bottom: 1rem;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .input-group {
+  flex: 1;
+  min-width: 250px;
   display: flex;
   flex-direction: column;
-  flex: 1; 
-  min-width: 250px; /* Largura mínima para evitar que os campos fiquem muito estreitos */
-}
-
-.input-group.full-width {
-  flex-basis: 100%;
 }
 
 .input-group label {
-  font-weight: bold;
-  font-size: 0.8rem;
-  margin-bottom: 5px;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
 }
 
 .input-group input,
 .input-group select,
 .input-group textarea {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #999;
-  box-sizing: border-box; 
-  font-size: 0.9rem;
-  border-radius: 4px; /* Bordas arredondadas para inputs */
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: #f9fafb;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
 
 .input-group input:disabled {
@@ -115,92 +86,54 @@
   cursor: not-allowed;
 }
 
+/* --- Rodapé e Botões --- */
 .os-form-footer {
-  border-top: 2px solid #333;
-  padding: 10px 20px;
-}
-
-.form-actions {
+  padding: 1.5rem 2rem;
+  background-color: #f9fafb;
+  border-top: 1px solid #eeeeee;
   display: flex;
-  justify-content: flex-start;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 1rem;
+
+  /* ✅ A CORREÇÃO FINAL ESTÁ AQUI */
+  /* Garante que todos os itens no container se estiquem para ter a mesma altura */
+  align-items: stretch;
 }
 
 .button-save, .button-cancel {
-  padding: 10px 20px; /* Botões maiores */
+  flex: 1; 
+  padding: 1rem 1.5rem; /* Aumenta um pouco o padding vertical para consistência */
   border: none;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: bold;
+  color: white;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s ease; /* Transição suave */
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.button-save:hover:not(:disabled), .button-cancel:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .button-save {
-  background-color: #28a745; /* Verde mais moderno */
-  color: white;
-}
-
-.button-save:hover {
-  background-color: #218838;
+  background-color: #3b82f6; /* Azul */
 }
 
 .button-cancel {
-  background-color: #dc3545; /* Vermelho mais moderno */
-  color: white;
+  background-color: #ef4444; /* Vermelho */
 }
 
-.button-cancel:hover {
-  background-color: #c82333;
+.button-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.footer-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.7rem;
-  color: #6c757d;
-}
-
-/* ========================================================= */
-/* 👇👇 ESTILOS ADICIONADOS PARA OS BOTÕES 👇👇      */
-/* ========================================================= */
-
-.maintenance-type-selector {
-  display: flex;
-  gap: 0; /* Sem gap para parecer um grupo único */
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #999;
-  width: 100%;
-}
-
-.maintenance-btn {
-  flex-grow: 1;
-  padding: 10px;
-  border: none;
-  background-color: #f0f0f0;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #555;
-  transition: all 0.2s ease-in-out;
-}
-
-.maintenance-btn.active {
-  background-color: #007bff; /* Azul padrão do Bootstrap */
-  color: white;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.maintenance-btn:not(.active):hover {
-  background-color: #e0e0e0;
-}
-
-/* Estilo para a linha de datas da preventiva */
-.preventiva-fields {
-  background-color: #f0f5ff; /* Um fundo levemente azulado para diferenciar */
+.error-message {
   padding: 1rem;
-  border-radius: 6px;
-  border: 1px solid #cce5ff;
-  margin-top: -0.5rem; /* Ajuste para colar melhor na seleção */
+  border-radius: 8px;
+  text-align: center;
+  color: white;
+  background-color: #ef4444;
 }

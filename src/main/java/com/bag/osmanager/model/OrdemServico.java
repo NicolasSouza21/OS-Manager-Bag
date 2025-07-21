@@ -70,7 +70,6 @@ public class OrdemServico {
     @JoinColumn(name = "verificado_por_id")
     private Funcionario verificadoPor;
     
-    // ✅ NOVOS CAMPOS PARA VERIFICAÇÃO ADICIONADOS AQUI
     private LocalDateTime dataVerificacao;
 
     @Column(columnDefinition = "TEXT")
@@ -93,6 +92,16 @@ public class OrdemServico {
     @Column(nullable = true)
     private LocalDate dataInicioPreventiva;
 
-    @Column(nullable = true)
-    private LocalDate dataFimPreventiva;
+    // ✅ --- ALTERAÇÕES APLICADAS AQUI --- ✅
+
+    // O campo 'dataFimPreventiva' foi removido.
+
+    // Nova relação para saber qual serviço da preventiva foi realizado.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tipo_servico_id")
+    private TipoServico tipoServico;
+
+    // Novo campo para armazenar a frequência.
+    @Enumerated(EnumType.STRING)
+    private Frequencia frequencia;
 }

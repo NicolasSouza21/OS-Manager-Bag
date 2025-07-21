@@ -1,12 +1,14 @@
 package com.bag.osmanager.controller;
 
 import com.bag.osmanager.dto.EquipamentoDTO;
+import com.bag.osmanager.dto.TipoServicoDTO; // ✅ Importe o DTO de serviço
 import com.bag.osmanager.service.EquipamentoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set; // ✅ Importe o Set
 
 @RestController
 @RequestMapping("/api/equipamentos")
@@ -22,14 +24,10 @@ public class EquipamentoController {
         return ResponseEntity.ok(equipamentos);
     }
 
-    // Buscar por ID (opcional, mas útil)
+    // Buscar por ID
     @GetMapping("/{id}")
     public ResponseEntity<EquipamentoDTO> buscarPorId(@PathVariable Long id) {
-        EquipamentoDTO equip = equipamentoService.buscarPorId(id);
-        if (equip != null) {
-            return ResponseEntity.ok(equip);
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(equipamentoService.buscarPorId(id));
     }
 
     // Cadastrar novo
@@ -39,25 +37,50 @@ public class EquipamentoController {
         return ResponseEntity.ok(salvo);
     }
 
-    // Atualizar (PUT /api/equipamentos/{id})
+    // Atualizar
     @PutMapping("/{id}")
     public ResponseEntity<EquipamentoDTO> atualizarEquipamento(
             @PathVariable Long id,
             @RequestBody EquipamentoDTO equipamentoDTO) {
         EquipamentoDTO atualizado = equipamentoService.atualizar(id, equipamentoDTO);
-        if (atualizado != null) {
-            return ResponseEntity.ok(atualizado);
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(atualizado);
     }
 
-    // Excluir (DELETE /api/equipamentos/{id})
+    // Excluir
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarEquipamento(@PathVariable Long id) {
-        boolean removido = equipamentoService.deletar(id);
-        if (removido) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        equipamentoService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
+    
+    // --- ✅ NOVOS ENDPOINTS PARA GERENCIAR SERVIÇOS DO EQUIPAMENTO ---
+
+    /**
+     * Lista todos os serviços disponíveis para um equipamento específico.
+     */
+    @GetMapping("/{equipamentoId}/servicos")
+    public ResponseEntity<Set<TipoServicoDTO>> listarServicosPorEquipamento(@PathVariable Long equipamentoId) {
+        return ResponseEntity.ok(equipamentoService.listarServicosPorEquipamento(equipamentoId));
+    }
+
+    /**
+     * Associa um tipo de serviço a um equipamento.
+     */
+    @PostMapping("/{equipamentoId}/servicos/{servicoId}")
+    public ResponseEntity<EquipamentoDTO> associarServico(
+            @PathVariable Long equipamentoId,
+            @PathVariable Long servicoId) {
+        return ResponseEntity.ok(equipamentoService.associarServico(equipamentoId, servicoId));
+    }
+
+    /**
+     * Desassocia um tipo de serviço de um equipamento.
+     */
+    @DeleteMapping("/{equipamentoId}/servicos/{servicoId}")
+    public ResponseEntity<Void> desassociarServico(
+            @PathVariable Long equipamentoId,
+            @PathVariable Long servicoId) {
+        equipamentoService.desassociarServico(equipamentoId, servicoId);
+        return ResponseEntity.noContent().build();
     }
 }
