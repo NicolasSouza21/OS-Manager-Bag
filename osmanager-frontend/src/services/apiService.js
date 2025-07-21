@@ -82,4 +82,6 @@ export const verificarOS = async (osId, dadosVerificacao) => {
 export const getLocais = () => api.get('/locais');
 
 
+
+
 export default api;

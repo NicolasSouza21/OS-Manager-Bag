@@ -2,9 +2,8 @@ package com.bag.osmanager.controller;
 
 import com.bag.osmanager.dto.*;
 import com.bag.osmanager.model.Funcionario;
-import com.bag.osmanager.model.enums.Prioridade;
+import com.bag.osmanager.model.enums.StatusOrdemServico;
 import com.bag.osmanager.model.enums.StatusVerificacao;
-import com.bag.osmanager.model.enums.Turno;
 import com.bag.osmanager.service.OrdemServicoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,23 +25,25 @@ public class OrdemServicoController {
     private final OrdemServicoService osService;
 
     @PostMapping
-    // A anotação @PreAuthorize usa "ROLE_ADMIN", mas o SecurityConfig usa "ADMIN". 
-    // Vamos manter a consistência e usar a anotação apenas onde for estritamente necessário.
-    // As permissões principais ficarão no SecurityConfig.
     public ResponseEntity<OrdemServicoDTO> criarOS(@RequestBody @Valid CriarOrdemServicoDTO dto) {
         OrdemServicoDTO osCriada = osService.criarOS(dto);
         return new ResponseEntity<>(osCriada, HttpStatus.CREATED);
     }
 
+    // ✅ MÉTODO ATUALIZADO PARA RECEBER OS NOVOS PARÂMETROS DA REQUISIÇÃO
     @GetMapping
     public ResponseEntity<Page<OrdemServicoDTO>> buscarComFiltros(
-            @RequestParam(required = false) String numeroMaquina,
-            @RequestParam(required = false) Prioridade prioridade,
-            @RequestParam(required = false) StatusVerificacao status,
-            @RequestParam(required = false) Turno turno,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) StatusOrdemServico status,
+            @RequestParam(required = false) Long equipamentoId,
+            @RequestParam(required = false) Long localId,
+            @RequestParam(required = false) Long mecanicoId,
+            @RequestParam(required = false) StatusVerificacao statusVerificacao,
             @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        Page<OrdemServicoDTO> pagina = osService.buscarComFiltros(numeroMaquina, prioridade, status, turno, pageable);
+        Page<OrdemServicoDTO> pagina = osService.buscarComFiltros(
+            keyword, status, equipamentoId, localId, mecanicoId, statusVerificacao, pageable
+        );
         return ResponseEntity.ok(pagina);
     }
 
@@ -70,7 +71,6 @@ public class OrdemServicoController {
         return ResponseEntity.ok(osService.registrarExecucao(id, executanteId, dto));
     }
 
-    // ✅ NOVO ENDPOINT PARA VERIFICAÇÃO DO ENCARREGADO
     @PostMapping("/{id}/verificar")
     public ResponseEntity<OrdemServicoDTO> verificarOS(@PathVariable Long id, @Valid @RequestBody VerificacaoDTO dto, Authentication authentication) {
         Funcionario userDetails = (Funcionario) authentication.getPrincipal();
@@ -80,7 +80,7 @@ public class OrdemServicoController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')") // Apenas Admins podem deletar
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
         osService.deletarOrdemServico(id);
         return ResponseEntity.noContent().build();

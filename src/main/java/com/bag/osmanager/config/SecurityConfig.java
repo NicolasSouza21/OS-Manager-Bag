@@ -35,10 +35,9 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
+    // Seus beans (PasswordEncoder, etc.) e CORS estão corretos.
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -56,17 +55,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:5173",
-            "http://192.168.0.11:5173",
-            "http://192.168.56.1:5173"
-        ));
-        
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://192.168.0.11:5173", "http://192.168.56.1:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true);
-        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -79,24 +71,24 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
+            // ✅ ESTA CONFIGURAÇÃO ESTÁ CORRETA.
             .authorizeHttpRequests(authorize -> authorize
                 // 1. Rotas Públicas
                 .requestMatchers("/api/auth/**", "/error").permitAll()
 
-                // 2. Gerenciamento de Funcionários
-                .requestMatchers("/api/funcionarios/**").hasAuthority("ADMIN")
+                // 2. Gerenciamento de Funcionários: Apenas ADMIN
+                .requestMatchers("/api/funcionarios/**").hasRole("ADMIN")
 
-                // ✅ NOVA REGRA DE SEGURANÇA ADICIONADA AQUI
                 // 3. Verificação de OS: Apenas Encarregado e Admin
-                .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar").hasAnyAuthority("ADMIN", "ENCARREGADO")
+                .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar").hasAnyRole("ADMIN", "ENCARREGADO")
 
                 // 4. Gerenciamento de OS
-                .requestMatchers("/api/ordens-servico/aprovar/**", "/api/ordens-servico/finalizar/**").hasAnyAuthority("ADMIN", "LIDER", "ENCARREGADO")
-                .requestMatchers("/api/ordens-servico/cq/**").hasAnyAuthority("ADMIN", "LIDER", "ENCARREGADO", "ANALISTA_CQ")
+                .requestMatchers("/api/ordens-servico/aprovar/**", "/api/ordens-servico/finalizar/**").hasAnyRole("ADMIN", "LIDER", "ENCARREGADO")
+                .requestMatchers("/api/ordens-servico/cq/**").hasAnyRole("ADMIN", "LIDER", "ENCARREGADO", "ANALISTA_CQ")
 
                 // 5. Gerenciamento de Equipamentos e Locais
                 .requestMatchers(HttpMethod.GET, "/api/equipamentos/**", "/api/locais/**").authenticated()
-                .requestMatchers("/api/equipamentos/**", "/api/locais/**").hasAnyAuthority("ADMIN", "LIDER", "ENCARREGADO")
+                .requestMatchers("/api/equipamentos/**", "/api/locais/**").hasAnyRole("ADMIN", "LIDER", "ENCARREGADO")
                 
                 // 6. Regra final
                 .anyRequest().authenticated()

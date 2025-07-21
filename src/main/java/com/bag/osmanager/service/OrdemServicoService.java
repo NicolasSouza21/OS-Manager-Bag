@@ -29,6 +29,7 @@ public class OrdemServicoService {
     private final EquipamentoRepository equipamentoRepository;
     private final LocalRepository localRepository;
 
+    // ... todos os outros métodos (criarOS, registrarCiencia, etc.) permanecem exatamente iguais ...
     // --- O método criarOS permanece o mesmo ---
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
@@ -101,7 +102,7 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
-    // --- ✅ MÉTODO registrarExecucao MODIFICADO ---
+    // --- MÉTODO registrarExecucao MODIFICADO ---
     @Transactional
     public OrdemServicoDTO registrarExecucao(Long osId, Long executanteId, ExecucaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
@@ -152,7 +153,7 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
     
-    // ✅ NOVO MÉTODO PARA O ENCARREGADO VERIFICAR A OS PREVENTIVA
+    // NOVO MÉTODO PARA O ENCARREGADO VERIFICAR A OS PREVENTIVA
     @Transactional
     public OrdemServicoDTO verificarOS(Long osId, Long verificadorId, VerificacaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
@@ -187,9 +188,20 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
-    // --- Os métodos de busca, deleção e conversão permanecem os mesmos ---
-    public Page<OrdemServicoDTO> buscarComFiltros(String numeroMaquina, Prioridade prioridade, StatusVerificacao status, Turno turno, Pageable pageable) {
-        Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(numeroMaquina, prioridade, status, turno);
+    // ✅ MÉTODO buscarComFiltros ATUALIZADO
+    public Page<OrdemServicoDTO> buscarComFiltros(
+            String keyword,
+            StatusOrdemServico status,
+            Long equipamentoId,
+            Long localId,
+            Long mecanicoId,
+            StatusVerificacao statusVerificacao,
+            Pageable pageable
+    ) {
+        // Agora passamos os novos parâmetros para a Specification
+        Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(
+                keyword, status, equipamentoId, localId, mecanicoId, statusVerificacao
+        );
         Page<OrdemServico> paginaDeOS = osRepository.findAll(spec, pageable);
         return paginaDeOS.map(this::converteParaDTO);
     }

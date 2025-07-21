@@ -8,6 +8,10 @@
     background-color: #F4F7FC;
     box-sizing: border-box;
     min-height: 100vh;
+    margin-top: 8px;
+    margin-left: -8px;
+    margin-right: -20px;
+    
   }
   
   .dashboard-title {
