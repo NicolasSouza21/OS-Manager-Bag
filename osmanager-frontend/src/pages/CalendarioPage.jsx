@@ -8,9 +8,9 @@ import getDay from 'date-fns/getDay';
 import ptBR from 'date-fns/locale/pt-BR';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { getOrdensServico } from '../services/apiService';
-import './CalendarioPage.css'; // Criaremos este CSS a seguir
+import './CalendarioPage.css';
 
-// Configuração de localização para o calendário em Português-Brasil
+// Configuração de localização (permanece igual)
 const locales = {
     'pt-BR': ptBR,
 };
@@ -22,11 +22,11 @@ const localizer = dateFnsLocalizer({
     locales,
 });
 
-// Mensagens do calendário em Português
+// Mensagens em Português (permanece igual)
 const messages = {
     allDay: 'Dia todo',
-    previous: '<',
-    next: '>',
+    previous: 'Anterior',
+    next: 'Próximo',
     today: 'Hoje',
     month: 'Mês',
     week: 'Semana',
@@ -39,33 +39,53 @@ const messages = {
     showMore: total => `+ ver mais (${total})`
 };
 
+// Componente Legenda
+const Legenda = () => (
+    <div className="legenda-container">
+        <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#dc3545' }}></span>Corretiva Aberta</div>
+        <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#28a745' }}></span>Preventiva Aberta</div>
+        <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#ffc107' }}></span>Em Andamento</div>
+        <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#6c757d' }}></span>Concluída / Cancelada</div>
+    </div>
+);
+
+// Componente CustomEvent
+const CustomEvent = ({ event }) => {
+    return (
+        <div className="custom-event">
+            <strong>{`OS #${event.resource.id}`}</strong>
+            <span className="event-title">{event.resource.equipamentoNome || event.title}</span>
+        </div>
+    );
+};
+
 function CalendarioPage() {
+    // ✅ TODA A LÓGICA FOI MOVIDA PARA DENTRO DA FUNÇÃO, COMO DEVE SER
     const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Função para buscar as OSs e formatá-las para o calendário
     const fetchEvents = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await getOrdensServico({ page: 0, size: 500 }); // Busca um grande número de OSs
+            const response = await getOrdensServico({ page: 0, size: 500 });
             const ordens = response.data.content;
             
             const formattedEvents = ordens.map(os => {
-                // Usa a data programada para preventivas e a de solicitação para corretivas
                 const eventDateStr = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva 
                     ? os.dataInicioPreventiva 
                     : os.dataSolicitacao;
                 
                 const eventDate = new Date(eventDateStr);
+                eventDate.setMinutes(eventDate.getMinutes() + eventDate.getTimezoneOffset());
 
                 return {
                     id: os.id,
-                    title: `OS #${os.id} - ${os.equipamentoNome || os.descricaoProblema}`,
+                    title: `${os.equipamentoNome ? os.equipamentoNome + ' - ' : ''}${os.descricaoProblema}`,
                     start: eventDate,
-                    end: eventDate, // Evento de dia único
+                    end: eventDate,
                     allDay: true,
-                    resource: os, // Guarda a OS completa para uso posterior
+                    resource: os,
                 };
             });
             setEvents(formattedEvents);
@@ -81,34 +101,48 @@ function CalendarioPage() {
         fetchEvents();
     }, [fetchEvents]);
 
-    // Navega para a página de detalhes ao clicar em um evento
     const handleSelectEvent = (event) => {
         navigate(`/os/${event.id}`);
     };
     
-    // Customiza a aparência do evento no calendário
     const eventStyleGetter = (event) => {
         const os = event.resource;
-        let backgroundColor = '#3174ad'; // Cor padrão
+        let backgroundColor = '#3174ad';
 
-        if(os.status === 'CONCLUIDA' || os.status === 'CANCELADA') {
-            backgroundColor = '#6c757d'; // Cinza para finalizadas/canceladas
-        } else if (os.tipoManutencao === 'PREVENTIVA') {
-            backgroundColor = '#28a745'; // Verde para preventivas
-        } else if (os.tipoManutencao === 'CORRETIVA') {
-            backgroundColor = '#dc3545'; // Vermelho para corretivas
+        switch(os.status) {
+            case 'CONCLUIDA':
+            case 'CANCELADA':
+                backgroundColor = '#6c757d';
+                break;
+            case 'EM_EXECUCAO':
+            case 'PAUSADA':
+                backgroundColor = '#ffc107';
+                break;
+            default:
+                if (os.tipoManutencao === 'PREVENTIVA') {
+                    backgroundColor = '#28a745';
+                } else if (os.tipoManutencao === 'CORRETIVA') {
+                    backgroundColor = '#dc3545';
+                }
         }
         
         const style = {
             backgroundColor: backgroundColor,
             borderRadius: '5px',
-            opacity: 0.8,
+            opacity: 0.9,
             color: 'white',
-            border: '0px',
+            border: '1px solid rgba(0,0,0,0.1)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             display: 'block'
         };
         return { style };
     };
+
+    const dayPropGetter = useCallback(() => ({
+        style: {
+            overflow: 'hidden',
+        }
+    }), []);
 
     if (loading) {
         return <div className="loading-calendar">Carregando Calendário...</div>;
@@ -117,17 +151,21 @@ function CalendarioPage() {
     return (
         <div className="calendario-container">
             <h1 className="calendario-title">Calendário de Manutenção</h1>
+            <Legenda />
             <div className="calendario-wrapper">
                 <Calendar
                     localizer={localizer}
                     events={events}
                     startAccessor="start"
                     endAccessor="end"
-                    style={{ height: '85vh' }}
+                    style={{ minHeight: '90vh' }}
                     messages={messages}
                     culture='pt-BR'
                     onSelectEvent={handleSelectEvent}
                     eventPropGetter={eventStyleGetter}
+                    popup
+                    components={{ event: CustomEvent }}
+                    dayPropGetter={dayPropGetter}
                 />
             </div>
         </div>

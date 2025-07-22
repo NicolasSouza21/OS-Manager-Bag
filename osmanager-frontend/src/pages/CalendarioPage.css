@@ -1,44 +1,186 @@
+/* =================================================================== */
+/* ESTILOS GERAIS - LAYOUT FINAL E ESPAÇOSO                            */
+/* =================================================================== */
+:root {
+    --cor-principal: #007bff;
+    --cor-fundo-pagina: #f8f9fa;
+    --cor-fundo-wrapper: #ffffff;
+    --cor-texto-padrao: #495057;
+    --cor-borda-suave: #e9ecef;
+    --sombra-leve: 0 6px 24px rgba(0, 0, 0, 0.07);
+}
+
 .calendario-container {
-    padding: 2rem;
-    background-color: #F4F7FC;
+    padding: 3rem;
+    background-color: var(--cor-fundo-pagina);
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    margin-bottom: 15rem; /* Espaço generoso para o footer */
 }
 
 .calendario-title {
-    color: #334155;
-    font-size: 1.8rem;
-    margin-bottom: 2rem;
-    font-weight: 700;
+    text-align: center;
+    color: #343a40;
+    margin-bottom: 2.5rem;
+    font-size: 2.2rem;
+    font-weight: 600;
 }
 
 .calendario-wrapper {
-    background-color: #fff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+    background-color: var(--cor-fundo-wrapper);
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: var(--sombra-leve);
+    border: 1px solid var(--cor-borda-suave);
 }
 
-/* Ajusta as cores padrão do react-big-calendar */
-.rbc-toolbar button {
-    background-color: #007bff !important;
-    color: white !important;
-    border: none !important;
+/* =================================================================== */
+/* LEGENDAS E COMPONENTES                                              */
+/* =================================================================== */
+.legenda-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
 }
 
-.rbc-toolbar button:hover, .rbc-toolbar button:focus {
-    background-color: #0056b3 !important;
+.legenda-item {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    color: var(--cor-texto-padrao);
 }
 
-.rbc-toolbar button.rbc-active {
-    background-color: #004085 !important;
+.cor-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    margin-right: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.rbc-event {
-    padding: 5px !important;
+.custom-event {
+    padding: 5px 8px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    line-height: 1.4;
+}
+.custom-event .event-title {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    white-space: normal; /* Permite quebra de linha no título do evento */
 }
 
-.loading-calendar {
+/* =================================================================== */
+/* ESTILOS DO REACT-BIG-CALENDAR                                       */
+/* =================================================================== */
+
+/* ✅ CORREÇÃO DA BARRA DE FERRAMENTAS (TOOLBAR) */
+.rbc-toolbar {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--cor-borda-suave);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.rbc-toolbar .rbc-toolbar-label {
+    font-size: 2rem;
+    font-weight: 600;
     text-align: center;
-    padding: 4rem;
-    font-size: 1.5rem;
-    color: #334155;
+    flex-grow: 1; /* Faz o título ocupar o espaço central */
+}
+.rbc-btn-group {
+    display: flex;
+    gap: 0.5rem;
+}
+.rbc-btn-group button {
+    padding: 0.8rem 1.6rem;
+    font-size: 1rem;
+    border: 1px solid var(--cor-borda-suave) !important;
+    background-color: white !important;
+    color: var(--cor-texto-padrao) !important;
+    border-radius: 8px !important;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rbc-btn-group button:hover {
+    background-color: var(--cor-principal) !important;
+    color: white !important;
+    border-color: var(--cor-principal) !important;
+}
+
+.rbc-btn-group button.rbc-active {
+    background-color: var(--cor-principal) !important;
+    color: white !important;
+    border-color: var(--cor-principal) !important;
+}
+
+
+/* --- Cabeçalho e Células do Dia --- */
+.rbc-header {
+    padding: 1.2rem 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.rbc-month-row {
+    min-height: 250px !important; 
+}
+
+.rbc-month-cell .rbc-row-content {
+    padding: 0 5px;
+}
+
+.rbc-day-bg.rbc-today {
+    background-color: #eaf6ff;
+}
+
+/* --- Limita eventos e mostra "Ver Mais" --- */
+.rbc-month-view .rbc-row-content .rbc-event {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.rbc-month-view .rbc-row-content .rbc-event:nth-child(n+4) {
+    display: none;
+}
+
+.rbc-show-more {
+    color: var(--cor-principal);
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    font-size: 1rem;
+    padding-left: 5px;
+}
+
+/* =================================================================== */
+/* AJUSTES RESPONSIVOS                                                 */
+/* =================================================================== */
+@media (max-width: 992px) {
+    .rbc-month-row { min-height: 180px !important; }
+}
+
+@media (max-width: 768px) {
+    .calendario-container {
+        padding: 1rem;
+    }
+    .calendario-wrapper {
+        padding: 1rem;
+    }
+    .rbc-toolbar {
+        flex-direction: column;
+    }
+    .rbc-toolbar .rbc-toolbar-label {
+        order: -1; /* Joga o título para cima */
+    }
+    .rbc-month-row { min-height: 150px !important; }
+    .rbc-month-view .rbc-row-content .rbc-event:nth-child(n+3) {
+        display: none;
+    }
 }

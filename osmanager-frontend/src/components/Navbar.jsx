@@ -6,13 +6,17 @@ import './Navbar.css';
 function Navbar() {
     const navigate = useNavigate();
     const userRole = localStorage.getItem('userRole');
-    
-    // ✅ CORREÇÃO: Verificação de cargos agora inclui o prefixo "ROLE_"
-    const isAdmin = userRole === 'ROLE_ADMIN';
-    const isLider = userRole === 'ROLE_LIDER';
-    const isEncarregado = userRole === 'ROLE_ENCARREGADO';
-    const isMecanico = userRole === 'ROLE_MECANICO';
-    
+
+    // 👇 ALTERAÇÃO FOCADA AQUI 👇
+    // Normalizamos a role para funcionar com ou sem o prefixo "ROLE_"
+    const normalizedRole = userRole ? userRole.replace('ROLE_', '') : '';
+
+    const isAdmin = normalizedRole === 'ADMIN';
+    const isLider = normalizedRole === 'LIDER';
+    const isEncarregado = normalizedRole === 'ENCARREGADO';
+    const isMecanico = normalizedRole === 'MECANICO';
+    // ☝️ FIM DA ALTERAÇÃO ☝️
+
     // Usuários com permissão para acessar áreas de gestão
     const isGestor = isAdmin || isLider || isEncarregado;
 
@@ -53,14 +57,13 @@ function Navbar() {
                 </li>
 
                 {/* Link "Gerenciar Funcionários" - Apenas para ADMIN */}
-                              {isAdmin && (
+                {isAdmin && (
                     <li>
                         <Link to="/admin/funcionarios" className="nav-link admin-link">
                             Gerenciar Funcionários
                         </Link>
                     </li>
                 )}
-
 
                 {/* Link para "Gerenciar Equipamentos" - Apenas para Gestores */}
                 {isGestor && (
