@@ -31,7 +31,7 @@ public class OrdemServicoDTO {
     
     // Dados da Execução
     private Long executadoPorId;
-    private String executadoPorNome; // <-- Adicionado
+    private String executadoPorNome;
     private LocalDateTime dataExecucao;
     private String acaoRealizada;
     private LocalDateTime inicio;
@@ -41,15 +41,20 @@ public class OrdemServicoDTO {
     
     // Dados da Verificação de Qualidade
     private Long verificadoPorId;
-    private String verificadoPorNome; // <-- Corrigido/Adicionado
+    private String verificadoPorNome;
     private StatusVerificacao statusVerificacao;
     
     // Dados da Aprovação
     private Long aprovadoPorId;
-    private String aprovadoPorNome; // <-- Adicionado
+    private String aprovadoPorNome;
     private LocalDateTime dataAprovacao;
     
     // Dados da Preventiva
     private LocalDate dataInicioPreventiva;
-    private LocalDate dataFimPreventiva;
+    // O campo dataFimPreventiva foi removido, como solicitado.
+
+    // ✅ --- NOVOS CAMPOS ADICIONADOS AQUI --- ✅
+    private Long tipoServicoId;
+    private String tipoServicoNome;
+    private Frequencia frequencia;
 }

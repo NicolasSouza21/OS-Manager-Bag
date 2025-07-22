@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -28,10 +29,11 @@ public class OrdemServicoService {
     private final FuncionarioRepository funcionarioRepository;
     private final EquipamentoRepository equipamentoRepository;
     private final LocalRepository localRepository;
-    private final TipoServicoRepository tipoServicoRepository; // ✅ Repositório injetado
+    private final TipoServicoRepository tipoServicoRepository;
 
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
+        // ... (este método já está correto)
         OrdemServico os = new OrdemServico();
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoId");
         
@@ -50,7 +52,6 @@ public class OrdemServicoService {
             os.setLocal(local);
         }
 
-        // ✅ LÓGICA ATUALIZADA PARA PREVENTIVAS
         if (dto.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
             if (dto.getTipoServicoId() == null || dto.getFrequencia() == null) {
                 throw new IllegalArgumentException("Para OS Preventiva, o serviço e a frequência são obrigatórios.");
@@ -60,7 +61,6 @@ public class OrdemServicoService {
             
             os.setTipoServico(tipoServico);
             os.setFrequencia(dto.getFrequencia());
-            // A descrição do problema na preventiva pode ser o nome do serviço
             os.setDescricaoProblema(tipoServico.getNome());
 
         } else { // CORRETIVA
@@ -72,12 +72,16 @@ public class OrdemServicoService {
         }
         
         OrdemServico osSalva = osRepository.save(os);
+        
+        agendarProximaPreventiva(osSalva);
+
         return converteParaDTO(osSalva);
     }
-
-    // ... (registrarCiencia, iniciarExecucao, registrarExecucao, verificarOS, buscarComFiltros, etc. continuam iguais)
+    
+    // ... (outros métodos permanecem iguais)
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
+        // ... (sem alterações)
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
 
@@ -102,6 +106,7 @@ public class OrdemServicoService {
 
     @Transactional
     public OrdemServicoDTO iniciarExecucao(Long osId) {
+        // ... (sem alterações)
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
 
@@ -116,6 +121,7 @@ public class OrdemServicoService {
 
     @Transactional
     public OrdemServicoDTO registrarExecucao(Long osId, Long executanteId, ExecucaoDTO dto) {
+        // ... (sem alterações)
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
         
@@ -162,10 +168,11 @@ public class OrdemServicoService {
     
     @Transactional
     public OrdemServicoDTO verificarOS(Long osId, Long verificadorId, VerificacaoDTO dto) {
-        OrdemServico os = osRepository.findById(osId)
+        // ... (sem alterações)
+        OrdemServico osConcluida = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
         
-        if (os.getStatus() != StatusOrdemServico.AGUARDANDO_VERIFICACAO) {
+        if (osConcluida.getStatus() != StatusOrdemServico.AGUARDANDO_VERIFICACAO) {
             throw new IllegalStateException("A OS não está aguardando verificação.");
         }
 
@@ -176,29 +183,83 @@ public class OrdemServicoService {
             throw new IllegalStateException("Ação não permitida. Apenas ENCARREGADOS podem realizar a verificação.");
         }
 
-        os.setVerificadoPor(verificador);
-        os.setDataVerificacao(LocalDateTime.now());
-        os.setComentarioVerificacao(dto.getComentarioVerificacao());
+        osConcluida.setVerificadoPor(verificador);
+        osConcluida.setDataVerificacao(LocalDateTime.now());
+        osConcluida.setComentarioVerificacao(dto.getComentarioVerificacao());
 
         if (dto.getAprovado()) {
-            os.setStatus(StatusOrdemServico.CONCLUIDA);
-            os.setStatusVerificacao(StatusVerificacao.APROVADO);
+            osConcluida.setStatus(StatusOrdemServico.CONCLUIDA);
+            osConcluida.setStatusVerificacao(StatusVerificacao.APROVADO);
         } else {
-            os.setStatus(StatusOrdemServico.EM_EXECUCAO); 
-            os.setStatusVerificacao(StatusVerificacao.REPROVADO);
+            osConcluida.setStatus(StatusOrdemServico.EM_EXECUCAO); 
+            osConcluida.setStatusVerificacao(StatusVerificacao.REPROVADO);
         }
 
-        OrdemServico osAtualizada = osRepository.save(os);
+        OrdemServico osAtualizada = osRepository.save(osConcluida);
         return converteParaDTO(osAtualizada);
     }
 
-    public Page<OrdemServicoDTO> buscarComFiltros(String keyword, StatusOrdemServico status, Long equipamentoId, Long localId, Long mecanicoId, StatusVerificacao statusVerificacao, Pageable pageable) {
-        Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(keyword, status, equipamentoId, localId, mecanicoId, statusVerificacao);
+    private void agendarProximaPreventiva(OrdemServico osCriada) {
+        // ... (sem alterações)
+        if (osCriada.getTipoManutencao() != TipoManutencao.PREVENTIVA || osCriada.getFrequencia() == null || osCriada.getDataInicioPreventiva() == null) {
+            return;
+        }
+
+        LocalDate dataBase = osCriada.getDataInicioPreventiva();
+        LocalDate proximaData;
+
+        switch (osCriada.getFrequencia()) {
+            case DIARIO: proximaData = dataBase.plusDays(1); break;
+            case BIDIARIO: proximaData = dataBase.plusDays(2); break;
+            case SEMANAL: proximaData = dataBase.plusWeeks(1); break;
+            case QUINZENAL: proximaData = dataBase.plusWeeks(2); break;
+            case MENSAL: proximaData = dataBase.plusMonths(1); break;
+            case BIMESTRAL: proximaData = dataBase.plusMonths(2); break;
+            case TRIMESTRAL: proximaData = dataBase.plusMonths(3); break;
+            case SEMESTRAL: proximaData = dataBase.plusMonths(6); break;
+            case ANUAL: proximaData = dataBase.plusYears(1); break;
+            default: return;
+        }
+        
+        OrdemServico proximaOS = new OrdemServico();
+        proximaOS.setEquipamento(osCriada.getEquipamento());
+        proximaOS.setLocal(osCriada.getLocal());
+        proximaOS.setTipoManutencao(TipoManutencao.PREVENTIVA);
+        proximaOS.setTipoServico(osCriada.getTipoServico());
+        proximaOS.setFrequencia(osCriada.getFrequencia());
+        proximaOS.setDescricaoProblema(osCriada.getDescricaoProblema());
+        proximaOS.setSolicitante("SISTEMA (AUTO)");
+        proximaOS.setPrioridade(Prioridade.MEDIA);
+        
+        proximaOS.setDataSolicitacao(LocalDateTime.now());
+        proximaOS.setDataInicioPreventiva(proximaData);
+        
+        proximaOS.setStatus(StatusOrdemServico.ABERTA);
+        proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
+
+        osRepository.save(proximaOS);
+    }
+
+    // ✅ MÉTODO buscarComFiltros ATUALIZADO
+    public Page<OrdemServicoDTO> buscarComFiltros(
+            String keyword,
+            StatusOrdemServico status,
+            TipoManutencao tipoManutencao, // <-- Parâmetro adicionado
+            Long equipamentoId,
+            Long localId,
+            Long mecanicoId,
+            StatusVerificacao statusVerificacao,
+            Pageable pageable
+    ) {
+        Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(
+                keyword, status, tipoManutencao, equipamentoId, localId, mecanicoId, statusVerificacao
+        );
         Page<OrdemServico> paginaDeOS = osRepository.findAll(spec, pageable);
         return paginaDeOS.map(this::converteParaDTO);
     }
 
     public OrdemServicoDTO buscarPorId(Long id) {
+        // ... (sem alterações)
         return osRepository.findById(id)
                 .map(this::converteParaDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
@@ -206,12 +267,14 @@ public class OrdemServicoService {
 
     @Transactional
     public void deletarOrdemServico(Long id) {
+        // ... (sem alterações)
         OrdemServico os = osRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
         osRepository.delete(os);
     }
     
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
+        // ... (sem alterações)
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto);
 
@@ -243,6 +306,13 @@ public class OrdemServicoService {
                 BeanUtils.copyProperties(peca, pecaDTO);
                 return pecaDTO;
             }).collect(Collectors.toList()));
+        }
+        if (os.getTipoServico() != null) {
+            dto.setTipoServicoId(os.getTipoServico().getId());
+            dto.setTipoServicoNome(os.getTipoServico().getNome());
+        }
+        if (os.getFrequencia() != null) {
+            dto.setFrequencia(os.getFrequencia());
         }
         return dto;
     }

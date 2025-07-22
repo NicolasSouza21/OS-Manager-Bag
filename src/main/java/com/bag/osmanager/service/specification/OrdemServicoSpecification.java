@@ -5,6 +5,7 @@ import com.bag.osmanager.model.Funcionario;
 import com.bag.osmanager.model.OrdemServico;
 import com.bag.osmanager.model.enums.StatusOrdemServico;
 import com.bag.osmanager.model.enums.StatusVerificacao;
+import com.bag.osmanager.model.enums.TipoManutencao; // ✅ Importe o enum TipoManutencao
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -19,6 +20,7 @@ public class OrdemServicoSpecification {
     public static Specification<OrdemServico> comFiltros(
             String keyword,
             StatusOrdemServico status,
+            TipoManutencao tipoManutencao, // ✅ Novo parâmetro adicionado
             Long equipamentoId,
             Long localId,
             Long mecanicoId,
@@ -27,22 +29,23 @@ public class OrdemServicoSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // ✅ FILTRO POR PALAVRA-CHAVE CORRIGIDO E MELHORADO
+            // Filtro por palavra-chave (keyword)
             if (StringUtils.hasText(keyword)) {
-                // Usamos um LEFT JOIN para buscar no nome do equipamento de forma segura
                 Join<OrdemServico, Equipamento> equipamentoJoin = root.join("equipamento", JoinType.LEFT);
-                
                 Predicate idPredicate = criteriaBuilder.like(root.get("id").as(String.class), "%" + keyword + "%");
                 Predicate equipamentoPredicate = criteriaBuilder.like(criteriaBuilder.lower(equipamentoJoin.get("nome")), "%" + keyword.toLowerCase() + "%");
-                // Adicionamos a busca na descrição do problema
                 Predicate descricaoPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("descricaoProblema")), "%" + keyword.toLowerCase() + "%");
-
                 predicates.add(criteriaBuilder.or(idPredicate, equipamentoPredicate, descricaoPredicate));
             }
 
             // Filtro por Status da OS
             if (status != null) {
                 predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+
+            // ✅ NOVO FILTRO POR TIPO DE MANUTENÇÃO
+            if (tipoManutencao != null) {
+                predicates.add(criteriaBuilder.equal(root.get("tipoManutencao"), tipoManutencao));
             }
 
             // Filtro por Equipamento
@@ -55,14 +58,12 @@ public class OrdemServicoSpecification {
                 predicates.add(criteriaBuilder.equal(root.get("local").get("id"), localId));
             }
 
-            // Filtro "Minhas Tarefas" (pelo ID do mecânico/líder)
+            // Filtro "Minhas Tarefas"
             if (mecanicoId != null) {
                 Join<OrdemServico, Funcionario> cienciaJoin = root.join("mecanicoCiencia", JoinType.LEFT);
                 Join<OrdemServico, Funcionario> execucaoJoin = root.join("executadoPor", JoinType.LEFT);
-                
                 Predicate cienciaPredicate = criteriaBuilder.equal(cienciaJoin.get("id"), mecanicoId);
                 Predicate execucaoPredicate = criteriaBuilder.equal(execucaoJoin.get("id"), mecanicoId);
-                
                 predicates.add(criteriaBuilder.or(cienciaPredicate, execucaoPredicate));
             }
             
