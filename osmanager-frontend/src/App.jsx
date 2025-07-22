@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import VisualizarOsPage from './pages/VisualizarOsPage';
+import CalendarioPage from './pages/CalendarioPage'; // ✅ IMPORT DO CALENDÁRIO ADICIONADO
 
 // Fluxo de Criação de OS
 import EscolherTipoOsPage from './pages/EscolherTipoOsPage';
@@ -25,7 +26,6 @@ import GerenciarEquipamentosPage from './pages/admin/equipamento/GerenciarEquipa
 import EquipamentoMenuPage from './pages/admin/equipamento/EquipamentoMenuPage';
 import LocaisListPage from './pages/admin/equipamento/LocaisListPage';
 import LocalAddPage from './pages/admin/equipamento/LocalAddPage';
-// ✅ NOVA PÁGINA IMPORTADA
 import GerenciarTiposServicoPage from './pages/admin/equipamento/GerenciarTiposServicoPage';
 
 
@@ -53,6 +53,9 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/os/:id" element={<VisualizarOsPage />} />
+        
+        {/* ✅ ROTA DO CALENDÁRIO ADICIONADA */}
+        <Route path="/calendario" element={<CalendarioPage />} />
 
         {/* Rotas de Criação de OS */}
         <Route path="/criar-os" element={<EscolherTipoOsPage />} />
@@ -67,8 +70,6 @@ function App() {
         {/* Rotas de Administração de Equipamentos */}
         <Route path="/admin/equipamentos" element={<EquipamentoMenuPage />} />
         <Route path="/admin/equipamentos/gerenciar" element={<GerenciarEquipamentosPage />} />
-        
-        {/* ✅ NOVA ROTA ADICIONADA */}
         <Route path="/admin/equipamentos/servicos" element={<GerenciarTiposServicoPage />} />
 
         {/* Rotas de Administração de Locais */}

@@ -7,10 +7,15 @@ function Navbar() {
     const navigate = useNavigate();
     const userRole = localStorage.getItem('userRole');
     
-    // ✅ Adicionando verificações para os novos cargos de gestão
-    const isAdmin = userRole === 'ADMIN';
-    const isLider = userRole === 'LIDER';
-    const isQualidade = userRole === 'ANALISTA_QC'
+    // ✅ CORREÇÃO: Verificação de cargos agora inclui o prefixo "ROLE_"
+    const isAdmin = userRole === 'ROLE_ADMIN';
+    const isLider = userRole === 'ROLE_LIDER';
+    const isEncarregado = userRole === 'ROLE_ENCARREGADO';
+    const isMecanico = userRole === 'ROLE_MECANICO';
+    
+    // Usuários com permissão para acessar áreas de gestão
+    const isGestor = isAdmin || isLider || isEncarregado;
+
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -25,8 +30,12 @@ function Navbar() {
                 <li>
                     <Link to="/dashboard" className="nav-link">Dashboard</Link>
                 </li>
+                
+                {/* ✅ NOVO LINK PARA O CALENDÁRIO */}
+                <li>
+                    <Link to="/calendario" className="nav-link">Calendário</Link>
+                </li>
 
-                {/* Dropdown para "Criar OS" - Mantido como está */}
                 <li className="nav-item dropdown">
                     <a href="#" className="nav-link dropdown-toggle">Criar OS</a>
                     <ul className="dropdown-menu">
@@ -44,7 +53,7 @@ function Navbar() {
                 </li>
 
                 {/* Link "Gerenciar Funcionários" - Apenas para ADMIN */}
-                {isAdmin && (
+                              {isAdmin && (
                     <li>
                         <Link to="/admin/funcionarios" className="nav-link admin-link">
                             Gerenciar Funcionários
@@ -52,8 +61,9 @@ function Navbar() {
                     </li>
                 )}
 
-                {/* ✅Admin, Líder e Qualidade podem gerenciar equipamentos */}
-                {(isAdmin || isLider || isQualidade) && (
+
+                {/* Link para "Gerenciar Equipamentos" - Apenas para Gestores */}
+                {isGestor && (
                     <li>
                         <Link to="/admin/equipamentos" className="nav-link">
                             Gerenciar Equipamentos

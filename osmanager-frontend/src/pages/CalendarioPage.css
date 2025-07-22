@@ -1,0 +1,44 @@
+.calendario-container {
+    padding: 2rem;
+    background-color: #F4F7FC;
+}
+
+.calendario-title {
+    color: #334155;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    font-weight: 700;
+}
+
+.calendario-wrapper {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+}
+
+/* Ajusta as cores padrão do react-big-calendar */
+.rbc-toolbar button {
+    background-color: #007bff !important;
+    color: white !important;
+    border: none !important;
+}
+
+.rbc-toolbar button:hover, .rbc-toolbar button:focus {
+    background-color: #0056b3 !important;
+}
+
+.rbc-toolbar button.rbc-active {
+    background-color: #004085 !important;
+}
+
+.rbc-event {
+    padding: 5px !important;
+}
+
+.loading-calendar {
+    text-align: center;
+    padding: 4rem;
+    font-size: 1.5rem;
+    color: #334155;
+}
