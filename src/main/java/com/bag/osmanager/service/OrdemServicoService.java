@@ -1,3 +1,5 @@
+// Local: src/main/java/com/bag/osmanager/service/OrdemServicoService.java
+
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.*;
@@ -33,7 +35,6 @@ public class OrdemServicoService {
 
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
-        // ... (este método já está correto)
         OrdemServico os = new OrdemServico();
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoId");
         
@@ -73,15 +74,16 @@ public class OrdemServicoService {
         
         OrdemServico osSalva = osRepository.save(os);
         
-        agendarProximaPreventiva(osSalva);
+        // ❌ CHAMADA REMOVIDA DESTE LOCAL
+        // agendarProximaPreventiva(osSalva);
 
         return converteParaDTO(osSalva);
     }
     
-    // ... (outros métodos permanecem iguais)
+    // ... (métodos registrarCiencia, iniciarExecucao, registrarExecucao permanecem iguais)
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
-        // ... (sem alterações)
+        // ... (código sem alterações)
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
 
@@ -106,7 +108,7 @@ public class OrdemServicoService {
 
     @Transactional
     public OrdemServicoDTO iniciarExecucao(Long osId) {
-        // ... (sem alterações)
+        // ... (código sem alterações)
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
 
@@ -121,7 +123,7 @@ public class OrdemServicoService {
 
     @Transactional
     public OrdemServicoDTO registrarExecucao(Long osId, Long executanteId, ExecucaoDTO dto) {
-        // ... (sem alterações)
+        // ... (código sem alterações)
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
         
@@ -168,7 +170,6 @@ public class OrdemServicoService {
     
     @Transactional
     public OrdemServicoDTO verificarOS(Long osId, Long verificadorId, VerificacaoDTO dto) {
-        // ... (sem alterações)
         OrdemServico osConcluida = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
         
@@ -190,6 +191,9 @@ public class OrdemServicoService {
         if (dto.getAprovado()) {
             osConcluida.setStatus(StatusOrdemServico.CONCLUIDA);
             osConcluida.setStatusVerificacao(StatusVerificacao.APROVADO);
+            // ✅ CHAMADA ADICIONADA AQUI, NO LOCAL CORRETO
+            // Agenda a próxima OS apenas após a aprovação da atual.
+            agendarProximaPreventiva(osConcluida);
         } else {
             osConcluida.setStatus(StatusOrdemServico.EM_EXECUCAO); 
             osConcluida.setStatusVerificacao(StatusVerificacao.REPROVADO);
@@ -199,8 +203,8 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
+    // O resto da classe (agendarProximaPreventiva, buscarComFiltros, etc.) permanece igual
     private void agendarProximaPreventiva(OrdemServico osCriada) {
-        // ... (sem alterações)
         if (osCriada.getTipoManutencao() != TipoManutencao.PREVENTIVA || osCriada.getFrequencia() == null || osCriada.getDataInicioPreventiva() == null) {
             return;
         }
@@ -240,11 +244,10 @@ public class OrdemServicoService {
         osRepository.save(proximaOS);
     }
 
-    // ✅ MÉTODO buscarComFiltros ATUALIZADO
     public Page<OrdemServicoDTO> buscarComFiltros(
             String keyword,
             StatusOrdemServico status,
-            TipoManutencao tipoManutencao, // <-- Parâmetro adicionado
+            TipoManutencao tipoManutencao,
             Long equipamentoId,
             Long localId,
             Long mecanicoId,
@@ -259,7 +262,6 @@ public class OrdemServicoService {
     }
 
     public OrdemServicoDTO buscarPorId(Long id) {
-        // ... (sem alterações)
         return osRepository.findById(id)
                 .map(this::converteParaDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
@@ -267,14 +269,12 @@ public class OrdemServicoService {
 
     @Transactional
     public void deletarOrdemServico(Long id) {
-        // ... (sem alterações)
         OrdemServico os = osRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
         osRepository.delete(os);
     }
     
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
-        // ... (sem alterações)
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto);
 

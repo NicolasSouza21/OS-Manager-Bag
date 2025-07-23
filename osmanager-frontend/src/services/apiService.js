@@ -24,10 +24,7 @@ api.interceptors.request.use(
 /** AUTENTICAÇÃO */
 export const login = (credentials) => api.post('/auth/login', credentials);
 export const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userId');
+    localStorage.clear(); // Limpa todo o storage para garantir um logout limpo
 };
 
 /** ORDENS DE SERVIÇO */
@@ -41,14 +38,21 @@ export const registrarExecucao = (osId, dadosExecucao) => api.put(`/ordens-servi
 export const verificarOS = (osId, dadosVerificacao) => api.post(`/ordens-servico/${osId}/verificar`, dadosVerificacao);
 
 /** FUNCIONÁRIOS */
-export const getFuncionarios = () => api.get('/funcionarios');
+// ✅ CORREÇÃO: Unificado e usando 'api' consistentemente
+export const getAllFuncionarios = () => api.get('/funcionarios');
+export const getFuncionarioById = (id) => api.get(`/funcionarios/${id}`);
 export const cadastrarFuncionario = (funcionarioData) => api.post('/funcionarios', funcionarioData);
+export const updateFuncionario = (id, funcionarioData) => api.put(`/funcionarios/${id}`, funcionarioData);
+export const deleteFuncionario = (id) => api.delete(`/funcionarios/${id}`);
 
 /** EQUIPAMENTOS */
 export const getEquipamentos = () => api.get('/equipamentos');
 export const createEquipamento = (equipamentoData) => api.post('/equipamentos', equipamentoData);
 export const updateEquipamento = (id, equipamentoData) => api.put(`/equipamentos/${id}`, equipamentoData);
 export const deleteEquipamento = (id) => api.delete(`/equipamentos/${id}`);
+export const listarServicosPorEquipamento = (equipamentoId) => api.get(`/equipamentos/${equipamentoId}/servicos`);
+export const associarServico = (equipamentoId, servicoId) => api.post(`/equipamentos/${equipamentoId}/servicos/${servicoId}`);
+export const desassociarServico = (equipamentoId, servicoId) => api.delete(`/equipamentos/${equipamentoId}/servicos/${servicoId}`);
 
 /** LOCAIS */
 export const getLocais = () => api.get('/locais');
@@ -63,10 +67,5 @@ export const deletarPlano = (planoId) => api.delete(`/planos-preventiva/${planoI
 export const getTiposServico = () => api.get('/tipos-servico');
 export const createTipoServico = (servicoData) => api.post('/tipos-servico', servicoData);
 export const deleteTipoServico = (id) => api.delete(`/tipos-servico/${id}`);
-
-// ✅ FUNÇÕES ADICIONADAS PARA GERENCIAR A RELAÇÃO EQUIPAMENTO <-> SERVIÇO
-export const listarServicosPorEquipamento = (equipamentoId) => api.get(`/equipamentos/${equipamentoId}/servicos`);
-export const associarServico = (equipamentoId, servicoId) => api.post(`/equipamentos/${equipamentoId}/servicos/${servicoId}`);
-export const desassociarServico = (equipamentoId, servicoId) => api.delete(`/equipamentos/${equipamentoId}/servicos/${servicoId}`);
 
 export default api;

@@ -1,48 +1,124 @@
 /* Local: src/pages/admin/ListarFuncionariosPage.css */
 
 .page-container {
-    padding: 2rem;
-  }
-  
-  .page-container h1 {
-    margin-bottom: 2rem;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 1rem;
-  }
-  
-  .error-text {
-    color: #D8000C;
-    background-color: #FFD2D2;
-    padding: 1rem;
-    border-radius: 5px;
-  }
-  
-  .funcionarios-table {
-    width: 100%;
-    border-collapse: collapse;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    background-color: white;
-    border-radius: 8px;
-    overflow: hidden; /* Garante que o border-radius seja aplicado nas bordas da tabela */
-  }
-  
-  .funcionarios-table th,
-  .funcionarios-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid #dee2e6;
-  }
-  
-  .funcionarios-table thead th {
-    background-color: #f8f9fa;
-    font-weight: bold;
-    color: #495057;
-  }
-  
-  .funcionarios-table tbody tr:hover {
-    background-color: #f1f3f5;
-  }
-  
-  .funcionarios-table td {
-    color: #212529;
-  }
+  width: 100%;
+  max-width: 1200px; /* Limita a largura em telas grandes */
+  margin: 2rem auto; /* Centraliza o container */
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ✅ Estilo para o cabeçalho da página */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.list-header h1 {
+  font-size: 1.8rem;
+  color: #343a40;
+  margin: 0; /* Remove margem padrão do h1 */
+}
+
+/* ✅ Estilo para o botão "Cadastrar Novo" */
+.btn-new {
+  padding: 0.7rem 1.2rem;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-new:hover {
+  background-color: #0056b3;
+}
+
+/* Tabela de funcionários com estilo aprimorado */
+.funcionarios-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.funcionarios-table th, 
+.funcionarios-table td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.funcionarios-table th {
+  font-weight: 600;
+  color: #6c757d;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.funcionarios-table tr:last-child td {
+  border-bottom: none;
+}
+
+.funcionarios-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* ✅ Estilos para a coluna e os botões de AÇÕES */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.actions-header {
+  text-align: right;
+}
+
+.actions-header ~ .actions {
+  justify-content: flex-end;
+}
+
+.actions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-edit { background-color: #ffc107; color: #212529; }
+.btn-edit:hover { background-color: #e0a800; }
+.btn-delete { background-color: #dc3545; color: white; }
+.btn-delete:hover { background-color: #c82333; }
+.btn-save { background-color: #28a745; color: white; }
+.btn-save:hover { background-color: #218838; }
+.btn-cancel { background-color: #6c757d; color: white; }
+.btn-cancel:hover { background-color: #5a6268; }
+
+/* ✅ Estilos para a LINHA DE EDIÇÃO e seus campos */
+.editing-row td {
+  background-color: #f8f9fa;
+}
+
+.editing-row input, .editing-row select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-sizing: border-box; /* Garante que padding não afete a largura total */
+}
+
+.editing-row input:focus, .editing-row select:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}

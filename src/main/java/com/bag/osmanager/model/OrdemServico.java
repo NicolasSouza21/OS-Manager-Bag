@@ -1,3 +1,5 @@
+// Local: src/main/java/com/bag/osmanager/model/OrdemServico.java
+
 package com.bag.osmanager.model;
 
 import com.bag.osmanager.model.enums.*;
@@ -5,6 +7,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+// ✅ Imports adicionados
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -46,6 +52,7 @@ public class OrdemServico {
 
     @ManyToOne
     @JoinColumn(name = "mecanico_ciencia_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL) // ✅ CORREÇÃO APLICADA
     private Funcionario mecanicoCiencia;
     private LocalDateTime dataCiencia;
 
@@ -63,11 +70,13 @@ public class OrdemServico {
 
     @ManyToOne
     @JoinColumn(name = "executado_por_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL) // ✅ CORREÇÃO APLICADA
     private Funcionario executadoPor;
     private LocalDateTime dataExecucao;
 
     @ManyToOne
     @JoinColumn(name = "verificado_por_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL) // ✅ CORREÇÃO APLICADA
     private Funcionario verificadoPor;
     
     private LocalDateTime dataVerificacao;
@@ -80,6 +89,7 @@ public class OrdemServico {
 
     @ManyToOne
     @JoinColumn(name = "aprovado_por_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL) // ✅ CORREÇÃO APLICADA
     private Funcionario aprovadoPor;
     private LocalDateTime dataAprovacao;
 
@@ -92,16 +102,10 @@ public class OrdemServico {
     @Column(nullable = true)
     private LocalDate dataInicioPreventiva;
 
-    // ✅ --- ALTERAÇÕES APLICADAS AQUI --- ✅
-
-    // O campo 'dataFimPreventiva' foi removido.
-
-    // Nova relação para saber qual serviço da preventiva foi realizado.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tipo_servico_id")
     private TipoServico tipoServico;
 
-    // Novo campo para armazenar a frequência.
     @Enumerated(EnumType.STRING)
     private Frequencia frequencia;
 }
