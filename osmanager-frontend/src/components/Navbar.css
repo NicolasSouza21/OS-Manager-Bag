@@ -27,9 +27,6 @@
   align-items: center; /* Alinha verticalmente os itens da nav */
 }
 
-.navbar-links li {
-  /* O padding foi movido para o .nav-link para melhor área de clique */
-}
 
 .nav-link {
   color: white;
