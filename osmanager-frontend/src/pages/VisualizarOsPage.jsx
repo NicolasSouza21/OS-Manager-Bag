@@ -6,11 +6,11 @@ import {
     getLocais,
     deleteOrdemServico,
     registrarCiencia,
-    verificarOS, // ✅ Importe a nova função da API
+    verificarOS,
 } from '../services/apiService';
 import './VisualizarOsPage.css';
 
-// Componente separado para o painel de verificação, para manter o código limpo
+// Componente PainelVerificacao (sem alterações)
 const PainelVerificacao = ({ os, onVerificacaoSubmit, actionLoading }) => {
     const [aprovado, setAprovado] = useState(true);
     const [comentario, setComentario] = useState('');
@@ -74,11 +74,9 @@ function VisualizarOsPage() {
     const [error, setError] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
 
-    // ✅ Lógica de roles ajustada para ler do localStorage diretamente
     const userRole = localStorage.getItem('userRole'); 
 
     const fetchData = async () => {
-        // ... (seu fetchData continua igual)
         if (!id) return;
         try {
             setLoading(true);
@@ -109,7 +107,6 @@ function VisualizarOsPage() {
     // --- LÓGICA DAS AÇÕES ---
 
     const handleDarCiencia = async () => {
-        // ... (seu handleDarCiencia continua igual)
         setActionLoading(true);
         try {
             await registrarCiencia(id);
@@ -124,7 +121,6 @@ function VisualizarOsPage() {
     };
 
     const handleDelete = async () => {
-        // ... (seu handleDelete continua igual)
         if (!window.confirm("Tem certeza que deseja excluir esta Ordem de Serviço?")) return;
         setActionLoading(true);
         try {
@@ -138,13 +134,12 @@ function VisualizarOsPage() {
         }
     };
 
-    // ✅ NOVA FUNÇÃO PARA SUBMETER A VERIFICAÇÃO
     const handleVerificacaoSubmit = async (dadosVerificacao) => {
         setActionLoading(true);
         try {
             await verificarOS(id, dadosVerificacao);
             alert('Verificação registrada com sucesso!');
-            fetchData(); // Atualiza os dados da OS na tela
+            fetchData();
         } catch (error) {
             console.error("Erro ao registrar verificação:", error);
             alert(error.response?.data?.message || 'Falha ao registrar verificação.');
@@ -154,7 +149,6 @@ function VisualizarOsPage() {
     };
 
     // --- FUNÇÕES DE FORMATAÇÃO ---
-    // ... (suas funções de formatação continuam iguais)
     const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return "—";
         return new Date(dateTimeString).toLocaleString('pt-BR', {
@@ -162,11 +156,7 @@ function VisualizarOsPage() {
             hour: '2-digit', minute: '2-digit'
         });
     };
-    const formatDate = (dateString) => {
-        if (!dateString) return '—';
-        const date = new Date(dateString);
-        return new Date(date.getTime() + date.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR');
-    };
+    
     const formatStatusLabel = (status) => {
         if (!status) return 'Pendente';
         return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
@@ -177,10 +167,8 @@ function VisualizarOsPage() {
     if (error) return <div className="error-details">{error}</div>;
     if (!ordemServico) return <div className="no-data-details">Ordem de Serviço não encontrada.</div>;
 
-    // ✅ Lógica de permissão simplificada
-    const isMecanicoOrLider = userRole === 'MECANICO' || userRole === 'LIDER';
     const podeExcluir = userRole === 'ADMIN' || userRole === 'LIDER';
-    const isEncarregado = userRole === 'ENCARREGADO';
+    const isEncarregado = userRole === 'ENCARREGado';
 
     return (
         <div className="view-os-page">
@@ -192,29 +180,34 @@ function VisualizarOsPage() {
                     </div>
                 </header>
                 
-                {/* As seções de Abertura, Preventiva e Ciência continuam iguais... */}
                 <section className="form-section">
                     <header><h2>Abertura e Detalhes</h2></header>
                     <div className="grid-container">
-                         <div className="input-group"><label>Tipo de Manutenção</label><input type="text" value={formatStatusLabel(ordemServico.tipoManutencao)} disabled /></div>
-                         <div className="input-group"><label>Solicitante</label><input type="text" value={ordemServico.solicitante || '—'} disabled /></div>
-                         <div className="input-group"><label>Data da Solicitação</label><input type="text" value={formatDateTime(ordemServico.dataSolicitacao)} disabled /></div>
-                         <div className="input-group"><label>Equipamento</label><input type="text" value={equipamento?.nome || '—'} disabled /></div>
-                         <div className="input-group"><label>Local</label><input type="text" value={local?.nome || '—'} disabled /></div>
+                        <div className="input-group"><label>Tipo de Manutenção</label><input type="text" value={formatStatusLabel(ordemServico.tipoManutencao)} disabled /></div>
+                        
+                        {/* ✅ CAMPO DE FREQUÊNCIA ADICIONADO (só aparece se for preventiva) */}
+                        {ordemServico.tipoManutencao === 'PREVENTIVA' && ordemServico.frequencia && (
+                            <div className="input-group"><label>Frequência</label><input type="text" value={formatStatusLabel(ordemServico.frequencia)} disabled /></div>
+                        )}
+                        
+                        <div className="input-group"><label>Solicitante</label><input type="text" value={ordemServico.solicitante || '—'} disabled /></div>
+                        <div className="input-group"><label>Data da Solicitação</label><input type="text" value={formatDateTime(ordemServico.dataSolicitacao)} disabled /></div>
+                        <div className="input-group"><label>Equipamento</label><input type="text" value={equipamento?.nome || '—'} disabled /></div>
+                        <div className="input-group"><label>Local</label><input type="text" value={local?.nome || '—'} disabled /></div>
                     </div>
                     <div className="input-group full-width" style={{marginTop: '1rem'}}><label>Descrição do Problema/Serviço</label><textarea value={ordemServico.descricaoProblema || 'Nenhuma'} rows="3" disabled></textarea></div>
                 </section>
-                {/* ... */}
+                
+                {/* O resto das seções (Execução, Verificação) permanece o mesmo */}
                 <section className="form-section">
                     <header><h2>Execução do Serviço</h2></header>
                     <div className="grid-container">
-                         <div className="input-group"><label>Executado por</label><input type="text" value={ordemServico.executadoPorNome || "Pendente"} disabled /></div>
-                         <div className="input-group"><label>Data da Execução</label><input type="text" value={formatDateTime(ordemServico.dataExecucao)} disabled /></div>
+                        <div className="input-group"><label>Executado por</label><input type="text" value={ordemServico.executadoPorNome || "Pendente"} disabled /></div>
+                        <div className="input-group"><label>Data da Execução</label><input type="text" value={formatDateTime(ordemServico.dataExecucao)} disabled /></div>
                     </div>
-                     <div className="input-group full-width" style={{marginTop: '1rem'}}><label>Ação Realizada</label><textarea value={ordemServico.acaoRealizada || 'Aguardando preenchimento no Dashboard.'} rows="3" disabled></textarea></div>
+                    <div className="input-group full-width" style={{marginTop: '1rem'}}><label>Ação Realizada</label><textarea value={ordemServico.acaoRealizada || 'Aguardando preenchimento no Dashboard.'} rows="3" disabled></textarea></div>
                 </section>
                 
-                {/* ✅ SEÇÃO DE VERIFICAÇÃO ADICIONADA */}
                 <section className="form-section">
                     <header><h2>Verificação de Qualidade</h2></header>
                     <div className="grid-container">
@@ -230,7 +223,6 @@ function VisualizarOsPage() {
                     )}
                 </section>
 
-                {/* ✅ PAINEL DE AÇÃO PARA O ENCARREGADO */}
                 {isEncarregado && ordemServico.status === 'AGUARDANDO_VERIFICACAO' && (
                     <PainelVerificacao 
                         os={ordemServico}
@@ -239,8 +231,16 @@ function VisualizarOsPage() {
                     />
                 )}
 
+                {/* ✅ BOTÕES DE VOLTAR E EXCLUIR ADICIONADOS AO RODAPÉ */}
                 <footer className="form-actions">
-                    {/* ... (seus botões de Voltar e Excluir) ... */}
+                    <button type="button" className="button-cancel" onClick={() => navigate(-1)}>
+                        Voltar
+                    </button>
+                    {podeExcluir && (
+                        <button type="button" className="button-delete" onClick={handleDelete} disabled={actionLoading}>
+                            {actionLoading ? 'Excluindo...' : 'Excluir OS'}
+                        </button>
+                    )}
                 </footer>
             </div>
         </div>
