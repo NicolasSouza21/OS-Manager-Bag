@@ -142,13 +142,13 @@ O **OS Manager** é uma solução web completa projetada para modernizar e otimi
 ## 📷 Visuais do Sistema
 
 ### 🛠️ Criar uma Ordem de Serviço
-![Criar OS](assets/criar os.png)
+![Criar OS](assets/criar-os.png)
 
 ### 🔄 Fluxograma da Ordem de Serviço
 ![Fluxograma OS](assets/fluxograma-os.png)
 
 ### 📌 Barra de Navegação do Sistema
-![Navbar OS](assets/NavBar OS.png)
+![Navbar OS](assets/NavBar-OS.png)
 
 ## 📌 Licença
 
