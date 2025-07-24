@@ -1,106 +1,219 @@
+/*
+ * =========================================
+ * Estilo Visual para a Página de Tipos de Serviço
+ * =========================================
+ * Autor: Fazedor de Sistema
+ * Objetivo: Interface limpa, intuitiva e profissional.
+ */
+
+/* --- Variáveis Globais (Reutilizadas para consistência) --- */
+:root {
+    --cor-primaria: #005A9C;
+    --cor-primaria-hover: #004070;
+    --cor-sucesso: #2a9d8f;
+    --cor-borda: #dee2e6;
+    --fundo-pagina: #f4f7f6;
+    --fundo-card: #ffffff;
+    --cor-texto-principal: #343a40;
+    --cor-texto-secundario: #6c757d;
+    --sombra-card: 0 4px 15px rgba(0, 0, 0, 0.07);
+    --raio-borda: 8px;
+    --transicao-rapida: all 0.2s ease-in-out;
+}
+
 /* --- Layout Principal --- */
 .gerenciar-servicos-container {
     max-width: 900px;
     margin: 2rem auto;
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    /* ✅ Define uma fonte padrão limpa e legível */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    gap: 2.5rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* --- Estilos dos Cards --- */
-.form-card, .lista-card {
-    background: #ffffff;
+/* --- Card de Formulário --- */
+.form-card {
+    background: var(--fundo-card);
     padding: 2rem 2.5rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: var(--raio-borda);
+    box-shadow: var(--sombra-card);
+    border: 1px solid var(--cor-borda);
 }
 
-.form-card h2, .lista-card h2 {
+.form-card h2, .form-card h3 {
+    font-size: 1.5rem;
     margin-top: 0;
+    margin-bottom: 2rem;
+    color: var(--cor-primaria);
+    font-weight: 600;
+}
+
+.form-card h3 {
+    font-size: 1.2rem;
+    margin-top: 2.5rem; /* Espaço antes do título "Associar" */
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--cor-borda);
+}
+
+
+/* --- Campos de Formulário --- */
+.input-group {
     margin-bottom: 1.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid #dee2e6;
-    color: #0056b3; /* Tom de azul mais sóbrio */
-    font-size: 1.5rem; /* Tamanho do título aumentado */
 }
 
-/* --- Formulário com Melhor Legibilidade --- */
 .input-group label {
-    font-size: 1rem;  /* ✅ Tamanho da fonte do label aumentado */
-    font-weight: 600; /* ✅ Deixa o label mais destacado */
-    color: #495057;   /* Cor com bom contraste */
-    margin-bottom: 0.5rem;
     display: block;
+    font-weight: 600;
+    color: var(--cor-texto-secundario);
+    margin-bottom: 0.5rem;
 }
 
-.input-group input, .input-group textarea {
-    font-size: 1rem; /* ✅ Tamanho da fonte dentro do campo aumentado */
-    padding: 0.8rem; /* ✅ Mais espaço interno */
+.input-group input[type="text"],
+.input-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: 6px;
+    transition: var(--transicao-rapida);
+    color: var(--cor-texto-principal);
 }
 
-/* --- ✅ Lista de Checkbox Aprimorada --- */
+.input-group input[type="text"]:focus,
+.input-group textarea:focus {
+    outline: none;
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 3px rgba(0, 90, 156, 0.2);
+}
+
+.input-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+
+/* --- ✅ Nova Lista de Associação de Equipamentos --- */
 .equipamentos-checkbox-list {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 5px;
-    padding: 1rem;
-    margin-top: 0.5rem;
-    max-height: 220px;
-    overflow-y: auto;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 0.75rem;
+    /* Cria colunas que se ajustam, com no mínimo 250px */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--fundo-pagina);
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-borda);
+    max-height: 300px; /* Altura máxima com scroll */
+    overflow-y: auto;
 }
 
 .checkbox-label {
     display: flex;
     align-items: center;
-    background-color: #ffffff;
-    padding: 0.8rem 1rem; /* ✅ Mais espaço interno */
-    border-radius: 5px;
-    border: 1px solid #dee2e6;
+    background-color: var(--fundo-card);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 2px solid var(--cor-borda); /* Borda um pouco mais grossa */
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    transition: var(--transicao-rapida);
     font-weight: 500;
-    font-size: 1rem; /* ✅ Tamanho da fonte aumentado */
 }
 
 .checkbox-label:hover {
-    border-color: #007bff;
-    background-color: #e9f2ff;
+    border-color: var(--cor-primaria-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+}
+
+/* Estilo para o label quando o checkbox está marcado */
+.checkbox-label.checked {
+    border-color: var(--cor-primaria);
+    background-color: #eaf5ff;
+    color: var(--cor-primaria);
+    font-weight: 600;
 }
 
 .checkbox-label input[type="checkbox"] {
-    /* Transforma o checkbox em um quadrado maior e mais fácil de clicar */
-    transform: scale(1.4);
-    margin-right: 1rem;
+    /* Esconde o checkbox original, pois o label inteiro é clicável */
+    display: none;
 }
 
-/* --- Tabela com Melhor Espaçamento --- */
+.checkbox-label .checkbox-custom {
+    /* Cria um checkbox customizado */
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--cor-borda);
+    border-radius: 4px;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transicao-rapida);
+    flex-shrink: 0; /* Impede que o checkbox encolha */
+}
+
+.checkbox-label.checked .checkbox-custom {
+    background-color: var(--cor-primaria);
+    border-color: var(--cor-primaria);
+}
+
+/* Desenha o "check" (V) com CSS */
+.checkbox-label .checkbox-custom::after {
+    content: '';
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+    opacity: 0;
+    transition: var(--transicao-rapida);
+}
+
+.checkbox-label.checked .checkbox-custom::after {
+    opacity: 1;
+}
+
+.checkbox-text {
+    /* Permite que o texto quebre a linha se for muito longo */
+    white-space: normal;
+    word-break: break-word;
+}
+
+
+/* --- Botão Principal --- */
+.btn-submit {
+    width: 100%;
+    padding: 14px 20px;
+    margin-top: 2rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    background-color: var(--cor-primaria);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transicao-rapida);
+}
+
+.btn-submit:hover {
+    background-color: var(--cor-primaria-hover);
+    transform: scale(1.02);
+}
+
+
+/* --- Tabela de Serviços (Se aplicável na mesma página) --- */
+.lista-card {
+    background: var(--fundo-card);
+    padding: 2rem 2.5rem;
+    border-radius: var(--raio-borda);
+    box-shadow: var(--sombra-card);
+    border: 1px solid var(--cor-borda);
+}
+
 .servicos-table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 1.5rem;
 }
-
-.servicos-table th, .servicos-table td {
-    padding: 1rem 1.2rem; /* ✅ Mais espaçamento nas células */
-    text-align: left;
-    border-bottom: 1px solid #dee2e6;
-    font-size: 1rem; /* ✅ Tamanho da fonte aumentado */
-}
-
-.servicos-table thead {
-    background-color: #f8f9fa;
-}
-
-.servicos-table th {
-    font-weight: 600;
-    color: #343a40;
-}
-
-.servicos-table td:last-child {
-    width: 1%;
-    white-space: nowrap;
-}
+/* ... (estilos de tabela podem ser adicionados aqui se necessário) ... */

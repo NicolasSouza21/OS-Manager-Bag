@@ -1,11 +1,17 @@
-// Local do arquivo: src/main/java/com/bag/osmanager/repository/OrdemServicoRepository.java
 package com.bag.osmanager.repository;
 
 import com.bag.osmanager.model.OrdemServico;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor; // 👈 IMPORT ADICIONADO
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-// 👇 FAÇA O REPOSITÓRIO ESTENDER JpaSpecificationExecutor 👇
 public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long>, JpaSpecificationExecutor<OrdemServico> {
-    // Exemplo futuro: List<OrdemServico> findByPrioridade(Prioridade prioridade);
+
+    /**
+     * Verifica de forma otimizada se existe pelo menos uma Ordem de Serviço
+     * associada a um determinado ID de equipamento.
+     * @param equipamentoId O ID do equipamento a ser verificado.
+     * @return true se existir alguma OS para o equipamento, false caso contrário.
+     */
+    boolean existsByEquipamentoId(Long equipamentoId); // <-- ✅ MÉTODO ADICIONADO
+
 }

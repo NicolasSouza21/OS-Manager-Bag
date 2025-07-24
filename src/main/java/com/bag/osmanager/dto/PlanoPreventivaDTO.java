@@ -4,6 +4,8 @@ import com.bag.osmanager.model.enums.Frequencia;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import java.time.LocalDate; // ✅ Importe LocalDate
+
 
 @Data
 @NoArgsConstructor
@@ -18,6 +20,6 @@ public class PlanoPreventivaDTO {
     // Trocamos o campo 'servico' por uma referência ao 'TipoServico'
     private Long tipoServicoId;
     private String tipoServicoNome; // Para facilitar a exibição no frontend
-
+    private LocalDate dataInicio;
     private Integer toleranciaDias;
 }

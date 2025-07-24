@@ -17,6 +17,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -54,8 +55,8 @@ public class OrdemServicoService {
         }
 
         if (dto.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
-            if (dto.getTipoServicoId() == null || dto.getFrequencia() == null) {
-                throw new IllegalArgumentException("Para OS Preventiva, o serviço e a frequência são obrigatórios.");
+            if (dto.getTipoServicoId() == null || dto.getFrequencia() == null || dto.getDataInicioPreventiva() == null) {
+                throw new IllegalArgumentException("Para OS Preventiva, o serviço, a frequência e a data de início são obrigatórios.");
             }
             TipoServico tipoServico = tipoServicoRepository.findById(dto.getTipoServicoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de Serviço com ID " + dto.getTipoServicoId() + " não encontrado!"));
@@ -63,6 +64,10 @@ public class OrdemServicoService {
             os.setTipoServico(tipoServico);
             os.setFrequencia(dto.getFrequencia());
             os.setDescricaoProblema(tipoServico.getNome());
+            
+            // ✅ --- CORREÇÃO DEFINITIVA APLICADA AQUI --- ✅
+            // Salva a data de início da preventiva que vem do formulário.
+            os.setDataInicioPreventiva(dto.getDataInicioPreventiva());
 
         } else { // CORRETIVA
             switch (dto.getPrioridade()) {
@@ -74,16 +79,12 @@ public class OrdemServicoService {
         
         OrdemServico osSalva = osRepository.save(os);
         
-        // ❌ CHAMADA REMOVIDA DESTE LOCAL
-        // agendarProximaPreventiva(osSalva);
-
         return converteParaDTO(osSalva);
     }
     
-    // ... (métodos registrarCiencia, iniciarExecucao, registrarExecucao permanecem iguais)
+    // ... (O resto da classe, incluindo agendarProximaPreventiva, permanece o mesmo)
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
-        // ... (código sem alterações)
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
 
@@ -108,7 +109,6 @@ public class OrdemServicoService {
 
     @Transactional
     public OrdemServicoDTO iniciarExecucao(Long osId) {
-        // ... (código sem alterações)
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
 
@@ -123,7 +123,6 @@ public class OrdemServicoService {
 
     @Transactional
     public OrdemServicoDTO registrarExecucao(Long osId, Long executanteId, ExecucaoDTO dto) {
-        // ... (código sem alterações)
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
         
@@ -191,8 +190,6 @@ public class OrdemServicoService {
         if (dto.getAprovado()) {
             osConcluida.setStatus(StatusOrdemServico.CONCLUIDA);
             osConcluida.setStatusVerificacao(StatusVerificacao.APROVADO);
-            // ✅ CHAMADA ADICIONADA AQUI, NO LOCAL CORRETO
-            // Agenda a próxima OS apenas após a aprovação da atual.
             agendarProximaPreventiva(osConcluida);
         } else {
             osConcluida.setStatus(StatusOrdemServico.EM_EXECUCAO); 
@@ -203,16 +200,15 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
-    // O resto da classe (agendarProximaPreventiva, buscarComFiltros, etc.) permanece igual
-    private void agendarProximaPreventiva(OrdemServico osCriada) {
-        if (osCriada.getTipoManutencao() != TipoManutencao.PREVENTIVA || osCriada.getFrequencia() == null || osCriada.getDataInicioPreventiva() == null) {
+    private void agendarProximaPreventiva(OrdemServico osConcluida) {
+        if (osConcluida.getTipoManutencao() != TipoManutencao.PREVENTIVA || osConcluida.getFrequencia() == null || osConcluida.getDataInicioPreventiva() == null) {
             return;
         }
 
-        LocalDate dataBase = osCriada.getDataInicioPreventiva();
+        LocalDate dataBase = osConcluida.getDataInicioPreventiva();
         LocalDate proximaData;
 
-        switch (osCriada.getFrequencia()) {
+        switch (osConcluida.getFrequencia()) {
             case DIARIO: proximaData = dataBase.plusDays(1); break;
             case BIDIARIO: proximaData = dataBase.plusDays(2); break;
             case SEMANAL: proximaData = dataBase.plusWeeks(1); break;
@@ -225,13 +221,17 @@ public class OrdemServicoService {
             default: return;
         }
         
+        if (proximaData.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            proximaData = proximaData.plusDays(1);
+        }
+        
         OrdemServico proximaOS = new OrdemServico();
-        proximaOS.setEquipamento(osCriada.getEquipamento());
-        proximaOS.setLocal(osCriada.getLocal());
+        proximaOS.setEquipamento(osConcluida.getEquipamento());
+        proximaOS.setLocal(osConcluida.getLocal());
         proximaOS.setTipoManutencao(TipoManutencao.PREVENTIVA);
-        proximaOS.setTipoServico(osCriada.getTipoServico());
-        proximaOS.setFrequencia(osCriada.getFrequencia());
-        proximaOS.setDescricaoProblema(osCriada.getDescricaoProblema());
+        proximaOS.setTipoServico(osConcluida.getTipoServico());
+        proximaOS.setFrequencia(osConcluida.getFrequencia());
+        proximaOS.setDescricaoProblema(osConcluida.getDescricaoProblema());
         proximaOS.setSolicitante("SISTEMA (AUTO)");
         proximaOS.setPrioridade(Prioridade.MEDIA);
         

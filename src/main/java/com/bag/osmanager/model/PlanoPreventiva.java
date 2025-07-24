@@ -1,5 +1,7 @@
 package com.bag.osmanager.model;
 
+import java.time.LocalDate;
+
 import com.bag.osmanager.model.enums.Frequencia;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -34,4 +36,8 @@ public class PlanoPreventiva {
 
     @Column
     private Integer toleranciaDias; // A tolerância em dias
+
+    // ✅ --- CAMPO ADICIONADO --- ✅
+    @Column(nullable = false)
+    private LocalDate dataInicio; // Data de início para o plano de manutenção
 }
