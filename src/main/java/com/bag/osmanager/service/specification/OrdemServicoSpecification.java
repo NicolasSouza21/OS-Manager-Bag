@@ -5,7 +5,7 @@ import com.bag.osmanager.model.Funcionario;
 import com.bag.osmanager.model.OrdemServico;
 import com.bag.osmanager.model.enums.StatusOrdemServico;
 import com.bag.osmanager.model.enums.StatusVerificacao;
-import com.bag.osmanager.model.enums.TipoManutencao; // ✅ Importe o enum TipoManutencao
+import com.bag.osmanager.model.enums.TipoManutencao;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -20,7 +20,7 @@ public class OrdemServicoSpecification {
     public static Specification<OrdemServico> comFiltros(
             String keyword,
             StatusOrdemServico status,
-            TipoManutencao tipoManutencao, // ✅ Novo parâmetro adicionado
+            TipoManutencao tipoManutencao,
             Long equipamentoId,
             Long localId,
             Long mecanicoId,
@@ -29,13 +29,21 @@ public class OrdemServicoSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Filtro por palavra-chave (keyword)
+            // ✅ --- FILTRO POR PALAVRA-CHAVE ATUALIZADO ---
             if (StringUtils.hasText(keyword)) {
                 Join<OrdemServico, Equipamento> equipamentoJoin = root.join("equipamento", JoinType.LEFT);
-                Predicate idPredicate = criteriaBuilder.like(root.get("id").as(String.class), "%" + keyword + "%");
+                
+                // Busca pelo novo código da OS (Ex: "123" ou "123-E")
+                Predicate codigoOsPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("codigoOs")), "%" + keyword.toLowerCase() + "%");
+                
+                // Busca pelo nome do equipamento
                 Predicate equipamentoPredicate = criteriaBuilder.like(criteriaBuilder.lower(equipamentoJoin.get("nome")), "%" + keyword.toLowerCase() + "%");
+                
+                // Busca pela descrição do problema
                 Predicate descricaoPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("descricaoProblema")), "%" + keyword.toLowerCase() + "%");
-                predicates.add(criteriaBuilder.or(idPredicate, equipamentoPredicate, descricaoPredicate));
+                
+                // Combina as buscas: a OS corresponde se a palavra-chave estiver no código, no nome do equipamento ou na descrição.
+                predicates.add(criteriaBuilder.or(codigoOsPredicate, equipamentoPredicate, descricaoPredicate));
             }
 
             // Filtro por Status da OS
@@ -43,7 +51,7 @@ public class OrdemServicoSpecification {
                 predicates.add(criteriaBuilder.equal(root.get("status"), status));
             }
 
-            // ✅ NOVO FILTRO POR TIPO DE MANUTENÇÃO
+            // Filtro por Tipo de Manutenção
             if (tipoManutencao != null) {
                 predicates.add(criteriaBuilder.equal(root.get("tipoManutencao"), tipoManutencao));
             }

@@ -35,7 +35,7 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
-    // Seus beans (PasswordEncoder, etc.) e CORS estão corretos.
+    // ... (Seus outros beans permanecem os mesmos)
     @Bean
     public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
@@ -71,8 +71,11 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
-            // ✅ ESTA CONFIGURAÇÃO ESTÁ CORRETA.
             .authorizeHttpRequests(authorize -> authorize
+                // ✅ --- CORREÇÃO APLICADA AQUI ---
+                // 0. Permite todas as requisições de verificação (preflight) OPTIONS
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                 // 1. Rotas Públicas
                 .requestMatchers("/api/auth/**", "/error").permitAll()
 

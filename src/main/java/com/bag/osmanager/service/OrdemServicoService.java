@@ -1,5 +1,3 @@
-// Local: src/main/java/com/bag/osmanager/service/OrdemServicoService.java
-
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.*;
@@ -39,8 +37,7 @@ public class OrdemServicoService {
         OrdemServico os = new OrdemServico();
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoId");
         
-        LocalDateTime agora = LocalDateTime.now();
-        os.setDataSolicitacao(agora);
+        os.setDataSolicitacao(LocalDateTime.now());
         os.setStatus(StatusOrdemServico.ABERTA);
         os.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
 
@@ -54,6 +51,7 @@ public class OrdemServicoService {
             os.setLocal(local);
         }
 
+        // ✅ --- NOVA LÓGICA DE GERAÇÃO DE CÓDIGO ---
         if (dto.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
             if (dto.getTipoServicoId() == null || dto.getFrequencia() == null || dto.getDataInicioPreventiva() == null) {
                 throw new IllegalArgumentException("Para OS Preventiva, o serviço, a frequência e a data de início são obrigatórios.");
@@ -64,25 +62,80 @@ public class OrdemServicoService {
             os.setTipoServico(tipoServico);
             os.setFrequencia(dto.getFrequencia());
             os.setDescricaoProblema(tipoServico.getNome());
-            
-            // ✅ --- CORREÇÃO DEFINITIVA APLICADA AQUI --- ✅
-            // Salva a data de início da preventiva que vem do formulário.
             os.setDataInicioPreventiva(dto.getDataInicioPreventiva());
+
+            // Calcula o próximo número da sequência de PREVENTIVAS
+            long proximoNumero = osRepository.findMaxNumeroPreventiva().orElse(0L) + 1;
+            os.setNumeroPreventiva(proximoNumero);
+            os.setCodigoOs(proximoNumero + "-E");
 
         } else { // CORRETIVA
             switch (dto.getPrioridade()) {
-                case ALTA: os.setDataLimite(agora.with(LocalTime.MAX)); break;
-                case MEDIA: os.setDataLimite(agora.plusDays(4)); break;
-                case BAIXA: os.setDataLimite(agora.plusDays(7)); break;
+                case ALTA: os.setDataLimite(LocalDateTime.now().with(LocalTime.MAX)); break;
+                case MEDIA: os.setDataLimite(LocalDateTime.now().plusDays(4)); break;
+                case BAIXA: os.setDataLimite(LocalDateTime.now().plusDays(7)); break;
             }
+
+            // Calcula o próximo número da sequência de CORRETIVAS
+            long proximoNumero = osRepository.findMaxNumeroCorretiva().orElse(0L) + 1;
+            os.setNumeroCorretiva(proximoNumero);
+            os.setCodigoOs(String.valueOf(proximoNumero));
         }
         
         OrdemServico osSalva = osRepository.save(os);
-        
         return converteParaDTO(osSalva);
     }
     
-    // ... (O resto da classe, incluindo agendarProximaPreventiva, permanece o mesmo)
+    private void agendarProximaPreventiva(OrdemServico osConcluida) {
+        if (osConcluida.getTipoManutencao() != TipoManutencao.PREVENTIVA || osConcluida.getFrequencia() == null || osConcluida.getDataInicioPreventiva() == null) {
+            return;
+        }
+
+        LocalDate dataBase = osConcluida.getDataInicioPreventiva();
+        LocalDate proximaData;
+
+        switch (osConcluida.getFrequencia()) {
+            case DIARIO: proximaData = dataBase.plusDays(1); break;
+            case BIDIARIO: proximaData = dataBase.plusDays(2); break;
+            case SEMANAL: proximaData = dataBase.plusWeeks(1); break;
+            case QUINZENAL: proximaData = dataBase.plusWeeks(2); break;
+            case MENSAL: proximaData = dataBase.plusMonths(1); break;
+            case BIMESTRAL: proximaData = dataBase.plusMonths(2); break;
+            case TRIMESTRAL: proximaData = dataBase.plusMonths(3); break;
+            case SEMESTRAL: proximaData = dataBase.plusMonths(6); break;
+            case ANUAL: proximaData = dataBase.plusYears(1); break;
+            default: return;
+        }
+        
+        if (proximaData.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            proximaData = proximaData.plusDays(1);
+        }
+        
+        OrdemServico proximaOS = new OrdemServico();
+        proximaOS.setEquipamento(osConcluida.getEquipamento());
+        proximaOS.setLocal(osConcluida.getLocal());
+        proximaOS.setTipoManutencao(TipoManutencao.PREVENTIVA);
+        proximaOS.setTipoServico(osConcluida.getTipoServico());
+        proximaOS.setFrequencia(osConcluida.getFrequencia());
+        proximaOS.setDescricaoProblema(osConcluida.getDescricaoProblema());
+        proximaOS.setSolicitante("SISTEMA (AUTO)");
+        proximaOS.setPrioridade(Prioridade.MEDIA);
+        proximaOS.setDataSolicitacao(LocalDateTime.now());
+        proximaOS.setDataInicioPreventiva(proximaData);
+        proximaOS.setStatus(StatusOrdemServico.ABERTA);
+        proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
+
+        // ✅ Lógica de geração de CÓDIGO INDEPENDENTE para preventivas automáticas
+        long proximoNumero = osRepository.findMaxNumeroPreventiva().orElse(0L) + 1;
+        proximaOS.setNumeroPreventiva(proximoNumero);
+        proximaOS.setCodigoOs(proximoNumero + "-E");
+
+        osRepository.save(proximaOS);
+    }
+
+    // --- O RESTANTE DA CLASSE PERMANECE IGUAL ---
+    
+    //...(todos os outros métodos como registrarCiencia, buscarComFiltros, converteParaDTO, etc. ficam aqui)
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
         OrdemServico os = osRepository.findById(osId)
@@ -199,52 +252,7 @@ public class OrdemServicoService {
         OrdemServico osAtualizada = osRepository.save(osConcluida);
         return converteParaDTO(osAtualizada);
     }
-
-    private void agendarProximaPreventiva(OrdemServico osConcluida) {
-        if (osConcluida.getTipoManutencao() != TipoManutencao.PREVENTIVA || osConcluida.getFrequencia() == null || osConcluida.getDataInicioPreventiva() == null) {
-            return;
-        }
-
-        LocalDate dataBase = osConcluida.getDataInicioPreventiva();
-        LocalDate proximaData;
-
-        switch (osConcluida.getFrequencia()) {
-            case DIARIO: proximaData = dataBase.plusDays(1); break;
-            case BIDIARIO: proximaData = dataBase.plusDays(2); break;
-            case SEMANAL: proximaData = dataBase.plusWeeks(1); break;
-            case QUINZENAL: proximaData = dataBase.plusWeeks(2); break;
-            case MENSAL: proximaData = dataBase.plusMonths(1); break;
-            case BIMESTRAL: proximaData = dataBase.plusMonths(2); break;
-            case TRIMESTRAL: proximaData = dataBase.plusMonths(3); break;
-            case SEMESTRAL: proximaData = dataBase.plusMonths(6); break;
-            case ANUAL: proximaData = dataBase.plusYears(1); break;
-            default: return;
-        }
-        
-        if (proximaData.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            proximaData = proximaData.plusDays(1);
-        }
-        
-        OrdemServico proximaOS = new OrdemServico();
-        proximaOS.setEquipamento(osConcluida.getEquipamento());
-        proximaOS.setLocal(osConcluida.getLocal());
-        proximaOS.setTipoManutencao(TipoManutencao.PREVENTIVA);
-        proximaOS.setTipoServico(osConcluida.getTipoServico());
-        proximaOS.setFrequencia(osConcluida.getFrequencia());
-        proximaOS.setDescricaoProblema(osConcluida.getDescricaoProblema());
-        proximaOS.setSolicitante("SISTEMA (AUTO)");
-        proximaOS.setPrioridade(Prioridade.MEDIA);
-        
-        proximaOS.setDataSolicitacao(LocalDateTime.now());
-        proximaOS.setDataInicioPreventiva(proximaData);
-        
-        proximaOS.setStatus(StatusOrdemServico.ABERTA);
-        proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
-
-        osRepository.save(proximaOS);
-    }
-
-    public Page<OrdemServicoDTO> buscarComFiltros(
+        public Page<OrdemServicoDTO> buscarComFiltros(
             String keyword,
             StatusOrdemServico status,
             TipoManutencao tipoManutencao,
@@ -277,6 +285,8 @@ public class OrdemServicoService {
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto);
+
+        dto.setCodigoOs(os.getCodigoOs());
 
         if (os.getMecanicoCiencia() != null) {
             dto.setLiderCienciaId(os.getMecanicoCiencia().getId());

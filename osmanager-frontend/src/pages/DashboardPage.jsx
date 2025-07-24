@@ -13,13 +13,22 @@ import { jwtDecode } from 'jwt-decode';
 import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck } from 'react-icons/fa';
 import './DashBoardPage.css';
 
-// ... (suas funções parseSafeDate e groupOrdensByDate continuam iguais)
+// ✅ --- CORREÇÃO DE FUSO HORÁRIO APLICADA AQUI ---
 const parseSafeDate = (dateString) => {
     if (!dateString) return null;
-    return new Date(dateString);
+    
+    // Quando o backend envia uma data como "2025-07-24", o JavaScript por padrão
+    // a interpreta como meia-noite no horário universal (UTC). Em fusos horários
+    // como o do Brasil (GMT-3), isso se torna 21:00 do dia ANTERIOR (dia 23).
+    // Esta correção garante que a data seja interpretada no fuso horário local,
+    // exibindo o dia correto que foi salvo no banco.
+    const date = new Date(dateString);
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() + userTimezoneOffset);
 };
 
 const groupOrdensByDate = (ordens) => {
+    // ... (Esta função não precisa de alterações)
     const groups = {};
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -64,7 +73,9 @@ const groupOrdensByDate = (ordens) => {
     return groups;
 };
 
+
 function DashboardPage() {
+    // ... (O restante do seu componente permanece exatamente o mesmo)
     const navigate = useNavigate();
     const [ordens, setOrdens] = useState([]);
     const [equipamentos, setEquipamentos] = useState([]);
@@ -91,10 +102,14 @@ function DashboardPage() {
         setLoading(true);
         try {
             const params = {
-                page: 0, size: 200, sort: 'dataSolicitacao,desc',
-                keyword: filtros.keyword, status: filtros.status,
+                page: 0, 
+                size: 200, 
+                sort: 'dataSolicitacao,desc',
+                keyword: filtros.keyword, 
+                status: filtros.status,
                 tipoManutencao: filtros.tipoManutencao,
-                equipamentoId: filtros.equipamentoId, localId: filtros.localId,
+                equipamentoId: filtros.equipamentoId, 
+                localId: filtros.localId,
                 mecanicoId: filtros.minhasTarefas ? userId : null,
                 statusVerificacao: filtros.aguardandoVerificacao ? 'PENDENTE' : null,
             };
@@ -113,7 +128,6 @@ function DashboardPage() {
         const token = localStorage.getItem('authToken');
         if (token) {
             const decoded = jwtDecode(token);
-            // O backend envia um array de roles, pegamos a primeira
             setUserRole(decoded.roles[0] || '');
             setUserId(decoded.userId || null);
         }
@@ -163,7 +177,7 @@ function DashboardPage() {
         if (!selectedOs) return;
         try {
             await registrarExecucao(selectedOs.id, dadosExecucao);
-            alert(`OS #${selectedOs.id} foi finalizada com sucesso!`);
+            alert(`OS #${selectedOs.codigoOs} foi finalizada com sucesso!`);
             setIsModalOpen(false);
             setSelectedOs(null);
             fetchData();
@@ -172,7 +186,6 @@ function DashboardPage() {
         }
     };
     
-    // ✅ FUNÇÃO CORRIGIDA PARA VERIFICAR O CARGO COM O PREFIXO "ROLE_"
     const renderAcoes = (os) => {
         const isMecanicoOrLider = userRole === 'ROLE_MECANICO' || userRole === 'ROLE_LIDER';
         const isEncarregado = userRole === 'ROLE_ENCARREGADO';
@@ -227,7 +240,6 @@ function DashboardPage() {
                         {equipamentos.map(e => (<option key={e.id} value={e.id}>{e.nome}</option>))}
                     </select>
                     <button className={`filtro-btn-rapido ${filtros.minhasTarefas ? 'ativo' : ''}`} onClick={() => handleToggleFilter('minhasTarefas')}>Minhas Tarefas</button>
-                    {/* ✅ LÓGICA CORRIGIDA AQUI TAMBÉM */}
                     {userRole === 'ROLE_ENCARREGADO' && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
                 </div>
                 
@@ -255,7 +267,7 @@ function DashboardPage() {
                                             {groupedOrdens[dateKey].map(os => (
                                                 <tr key={os.id}>
                                                     <td><span className={`status-pill status-${os.status?.toLowerCase()}`}>{formatLabel(os.status)}</span></td>
-                                                    <td>{os.id}</td>
+                                                    <td>{os.codigoOs}</td>
                                                     <td>{renderDataRelevante(os)}</td>
                                                     <td>
                                                         <span className={`tipo-pill tipo-${os.tipoManutencao?.toLowerCase()}`}>

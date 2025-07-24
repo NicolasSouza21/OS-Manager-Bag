@@ -1,5 +1,3 @@
-// Local: src/main/java/com/bag/osmanager/model/OrdemServico.java
-
 package com.bag.osmanager.model;
 
 import com.bag.osmanager.model.enums.*;
@@ -7,8 +5,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-// ✅ Imports adicionados
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -17,7 +13,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "ordens_servico")
+@Table(name = "ordens_servico", indexes = {
+    // Adding indexes to the new columns for faster lookups
+    @Index(name = "idx_numero_corretiva", columnList = "numero_corretiva"),
+    @Index(name = "idx_numero_preventiva", columnList = "numero_preventiva")
+})
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -26,6 +26,18 @@ public class OrdemServico {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // This field remains as the final, user-facing unique code
+    @Column(name = "codigo_os", unique = true, nullable = true)
+    private String codigoOs;
+
+    // ✅ --- NEW COLUMNS FOR SEPARATE SEQUENCES ---
+    @Column(name = "numero_corretiva", unique = true, nullable = true)
+    private Long numeroCorretiva;
+
+    @Column(name = "numero_preventiva", unique = true, nullable = true)
+    private Long numeroPreventiva;
+    // --- END OF NEW COLUMNS ---
 
     @ManyToOne
     @JoinColumn(name = "equipamento_id", referencedColumnName = "id", nullable = false)
@@ -52,7 +64,7 @@ public class OrdemServico {
 
     @ManyToOne
     @JoinColumn(name = "mecanico_ciencia_id")
-    @OnDelete(action = OnDeleteAction.SET_NULL) // ✅ CORREÇÃO APLICADA
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private Funcionario mecanicoCiencia;
     private LocalDateTime dataCiencia;
 
@@ -70,13 +82,13 @@ public class OrdemServico {
 
     @ManyToOne
     @JoinColumn(name = "executado_por_id")
-    @OnDelete(action = OnDeleteAction.SET_NULL) // ✅ CORREÇÃO APLICADA
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private Funcionario executadoPor;
     private LocalDateTime dataExecucao;
 
     @ManyToOne
     @JoinColumn(name = "verificado_por_id")
-    @OnDelete(action = OnDeleteAction.SET_NULL) // ✅ CORREÇÃO APLICADA
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private Funcionario verificadoPor;
     
     private LocalDateTime dataVerificacao;
@@ -89,7 +101,7 @@ public class OrdemServico {
 
     @ManyToOne
     @JoinColumn(name = "aprovado_por_id")
-    @OnDelete(action = OnDeleteAction.SET_NULL) // ✅ CORREÇÃO APLICADA
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private Funcionario aprovadoPor;
     private LocalDateTime dataAprovacao;
 

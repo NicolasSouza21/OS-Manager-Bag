@@ -10,6 +10,7 @@ import java.util.List;
 public class OrdemServicoDTO {
     
     private Long id;
+    private String codigoOs; // ✅ --- NOVO CAMPO ADICIONADO ---
     private StatusOrdemServico status;
     private String solicitante;
     private LocalDateTime dataSolicitacao;
@@ -51,9 +52,6 @@ public class OrdemServicoDTO {
     
     // Dados da Preventiva
     private LocalDate dataInicioPreventiva;
-    // O campo dataFimPreventiva foi removido, como solicitado.
-
-    // ✅ --- NOVOS CAMPOS ADICIONADOS AQUI --- ✅
     private Long tipoServicoId;
     private String tipoServicoNome;
     private Frequencia frequencia;

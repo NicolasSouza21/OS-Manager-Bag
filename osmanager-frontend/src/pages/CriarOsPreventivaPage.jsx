@@ -13,11 +13,10 @@ const FREQUENCIA_OPTIONS = [
     'BIMESTRAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'
 ];
 
-// Função utilitária não precisa de alteração, está correta.
+// Função utilitária para formatar a data para o input (sem alterações)
 const formatDateForInput = (date) => {
     if (!date) return '';
     const d = new Date(date);
-    // Adicionado tratamento para fuso horário local para evitar problemas de "um dia antes"
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
@@ -40,7 +39,6 @@ function CriarOsPreventivaPage() {
     const [servicosDoEquipamento, setServicosDoEquipamento] = useState([]);
     const [loadingServicos, setLoadingServicos] = useState(false);
 
-    // MELHORIA: Estados separados para mensagens de erro e sucesso para melhor UX
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
     const [submitting, setSubmitting] = useState(false);
@@ -58,8 +56,6 @@ function CriarOsPreventivaPage() {
         carregarDadosIniciais();
     }, []);
 
-    // CORREÇÃO: Lógica para carregar serviços refatorada com async/await e cleanup function
-    // para evitar race conditions.
     useEffect(() => {
         const equipamentoId = formData.equipamentoId;
 
@@ -68,18 +64,16 @@ function CriarOsPreventivaPage() {
             return;
         }
 
-        // Esta função de limpeza é crucial. Ela será executada antes da próxima
-        // vez que o efeito rodar, ou quando o componente for desmontado.
         let isMounted = true; 
 
         const buscarServicos = async () => {
             setLoadingServicos(true);
-            setError(null); // Limpa erros antigos
+            setError(null);
             setServicosDoEquipamento([]);
             
             try {
                 const response = await listarServicosPorEquipamento(equipamentoId);
-                if (isMounted) { // Só atualiza o estado se o componente ainda estiver "ativo" para esta requisição
+                if (isMounted) {
                     setServicosDoEquipamento(response.data);
                 }
             } catch (err) {
@@ -96,7 +90,7 @@ function CriarOsPreventivaPage() {
         buscarServicos();
 
         return () => {
-            isMounted = false; // "Cancela" a requisição anterior se uma nova for disparada
+            isMounted = false;
         };
     }, [formData.equipamentoId]);
 
@@ -105,7 +99,6 @@ function CriarOsPreventivaPage() {
         
         setFormData(prev => {
             const newState = { ...prev, [name]: value };
-            // Se o equipamento mudar, reseta o serviço selecionado. Lógica mantida, está ótima.
             if (name === 'equipamentoId') {
                 newState.tipoServicoId = '';
             }
@@ -119,8 +112,17 @@ function CriarOsPreventivaPage() {
         setSuccessMessage(null);
         setSubmitting(true);
 
+        // ✅ --- CORREÇÃO DE FUSO HORÁRIO APLICADA AQUI ---
+        // Pega a data do formulário (ex: "2025-07-25")
+        const dateString = formData.dataInicioPreventiva;
+        // Cria um novo objeto Date que representa o meio-dia (12:00) na data selecionada,
+        // no fuso horário local do usuário. Isso evita que a data mude para o dia anterior
+        // ao ser convertida para UTC pelo servidor.
+        const safeDate = new Date(`${dateString}T12:00:00`);
+
         const dadosParaApi = {
             ...formData,
+            dataInicioPreventiva: safeDate, // Enviamos o objeto de data "seguro"
             equipamentoId: Number(formData.equipamentoId),
             localId: Number(formData.localId),
             tipoServicoId: Number(formData.tipoServicoId),
@@ -131,9 +133,8 @@ function CriarOsPreventivaPage() {
 
         try {
             await createOrdemServico(dadosParaApi);
-            // MELHORIA: Usar mensagem de sucesso no estado em vez de alert()
             setSuccessMessage('Ordem de Serviço Preventiva agendada com sucesso!');
-            setTimeout(() => navigate('/dashboard'), 2000); // Aguarda 2s para o usuário ler a msg
+            setTimeout(() => navigate('/dashboard'), 2000);
         } catch (err) {
             const errorMsg = err.response?.data?.message || 'Falha ao criar a Ordem de Serviço.';
             setError(errorMsg);
@@ -149,7 +150,6 @@ function CriarOsPreventivaPage() {
                     <h1>ORDEM DE SERVIÇO - MANUTENÇÃO PREVENTIVA</h1>
                 </header>
                 <main className="os-form-body">
-                    {/* MELHORIA: Exibição das mensagens de erro e sucesso */}
                     {error && <div className="error-message">{error}</div>}
                     {successMessage && <div className="success-message">{successMessage}</div>}
                     
