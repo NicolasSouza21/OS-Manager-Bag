@@ -1,95 +1,215 @@
-.modal-overlay {
+/* ==========================================================================
+   1. FUNDO E CONTAINER DO MODAL
+   ========================================================================== */
+
+   .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(33, 37, 41, 0.6); /* Tom de cinza escuro mais profissional */
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    backdrop-filter: blur(2px); /* Efeito de desfoque no fundo */
   }
   
   .modal-content {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 8px;
+    background-color: #ffffff;
+    border-radius: 12px; /* Bordas mais suaves */
     width: 90%;
-    max-width: 600px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    max-width: 650px; /* Um pouco mais de espaço */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Garante que o conteúdo não vaze das bordas arredondadas */
   }
+  
+  /* ==========================================================================
+     2. CABEÇALHO, CORPO E RODAPÉ
+     ========================================================================== */
   
   .modal-content h2 {
-    margin-top: 0;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 1rem;
+    margin: 0;
+    padding: 1.25rem 1.75rem;
+    font-size: 1.4rem;
+    color: #212529;
+    background-color: #f8f9fa; /* Fundo sutil para o título */
+    border-bottom: 1px solid #dee2e6;
   }
   
+  .form-container {
+    padding: 1.75rem;
+    max-height: 70vh; /* Altura máxima para permitir rolagem em telas pequenas */
+    overflow-y: auto; /* Adiciona barra de rolagem se o conteúdo for grande */
+  }
+  
+  .modal-actions {
+    margin-top: 1.5rem;
+    padding: 1.25rem 1.75rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+  }
+  
+  /* ==========================================================================
+     3. CAMPOS DO FORMULÁRIO (INPUTS, TEXTAREA, LABELS)
+     ========================================================================== */
+  
   .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
   
   .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    font-weight: bold;
+    font-weight: 600; /* Destaque para os rótulos */
+    font-size: 0.9rem;
+    color: #495057;
   }
   
-  .form-group input,
+  .form-group input[type="datetime-local"],
   .form-group textarea {
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
     box-sizing: border-box;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  /* Efeito de foco para guiar o usuário */
+  .form-group input[type="datetime-local"]:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
   }
   
   .form-group-inline {
-      display: flex;
-      gap: 1rem;
+    display: flex;
+    gap: 1.5rem;
   }
   .form-group-inline .form-group {
-      flex: 1;
+    flex: 1;
   }
   
+  /* ==========================================================================
+     4. CHECKBOXES E SEÇÃO DE PEÇAS
+     ========================================================================== */
+  
   .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
   }
   .checkbox-group input {
-      width: auto;
+    width: 1.2em;
+    height: 1.2em;
+    cursor: pointer;
+  }
+  .checkbox-group label {
+    margin-bottom: 0;
+    font-weight: normal;
+    cursor: pointer;
   }
   
   .pecas-section {
-      border-top: 1px solid #eee;
-      margin-top: 1rem;
-      padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    background-color: #f8f9fa; /* Fundo sutil para destacar a seção */
+    padding: 1rem;
+    border-radius: 8px;
   }
-  .peca-item {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 0.5rem;
-  }
-  .peca-item input[type="text"] {
-      flex: 3;
-  }
-  .peca-item input[type="number"] {
-      flex: 1;
-  }
-  .add-peca-btn {
-      background: none;
-      border: 1px dashed #007bff;
-      color: #007bff;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
+  .pecas-section h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #343a40;
   }
   
-  .modal-actions {
-    margin-top: 2rem;
+  .peca-item {
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    align-items: center;
+  }
+  .peca-item input[type="text"] {
+    flex: 3;
+  }
+  .peca-item input[type="number"] {
+    flex: 1;
+  }
+  .peca-item input {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+  
+  .add-peca-btn {
+    background-color: #e9ecef;
+    border: none;
+    color: #495057;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+  }
+  .add-peca-btn:hover {
+    background-color: #ced4da;
+  }
+  
+  /* ==========================================================================
+     5. BOTÕES DE AÇÃO NO RODAPÉ
+     ========================================================================== */
+  
+  .action-button-modal {
+    padding: 0.7rem 1.4rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+  }
+  .action-button-modal:active {
+    transform: translateY(1px); /* Efeito de clique */
+  }
+  .action-button-modal:disabled {
+    background-color: #adb5bd;
+    cursor: not-allowed;
+  }
+  
+  /* Botão "Voltar" (secundário) */
+  .cancel-btn {
+    background-color: #ffffff;
+    color: #6c757d;
+    border: 1px solid #6c757d;
+  }
+  .cancel-btn:hover:not(:disabled) {
+    background-color: #f8f9fa;
+  }
+  
+  /* Botão "Concluir OS" (sucesso) */
+  .success-btn {
+    background-color: #28a745;
+    color: white;
+  }
+  .success-btn:hover:not(:disabled) {
+    background-color: #218838;
+  }
+  
+  /* Botão "Cancelar OS" (perigo) */
+  .danger-btn {
+    background-color: #dc3545;
+    color: white;
+  }
+  .danger-btn:hover:not(:disabled) {
+    background-color: #c82333;
   }

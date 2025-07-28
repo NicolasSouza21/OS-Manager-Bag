@@ -6,29 +6,25 @@ import {
     getLocais, 
     registrarCiencia, 
     iniciarExecucao,
-    registrarExecucao 
+    registrarExecucao,
+    verificarOS // ✅ 1. ADICIONADO: Importa a função de API para verificar a OS
 } from '../services/apiService';
 import ExecucaoModal from '../components/ExecucaoModal';
+import VerificacaoModal from '../components/VerificacaoModal'; // ✅ 2. ADICIONADO: Importa o novo modal
 import { jwtDecode } from 'jwt-decode';
 import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck } from 'react-icons/fa';
 import './DashBoardPage.css';
 
-// ✅ --- CORREÇÃO DE FUSO HORÁRIO APLICADA AQUI ---
+// Funções de formatação de data (SEU CÓDIGO ORIGINAL)
 const parseSafeDate = (dateString) => {
     if (!dateString) return null;
-    
-    // Quando o backend envia uma data como "2025-07-24", o JavaScript por padrão
-    // a interpreta como meia-noite no horário universal (UTC). Em fusos horários
-    // como o do Brasil (GMT-3), isso se torna 21:00 do dia ANTERIOR (dia 23).
-    // Esta correção garante que a data seja interpretada no fuso horário local,
-    // exibindo o dia correto que foi salvo no banco.
     const date = new Date(dateString);
     const userTimezoneOffset = date.getTimezoneOffset() * 60000;
     return new Date(date.getTime() + userTimezoneOffset);
 };
 
+// Função de agrupar por data (SEU CÓDIGO ORIGINAL)
 const groupOrdensByDate = (ordens) => {
-    // ... (Esta função não precisa de alterações)
     const groups = {};
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -43,7 +39,6 @@ const groupOrdensByDate = (ordens) => {
         const dateString = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva 
             ? os.dataInicioPreventiva 
             : os.dataSolicitacao;
-
         const osDate = parseSafeDate(dateString);
 
         if (!osDate) {
@@ -73,18 +68,20 @@ const groupOrdensByDate = (ordens) => {
     return groups;
 };
 
-
 function DashboardPage() {
-    // ... (O restante do seu componente permanece exatamente o mesmo)
     const navigate = useNavigate();
     const [ordens, setOrdens] = useState([]);
     const [equipamentos, setEquipamentos] = useState([]);
     const [locais, setLocais] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOs, setSelectedOs] = useState(null);
     const [userRole, setUserRole] = useState('');
     const [userId, setUserId] = useState(null);
+    const [actionLoading, setActionLoading] = useState(false); // ✅ ADICIONADO: State para feedback de carregamento nos modais
+
+    // ✅ ADICIONADO: States separados para cada modal
+    const [isExecucaoModalOpen, setIsExecucaoModalOpen] = useState(false);
+    const [isVerificacaoModalOpen, setIsVerificacaoModalOpen] = useState(false);
     
     const [filtros, setFiltros] = useState({
         keyword: '', status: '', equipamentoId: '', localId: '',
@@ -106,12 +103,11 @@ function DashboardPage() {
                 size: 200, 
                 sort: 'dataSolicitacao,desc',
                 keyword: filtros.keyword, 
-                status: filtros.status,
+                status: filtros.aguardandoVerificacao ? 'AGUARDANDO_VERIFICACAO' : filtros.status,
                 tipoManutencao: filtros.tipoManutencao,
                 equipamentoId: filtros.equipamentoId, 
                 localId: filtros.localId,
                 mecanicoId: filtros.minhasTarefas ? userId : null,
-                statusVerificacao: filtros.aguardandoVerificacao ? 'PENDENTE' : null,
             };
             Object.keys(params).forEach(key => { if (!params[key]) delete params[key]; });
             const osRes = await getOrdensServico(params);
@@ -151,7 +147,15 @@ function DashboardPage() {
     };
 
     const handleToggleFilter = (filterName) => {
-        const newFilters = { ...filtros, minhasTarefas: false, aguardandoVerificacao: false, [filterName]: !filtros[filterName] };
+        const newFilters = { 
+            ...filtros, 
+            minhasTarefas: false, 
+            aguardandoVerificacao: false, 
+            [filterName]: !filtros[filterName] 
+        };
+        if (newFilters.aguardandoVerificacao) {
+            newFilters.status = '';
+        }
         setFiltros(newFilters);
     };
     
@@ -159,44 +163,63 @@ function DashboardPage() {
     const getEquipamentoNome = (id) => equipamentos.find(e => e.id === id)?.nome || 'N/A';
     
     const renderDataRelevante = (os) => {
-        const dateString = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva 
-            ? os.dataInicioPreventiva 
-            : os.dataSolicitacao;
-        
+        const dateString = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva ? os.dataInicioPreventiva : os.dataSolicitacao;
         const date = parseSafeDate(dateString);
         if (!date) return '—';
-
-        const options = os.tipoManutencao === 'PREVENTIVA' 
-            ? { day: '2-digit', month: '2-digit', year: 'numeric' }
-            : { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-            
+        const options = os.tipoManutencao === 'PREVENTIVA' ? { day: '2-digit', month: '2-digit', year: 'numeric' } : { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
         return date.toLocaleString('pt-BR', options);
     };
 
     const handleExecucaoSubmit = async (dadosExecucao) => {
         if (!selectedOs) return;
+        setActionLoading(true);
         try {
             await registrarExecucao(selectedOs.id, dadosExecucao);
             alert(`OS #${selectedOs.codigoOs} foi finalizada com sucesso!`);
-            setIsModalOpen(false);
+            setIsExecucaoModalOpen(false); // ✅ CORRIGIDO: usa o state correto
             setSelectedOs(null);
             fetchData();
         } catch (error) {
             alert(error?.response?.data?.message || "Falha ao registrar execução.");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    // ✅ 3. ADICIONADO: Nova função para lidar com o submit da verificação
+    const handleVerificacaoSubmit = async (dadosVerificacao) => {
+        if (!selectedOs) return;
+        setActionLoading(true);
+        try {
+            await verificarOS(selectedOs.id, dadosVerificacao);
+            alert(`OS #${selectedOs.codigoOs} foi verificada com sucesso!`);
+            setIsVerificacaoModalOpen(false);
+            setSelectedOs(null);
+            fetchData();
+        } catch (error) {
+            alert(error?.response?.data?.message || "Falha ao registrar verificação.");
+        } finally {
+            setActionLoading(false);
         }
     };
     
     const renderAcoes = (os) => {
-        const isMecanicoOrLider = userRole === 'ROLE_MECANICO' || userRole === 'ROLE_LIDER';
-        const isEncarregado = userRole === 'ROLE_ENCARREGADO';
+        const isMecanicoOrLider = userRole.includes('MECANICO') || userRole.includes('LIDER');
+        const isEncarregado = userRole.includes('ENCARREGADO');
 
         return (
             <div className="actions-cell">
                 <div className="dynamic-actions-container">
                     {isMecanicoOrLider && os.status === 'ABERTA' && (<button title="Dar Ciência" className="action-button-circle ciencia-btn" onClick={() => registrarCiencia(os.id).then(fetchData)}><FaCheck /></button>)}
                     {isMecanicoOrLider && os.status === 'CIENTE' && (<button title="Iniciar Execução" className="action-button-circle iniciar-btn" onClick={() => iniciarExecucao(os.id).then(fetchData)}><FaPlay /></button>)}
-                    {isMecanicoOrLider && os.status === 'EM_EXECUCAO' && (<button title="Preencher e Finalizar OS" className="action-button-circle executar-btn" onClick={() => { setSelectedOs(os); setIsModalOpen(true); }}><FaTools /></button>)}
-                    {isEncarregado && os.status === 'AGUARDANDO_VERIFICACAO' && (<button title="Verificar OS" className="action-button-circle verificar-btn" onClick={() => navigate(`/os/${os.id}`)}><FaClipboardCheck /></button>)}
+                    {isMecanicoOrLider && os.status === 'EM_EXECUCAO' && (<button title="Preencher e Finalizar OS" className="action-button-circle executar-btn" onClick={() => { setSelectedOs(os); setIsExecucaoModalOpen(true); }}><FaTools /></button>)}
+                    
+                    {/* ✅ 4. ALTERADO: O botão do encarregado agora abre o modal de verificação */}
+                    {isEncarregado && os.status === 'AGUARDANDO_VERIFICACAO' && (
+                        <button title="Verificar OS" className="action-button-circle verificar-btn" onClick={() => { setSelectedOs(os); setIsVerificacaoModalOpen(true); }}>
+                            <FaClipboardCheck />
+                        </button>
+                    )}
                 </div>
                 <button title="Visualizar Detalhes" className="view-button" onClick={() => navigate(`/os/${os.id}`)}><FaSearch /></button>
             </div>
@@ -231,7 +254,7 @@ function DashboardPage() {
                         <option value="CORRETIVA">Corretiva</option>
                         <option value="PREVENTIVA">Preventiva</option>
                     </select>
-                    <select name="status" className="filtro-select" value={filtros.status} onChange={handleFilterChange}>
+                    <select name="status" className="filtro-select" value={filtros.status} onChange={handleFilterChange} disabled={filtros.aguardandoVerificacao}>
                         <option value="">Status (Todos)</option>
                         {statusOptions.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                     </select>
@@ -240,7 +263,8 @@ function DashboardPage() {
                         {equipamentos.map(e => (<option key={e.id} value={e.id}>{e.nome}</option>))}
                     </select>
                     <button className={`filtro-btn-rapido ${filtros.minhasTarefas ? 'ativo' : ''}`} onClick={() => handleToggleFilter('minhasTarefas')}>Minhas Tarefas</button>
-                    {userRole === 'ROLE_ENCARREGADO' && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
+                    
+                    {userRole.includes('ENCARREGADO') && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
                 </div>
                 
                 <div className="os-list-container">
@@ -269,11 +293,7 @@ function DashboardPage() {
                                                     <td><span className={`status-pill status-${os.status?.toLowerCase()}`}>{formatLabel(os.status)}</span></td>
                                                     <td>{os.codigoOs}</td>
                                                     <td>{renderDataRelevante(os)}</td>
-                                                    <td>
-                                                        <span className={`tipo-pill tipo-${os.tipoManutencao?.toLowerCase()}`}>
-                                                            {formatLabel(os.tipoManutencao)}
-                                                        </span>
-                                                    </td>
+                                                    <td><span className={`tipo-pill tipo-${os.tipoManutencao?.toLowerCase()}`}>{formatLabel(os.tipoManutencao)}</span></td>
                                                     <td>{getEquipamentoNome(os.equipamentoId)}</td>
                                                     <td>{os.solicitante || 'N/A'}</td>
                                                     <td>{os.liderCienciaNome || 'Pendente'}</td>
@@ -291,12 +311,26 @@ function DashboardPage() {
                     )}
                 </div>
             </main>
-            {isModalOpen && selectedOs && (
+
+            {/* Modal de Execução (seu código original, agora usando o state correto) */}
+            {isExecucaoModalOpen && selectedOs && (
                 <ExecucaoModal 
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
+                    isOpen={isExecucaoModalOpen}
+                    onClose={() => setIsExecucaoModalOpen(false)}
                     onSubmit={handleExecucaoSubmit}
                     os={selectedOs}
+                    actionLoading={actionLoading}
+                />
+            )}
+
+            {/* ✅ 5. ADICIONADO: Renderização do novo Modal de Verificação */}
+            {isVerificacaoModalOpen && selectedOs && (
+                <VerificacaoModal
+                    isOpen={isVerificacaoModalOpen}
+                    onClose={() => setIsVerificacaoModalOpen(false)}
+                    onSubmit={handleVerificacaoSubmit}
+                    os={{...selectedOs, equipamentoNome: getEquipamentoNome(selectedOs.equipamentoId)}}
+                    actionLoading={actionLoading}
                 />
             )}
         </div>

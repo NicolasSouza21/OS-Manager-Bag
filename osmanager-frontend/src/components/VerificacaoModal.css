@@ -1,0 +1,158 @@
+/* Fundo escuro que cobre a tela inteira */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* O container principal do modal (a janela branca) */
+.modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Cabeçalho do modal */
+.modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #333;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+/* Corpo do modal, onde ficam as informações */
+.modal-body {
+    padding: 1.5rem;
+    line-height: 1.6;
+}
+
+.modal-body p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.modal-body p strong {
+    color: #212529;
+}
+
+/* Estilo para as opções de Aprovar/Reprovar */
+.verification-choice {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.verification-choice label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.verification-choice input[type="radio"] {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+/* Seção do comentário de reprovação */
+.comment-section {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.comment-section label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #c92a2a; /* Vermelho para indicar importância */
+}
+
+.comment-section textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+/* Rodapé do modal com os botões de ação */
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Estilos genéricos para os botões do modal (reaproveitados) */
+.modal-footer .button-cancel {
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #6c757d;
+  background-color: #ffffff;
+  color: #6c757d;
+}
+
+.modal-footer .button-cancel:hover {
+  background-color: #6c757d;
+  color: white;
+}
+
+.modal-footer .button-action {
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background-color: #28a745; /* Verde para ação principal */
+  color: white;
+}
+
+.modal-footer .button-action:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.modal-footer .button-action:hover:not(:disabled) {
+  background-color: #218838;
+}

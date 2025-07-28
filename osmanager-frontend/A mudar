@@ -1,0 +1,30 @@
+-Dashboard
+
+-Adicionar Filtro de Início/Fim
+-Número sequencial igual, porem sendo diferente um dos outros
+
+-Tela de Gerenciar Equipamentos
+1.Tela de gerenciamento Equipamentos
+2.Tela de gerenciamento Serviço
+3.Tela de gerenciar frequencias
+4.Tela de Gerenciar Setores 
+5.Gerenciamento de Locais
+
+-Equipamento
+1.Descrição
+2.Numero do Ativo
+
+-Cadastrar Serviço
+
+1.Nome do Serviço
+2.Descrição
+
+-Frequencia
+1.Descrição
+
+-Locais
+1.Cadastrar o Setor
+2.Cadastrar Local(não obrigatório)
+
+-Criação de OS
+-Juntar as duas telas(Alterar tabelas entre Preventiva e Corretiva)

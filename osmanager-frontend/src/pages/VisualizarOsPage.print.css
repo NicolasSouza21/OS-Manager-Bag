@@ -1,0 +1,145 @@
+/* osmanager-frontend/src/pages/VisualizarOsPage.print.css */
+
+/* Regras aplicadas APENAS na hora de imprimir */
+@media print {
+
+    /* 1. Esconde a página da web, deixando apenas o conteúdo da impressão visível */
+    body > #root > div > .view-os-page {
+        display: none !important;
+    }
+
+    /* 2. Garante que o container da impressão ocupe todo o espaço */
+    .print-container {
+        display: block !important;
+    }
+
+    /* 3. Estilos base do documento impresso para ficar limpo no papel */
+    body, html {
+        margin: 0;
+        padding: 0;
+        background-color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+        color: #000;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* 4. Tabela principal que forma a moldura da OS */
+    .print-main-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 2px solid black;
+    }
+
+    /* Bordas para todas as células da tabela principal */
+    .print-main-table th, .print-main-table td {
+        border: 1px solid black;
+        padding: 5px;
+        vertical-align: top;
+    }
+
+    /* --- Células do Cabeçalho --- */
+    .header-logo-cell {
+        width: 15%;
+        font-size: 14pt;
+        text-align: center;
+        vertical-align: middle;
+        border-right: 2px solid black;
+    }
+
+    .header-title-cell {
+        width: 70%;
+        font-size: 14pt;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .header-os-number-cell {
+        width: 15%;
+        text-align: center;
+        vertical-align: middle;
+        border-left: 2px solid black;
+    }
+    .header-os-number-cell div:first-child {
+        border-bottom: 1px solid black;
+        padding-bottom: 4px;
+        margin-bottom: 4px;
+    }
+
+    /* --- Tabelas internas (sem bordas, apenas para layout) --- */
+    .info-table, .content-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .info-table td, .content-table td {
+        border: none;
+        padding: 4px;
+    }
+    .info-table td {
+        height: 25px; /* Altura mínima para as linhas de informação */
+    }
+
+    /* Remove o padding da célula que contém uma tabela interna */
+    .no-padding {
+        padding: 0 !important;
+    }
+
+    /* --- Título de Seção (cinza e com bordas grossas) --- */
+    .section-header td {
+        background-color: #E0E0E0 !important;
+        text-align: center;
+        font-weight: bold;
+        border-top: 2px solid black;
+        border-bottom: 2px solid black;
+    }
+
+    /* --- Células de Conteúdo Específico --- */
+    .desc-cell {
+        width: 70%;
+        height: 140px; /* Espaço para descrição */
+        border-right: 1px solid black;
+    }
+    .desc-cell p { min-height: 50px; margin: 5px 0 0 0; }
+    
+    .status-cell {
+        width: 30%;
+        padding-left: 10px;
+    }
+    .status-cell span {
+        display: block;
+        margin-top: 10px;
+    }
+
+    .obs-cell {
+        height: 80px; /* Espaço para observação */
+        border-top: 1px solid black;
+    }
+     .obs-cell p { margin: 5px 0 0 0; }
+
+    .pecas-check-cell {
+        border-left: 1px solid black;
+    }
+
+    .pecas-cell {
+        min-height: 40px;
+    }
+    .pecas-cell p {
+        min-height: 20px;
+        margin: 5px 0 0 0;
+    }
+
+    /* --- Rodapé --- */
+    .footer-row td {
+        display: flex;
+        justify-content: space-between;
+        font-size: 8pt;
+        font-weight: bold;
+        padding: 2px 5px;
+        border-top: 2px solid black;
+    }
+
+    strong {
+        font-weight: bold;
+    }
+}
