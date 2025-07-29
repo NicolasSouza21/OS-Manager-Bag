@@ -12,6 +12,7 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate; // ✨ IMPORT ADICIONADO
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,49 +25,34 @@ public class OrdemServicoSpecification {
             Long equipamentoId,
             Long localId,
             Long mecanicoId,
-            StatusVerificacao statusVerificacao
+            StatusVerificacao statusVerificacao,
+            // ✨ ALTERAÇÃO: Adicionados os parâmetros de data.
+            LocalDate dataInicio,
+            LocalDate dataFim
     ) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // ✅ --- FILTRO POR PALAVRA-CHAVE ATUALIZADO ---
+            // --- Seus filtros existentes permanecem inalterados ---
             if (StringUtils.hasText(keyword)) {
                 Join<OrdemServico, Equipamento> equipamentoJoin = root.join("equipamento", JoinType.LEFT);
-                
-                // Busca pelo novo código da OS (Ex: "123" ou "123-E")
                 Predicate codigoOsPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("codigoOs")), "%" + keyword.toLowerCase() + "%");
-                
-                // Busca pelo nome do equipamento
                 Predicate equipamentoPredicate = criteriaBuilder.like(criteriaBuilder.lower(equipamentoJoin.get("nome")), "%" + keyword.toLowerCase() + "%");
-                
-                // Busca pela descrição do problema
                 Predicate descricaoPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("descricaoProblema")), "%" + keyword.toLowerCase() + "%");
-                
-                // Combina as buscas: a OS corresponde se a palavra-chave estiver no código, no nome do equipamento ou na descrição.
                 predicates.add(criteriaBuilder.or(codigoOsPredicate, equipamentoPredicate, descricaoPredicate));
             }
-
-            // Filtro por Status da OS
             if (status != null) {
                 predicates.add(criteriaBuilder.equal(root.get("status"), status));
             }
-
-            // Filtro por Tipo de Manutenção
             if (tipoManutencao != null) {
                 predicates.add(criteriaBuilder.equal(root.get("tipoManutencao"), tipoManutencao));
             }
-
-            // Filtro por Equipamento
             if (equipamentoId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("equipamento").get("id"), equipamentoId));
             }
-
-            // Filtro por Local
             if (localId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("local").get("id"), localId));
             }
-
-            // Filtro "Minhas Tarefas"
             if (mecanicoId != null) {
                 Join<OrdemServico, Funcionario> cienciaJoin = root.join("mecanicoCiencia", JoinType.LEFT);
                 Join<OrdemServico, Funcionario> execucaoJoin = root.join("executadoPor", JoinType.LEFT);
@@ -74,10 +60,18 @@ public class OrdemServicoSpecification {
                 Predicate execucaoPredicate = criteriaBuilder.equal(execucaoJoin.get("id"), mecanicoId);
                 predicates.add(criteriaBuilder.or(cienciaPredicate, execucaoPredicate));
             }
-            
-            // Filtro "Aguardando Minha Verificação"
             if (statusVerificacao != null) {
                 predicates.add(criteriaBuilder.equal(root.get("statusVerificacao"), statusVerificacao));
+            }
+
+            // ✨ ALTERAÇÃO: Lógica do filtro de data adicionada aqui.
+            if (dataInicio != null) {
+                // Filtra pela data de solicitação a partir do início do dia da data de início.
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dataSolicitacao"), dataInicio.atStartOfDay()));
+            }
+            if (dataFim != null) {
+                // Filtra pela data de solicitação até o final do dia da data de fim.
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dataSolicitacao"), dataFim.atTime(23, 59, 59)));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

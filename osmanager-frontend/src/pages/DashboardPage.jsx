@@ -7,13 +7,33 @@ import {
     registrarCiencia, 
     iniciarExecucao,
     registrarExecucao,
-    verificarOS // ✅ 1. ADICIONADO: Importa a função de API para verificar a OS
+    verificarOS
 } from '../services/apiService';
 import ExecucaoModal from '../components/ExecucaoModal';
-import VerificacaoModal from '../components/VerificacaoModal'; // ✅ 2. ADICIONADO: Importa o novo modal
+import VerificacaoModal from '../components/VerificacaoModal';
 import { jwtDecode } from 'jwt-decode';
 import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck } from 'react-icons/fa';
 import './DashBoardPage.css';
+
+// ✨ NOVO: Hook customizado para "atrasar" a busca (debounce)
+function useDebounce(value, delay) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        // Cria um timer que só vai atualizar o valor após o 'delay'
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        // Limpa o timer se o valor mudar antes do fim do 'delay'
+        // Isso garante que a busca só ocorra quando o usuário parar de digitar
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]); // Roda apenas se o valor ou o delay mudarem
+
+    return debouncedValue;
+}
 
 // Funções de formatação de data (SEU CÓDIGO ORIGINAL)
 const parseSafeDate = (dateString) => {
@@ -68,6 +88,7 @@ const groupOrdensByDate = (ordens) => {
     return groups;
 };
 
+
 function DashboardPage() {
     const navigate = useNavigate();
     const [ordens, setOrdens] = useState([]);
@@ -77,24 +98,33 @@ function DashboardPage() {
     const [selectedOs, setSelectedOs] = useState(null);
     const [userRole, setUserRole] = useState('');
     const [userId, setUserId] = useState(null);
-    const [actionLoading, setActionLoading] = useState(false); // ✅ ADICIONADO: State para feedback de carregamento nos modais
-
-    // ✅ ADICIONADO: States separados para cada modal
+    const [actionLoading, setActionLoading] = useState(false);
     const [isExecucaoModalOpen, setIsExecucaoModalOpen] = useState(false);
     const [isVerificacaoModalOpen, setIsVerificacaoModalOpen] = useState(false);
     
+    // O estado 'filtros' é atualizado instantaneamente a cada digitação
     const [filtros, setFiltros] = useState({
-        keyword: '', status: '', equipamentoId: '', localId: '',
+        keyword: '', 
+        status: '', 
+        equipamentoId: '', 
+        localId: '',
         tipoManutencao: '',
-        minhasTarefas: false, aguardandoVerificacao: false,
+        minhasTarefas: false, 
+        aguardandoVerificacao: false,
+        dataInicio: '',
+        dataFim: '',
     });
     
+    // ✨ ALTERAÇÃO 1: Cria uma versão "atrasada" dos filtros que só atualiza 500ms após o usuário parar de digitar
+    const debouncedFiltros = useDebounce(filtros, 500);
+
     const statusOptions = [
         { label: 'Abertas', value: 'ABERTA' }, { label: 'Ciente', value: 'CIENTE' },
         { label: 'Em Execução', value: 'EM_EXECUCAO' }, { label: 'Aguardando Verificação', value: 'AGUARDANDO_VERIFICACAO' },
         { label: 'Concluída', value: 'CONCLUIDA' }, { label: 'Cancelada', value: 'CANCELADA' }
     ];
 
+    // ✨ ALTERAÇÃO 2: A função `fetchData` agora usa a versão "atrasada" (debounced) dos filtros
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -102,14 +132,17 @@ function DashboardPage() {
                 page: 0, 
                 size: 200, 
                 sort: 'dataSolicitacao,desc',
-                keyword: filtros.keyword, 
-                status: filtros.aguardandoVerificacao ? 'AGUARDANDO_VERIFICACAO' : filtros.status,
-                tipoManutencao: filtros.tipoManutencao,
-                equipamentoId: filtros.equipamentoId, 
-                localId: filtros.localId,
-                mecanicoId: filtros.minhasTarefas ? userId : null,
+                keyword: debouncedFiltros.keyword, 
+                status: debouncedFiltros.aguardandoVerificacao ? 'AGUARDANDO_VERIFICACAO' : debouncedFiltros.status,
+                tipoManutencao: debouncedFiltros.tipoManutencao,
+                equipamentoId: debouncedFiltros.equipamentoId, 
+                localId: debouncedFiltros.localId,
+                mecanicoId: debouncedFiltros.minhasTarefas ? userId : null,
+                dataInicio: debouncedFiltros.dataInicio,
+                dataFim: debouncedFiltros.dataFim,
             };
             Object.keys(params).forEach(key => { if (!params[key]) delete params[key]; });
+            
             const osRes = await getOrdensServico(params);
             setOrdens(osRes.data.content || []);
         } catch (err) {
@@ -118,7 +151,7 @@ function DashboardPage() {
         } finally {
             setLoading(false);
         }
-    }, [filtros, userId]);
+    }, [debouncedFiltros, userId]); // A dependência agora é a versão "atrasada"
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -137,8 +170,12 @@ function DashboardPage() {
         fetchInitialData();
     }, []);
 
+    // ✨ ALTERAÇÃO 3: O useEffect que dispara a busca agora depende da função `fetchData`
+    // Ele só vai rodar quando o `debouncedFiltros` mudar, pois isso recria a `fetchData`.
     useEffect(() => {
-        if (userId !== null) { fetchData(); }
+        if (userId !== null) { 
+            fetchData(); 
+        }
     }, [fetchData, userId]);
     
     const handleFilterChange = (e) => {
@@ -176,7 +213,7 @@ function DashboardPage() {
         try {
             await registrarExecucao(selectedOs.id, dadosExecucao);
             alert(`OS #${selectedOs.codigoOs} foi finalizada com sucesso!`);
-            setIsExecucaoModalOpen(false); // ✅ CORRIGIDO: usa o state correto
+            setIsExecucaoModalOpen(false);
             setSelectedOs(null);
             fetchData();
         } catch (error) {
@@ -186,7 +223,6 @@ function DashboardPage() {
         }
     };
 
-    // ✅ 3. ADICIONADO: Nova função para lidar com o submit da verificação
     const handleVerificacaoSubmit = async (dadosVerificacao) => {
         if (!selectedOs) return;
         setActionLoading(true);
@@ -214,7 +250,6 @@ function DashboardPage() {
                     {isMecanicoOrLider && os.status === 'CIENTE' && (<button title="Iniciar Execução" className="action-button-circle iniciar-btn" onClick={() => iniciarExecucao(os.id).then(fetchData)}><FaPlay /></button>)}
                     {isMecanicoOrLider && os.status === 'EM_EXECUCAO' && (<button title="Preencher e Finalizar OS" className="action-button-circle executar-btn" onClick={() => { setSelectedOs(os); setIsExecucaoModalOpen(true); }}><FaTools /></button>)}
                     
-                    {/* ✅ 4. ALTERADO: O botão do encarregado agora abre o modal de verificação */}
                     {isEncarregado && os.status === 'AGUARDANDO_VERIFICACAO' && (
                         <button title="Verificar OS" className="action-button-circle verificar-btn" onClick={() => { setSelectedOs(os); setIsVerificacaoModalOpen(true); }}>
                             <FaClipboardCheck />
@@ -247,8 +282,20 @@ function DashboardPage() {
         <div className="dashboard-container">
             <main>
                 <h1 className="dashboard-title">Painel de Ordens de Serviço</h1>
+
                 <div className="filtros-container">
                     <input type="text" name="keyword" className="filtro-input-busca" placeholder="Buscar por Nº OS ou Equipamento..." value={filtros.keyword} onChange={handleFilterChange} />
+                    
+                    <div className="filtro-data-item">
+                        <label htmlFor="dataInicio">De:</label>
+                        <input type="date" name="dataInicio" id="dataInicio" className="filtro-input-data" value={filtros.dataInicio} onChange={handleFilterChange} />
+                    </div>
+
+                    <div className="filtro-data-item">
+                        <label htmlFor="dataFim">Até:</label>
+                        <input type="date" name="dataFim" id="dataFim" className="filtro-input-data" value={filtros.dataFim} onChange={handleFilterChange} />
+                    </div>
+
                     <select name="tipoManutencao" className="filtro-select" value={filtros.tipoManutencao} onChange={handleFilterChange}>
                         <option value="">Tipo (Todos)</option>
                         <option value="CORRETIVA">Corretiva</option>
@@ -312,7 +359,6 @@ function DashboardPage() {
                 </div>
             </main>
 
-            {/* Modal de Execução (seu código original, agora usando o state correto) */}
             {isExecucaoModalOpen && selectedOs && (
                 <ExecucaoModal 
                     isOpen={isExecucaoModalOpen}
@@ -323,7 +369,6 @@ function DashboardPage() {
                 />
             )}
 
-            {/* ✅ 5. ADICIONADO: Renderização do novo Modal de Verificação */}
             {isVerificacaoModalOpen && selectedOs && (
                 <VerificacaoModal
                     isOpen={isVerificacaoModalOpen}

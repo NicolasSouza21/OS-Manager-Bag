@@ -36,7 +36,7 @@ public class OrdemServicoService {
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoId");
-        
+
         os.setDataSolicitacao(LocalDateTime.now());
         os.setStatus(StatusOrdemServico.ABERTA);
         os.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
@@ -51,20 +51,18 @@ public class OrdemServicoService {
             os.setLocal(local);
         }
 
-        // ✅ --- NOVA LÓGICA DE GERAÇÃO DE CÓDIGO ---
         if (dto.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
             if (dto.getTipoServicoId() == null || dto.getFrequencia() == null || dto.getDataInicioPreventiva() == null) {
                 throw new IllegalArgumentException("Para OS Preventiva, o serviço, a frequência e a data de início são obrigatórios.");
             }
             TipoServico tipoServico = tipoServicoRepository.findById(dto.getTipoServicoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Tipo de Serviço com ID " + dto.getTipoServicoId() + " não encontrado!"));
-            
+                    .orElseThrow(() -> new ResourceNotFoundException("Tipo de Serviço com ID " + dto.getTipoServicoId() + " não encontrado!"));
+
             os.setTipoServico(tipoServico);
             os.setFrequencia(dto.getFrequencia());
             os.setDescricaoProblema(tipoServico.getNome());
             os.setDataInicioPreventiva(dto.getDataInicioPreventiva());
 
-            // Calcula o próximo número da sequência de PREVENTIVAS
             long proximoNumero = osRepository.findMaxNumeroPreventiva().orElse(0L) + 1;
             os.setNumeroPreventiva(proximoNumero);
             os.setCodigoOs(proximoNumero + "-E");
@@ -76,66 +74,15 @@ public class OrdemServicoService {
                 case BAIXA: os.setDataLimite(LocalDateTime.now().plusDays(7)); break;
             }
 
-            // Calcula o próximo número da sequência de CORRETIVAS
             long proximoNumero = osRepository.findMaxNumeroCorretiva().orElse(0L) + 1;
             os.setNumeroCorretiva(proximoNumero);
             os.setCodigoOs(String.valueOf(proximoNumero));
         }
-        
+
         OrdemServico osSalva = osRepository.save(os);
         return converteParaDTO(osSalva);
     }
-    
-    private void agendarProximaPreventiva(OrdemServico osConcluida) {
-        if (osConcluida.getTipoManutencao() != TipoManutencao.PREVENTIVA || osConcluida.getFrequencia() == null || osConcluida.getDataInicioPreventiva() == null) {
-            return;
-        }
 
-        LocalDate dataBase = osConcluida.getDataInicioPreventiva();
-        LocalDate proximaData;
-
-        switch (osConcluida.getFrequencia()) {
-            case DIARIO: proximaData = dataBase.plusDays(1); break;
-            case BIDIARIO: proximaData = dataBase.plusDays(2); break;
-            case SEMANAL: proximaData = dataBase.plusWeeks(1); break;
-            case QUINZENAL: proximaData = dataBase.plusWeeks(2); break;
-            case MENSAL: proximaData = dataBase.plusMonths(1); break;
-            case BIMESTRAL: proximaData = dataBase.plusMonths(2); break;
-            case TRIMESTRAL: proximaData = dataBase.plusMonths(3); break;
-            case SEMESTRAL: proximaData = dataBase.plusMonths(6); break;
-            case ANUAL: proximaData = dataBase.plusYears(1); break;
-            default: return;
-        }
-        
-        if (proximaData.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            proximaData = proximaData.plusDays(1);
-        }
-        
-        OrdemServico proximaOS = new OrdemServico();
-        proximaOS.setEquipamento(osConcluida.getEquipamento());
-        proximaOS.setLocal(osConcluida.getLocal());
-        proximaOS.setTipoManutencao(TipoManutencao.PREVENTIVA);
-        proximaOS.setTipoServico(osConcluida.getTipoServico());
-        proximaOS.setFrequencia(osConcluida.getFrequencia());
-        proximaOS.setDescricaoProblema(osConcluida.getDescricaoProblema());
-        proximaOS.setSolicitante("SISTEMA (AUTO)");
-        proximaOS.setPrioridade(Prioridade.MEDIA);
-        proximaOS.setDataSolicitacao(LocalDateTime.now());
-        proximaOS.setDataInicioPreventiva(proximaData);
-        proximaOS.setStatus(StatusOrdemServico.ABERTA);
-        proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
-
-        // ✅ Lógica de geração de CÓDIGO INDEPENDENTE para preventivas automáticas
-        long proximoNumero = osRepository.findMaxNumeroPreventiva().orElse(0L) + 1;
-        proximaOS.setNumeroPreventiva(proximoNumero);
-        proximaOS.setCodigoOs(proximoNumero + "-E");
-
-        osRepository.save(proximaOS);
-    }
-
-    // --- O RESTANTE DA CLASSE PERMANECE IGUAL ---
-    
-    //...(todos os outros métodos como registrarCiencia, buscarComFiltros, converteParaDTO, etc. ficam aqui)
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
         OrdemServico os = osRepository.findById(osId)
@@ -147,7 +94,7 @@ public class OrdemServicoService {
 
         Funcionario funcionario = funcionarioRepository.findById(funcionarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Funcionário com ID " + funcionarioId + " não encontrado!"));
-        
+
         if (funcionario.getTipoFuncionario() != TipoFuncionario.MECANICO && funcionario.getTipoFuncionario() != TipoFuncionario.LIDER) {
             throw new IllegalStateException("Ação não permitida. O funcionário não tem permissão para dar ciência na OS.");
         }
@@ -155,7 +102,7 @@ public class OrdemServicoService {
         os.setMecanicoCiencia(funcionario);
         os.setDataCiencia(LocalDateTime.now());
         os.setStatus(StatusOrdemServico.CIENTE);
-        
+
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
     }
@@ -168,7 +115,7 @@ public class OrdemServicoService {
         if (os.getStatus() != StatusOrdemServico.CIENTE) {
             throw new IllegalStateException("Ação não permitida: a OS precisa estar com o status 'CIENTE' para iniciar a execução.");
         }
-        
+
         os.setStatus(StatusOrdemServico.EM_EXECUCAO);
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
@@ -178,7 +125,7 @@ public class OrdemServicoService {
     public OrdemServicoDTO registrarExecucao(Long osId, Long executanteId, ExecucaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        
+
         if (os.getStatus() != StatusOrdemServico.EM_EXECUCAO) {
             throw new IllegalStateException("Ação não permitida: a OS precisa estar com status 'EM EXECUÇÃO' para ser finalizada.");
         }
@@ -219,19 +166,19 @@ public class OrdemServicoService {
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
     }
-    
+
     @Transactional
     public OrdemServicoDTO verificarOS(Long osId, Long verificadorId, VerificacaoDTO dto) {
         OrdemServico osConcluida = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
-        
+
         if (osConcluida.getStatus() != StatusOrdemServico.AGUARDANDO_VERIFICACAO) {
             throw new IllegalStateException("A OS não está aguardando verificação.");
         }
 
         Funcionario verificador = funcionarioRepository.findById(verificadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Funcionário com ID " + verificadorId + " não encontrado!"));
-        
+
         if (verificador.getTipoFuncionario() != TipoFuncionario.ENCARREGADO) {
             throw new IllegalStateException("Ação não permitida. Apenas ENCARREGADOS podem realizar a verificação.");
         }
@@ -245,14 +192,15 @@ public class OrdemServicoService {
             osConcluida.setStatusVerificacao(StatusVerificacao.APROVADO);
             agendarProximaPreventiva(osConcluida);
         } else {
-            osConcluida.setStatus(StatusOrdemServico.EM_EXECUCAO); 
+            osConcluida.setStatus(StatusOrdemServico.EM_EXECUCAO);
             osConcluida.setStatusVerificacao(StatusVerificacao.REPROVADO);
         }
 
         OrdemServico osAtualizada = osRepository.save(osConcluida);
         return converteParaDTO(osAtualizada);
     }
-        public Page<OrdemServicoDTO> buscarComFiltros(
+
+    public Page<OrdemServicoDTO> buscarComFiltros(
             String keyword,
             StatusOrdemServico status,
             TipoManutencao tipoManutencao,
@@ -260,10 +208,13 @@ public class OrdemServicoService {
             Long localId,
             Long mecanicoId,
             StatusVerificacao statusVerificacao,
+            LocalDate dataInicio,
+            LocalDate dataFim,
             Pageable pageable
     ) {
+        // ✨ CORREÇÃO APLICADA AQUI: Passando dataInicio e dataFim para a Specification
         Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(
-                keyword, status, tipoManutencao, equipamentoId, localId, mecanicoId, statusVerificacao
+                keyword, status, tipoManutencao, equipamentoId, localId, mecanicoId, statusVerificacao, dataInicio, dataFim
         );
         Page<OrdemServico> paginaDeOS = osRepository.findAll(spec, pageable);
         return paginaDeOS.map(this::converteParaDTO);
@@ -281,7 +232,53 @@ public class OrdemServicoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
         osRepository.delete(os);
     }
-    
+
+    private void agendarProximaPreventiva(OrdemServico osConcluida) {
+        if (osConcluida.getTipoManutencao() != TipoManutencao.PREVENTIVA || osConcluida.getFrequencia() == null || osConcluida.getDataInicioPreventiva() == null) {
+            return;
+        }
+
+        LocalDate dataBase = osConcluida.getDataInicioPreventiva();
+        LocalDate proximaData;
+
+        switch (osConcluida.getFrequencia()) {
+            case DIARIO: proximaData = dataBase.plusDays(1); break;
+            case BIDIARIO: proximaData = dataBase.plusDays(2); break;
+            case SEMANAL: proximaData = dataBase.plusWeeks(1); break;
+            case QUINZENAL: proximaData = dataBase.plusWeeks(2); break;
+            case MENSAL: proximaData = dataBase.plusMonths(1); break;
+            case BIMESTRAL: proximaData = dataBase.plusMonths(2); break;
+            case TRIMESTRAL: proximaData = dataBase.plusMonths(3); break;
+            case SEMESTRAL: proximaData = dataBase.plusMonths(6); break;
+            case ANUAL: proximaData = dataBase.plusYears(1); break;
+            default: return;
+        }
+
+        if (proximaData.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            proximaData = proximaData.plusDays(1);
+        }
+
+        OrdemServico proximaOS = new OrdemServico();
+        proximaOS.setEquipamento(osConcluida.getEquipamento());
+        proximaOS.setLocal(osConcluida.getLocal());
+        proximaOS.setTipoManutencao(TipoManutencao.PREVENTIVA);
+        proximaOS.setTipoServico(osConcluida.getTipoServico());
+        proximaOS.setFrequencia(osConcluida.getFrequencia());
+        proximaOS.setDescricaoProblema(osConcluida.getDescricaoProblema());
+        proximaOS.setSolicitante("SISTEMA (AUTO)");
+        proximaOS.setPrioridade(Prioridade.MEDIA);
+        proximaOS.setDataSolicitacao(LocalDateTime.now());
+        proximaOS.setDataInicioPreventiva(proximaData);
+        proximaOS.setStatus(StatusOrdemServico.ABERTA);
+        proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
+
+        long proximoNumero = osRepository.findMaxNumeroPreventiva().orElse(0L) + 1;
+        proximaOS.setNumeroPreventiva(proximoNumero);
+        proximaOS.setCodigoOs(proximoNumero + "-E");
+
+        osRepository.save(proximaOS);
+    }
+
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto);

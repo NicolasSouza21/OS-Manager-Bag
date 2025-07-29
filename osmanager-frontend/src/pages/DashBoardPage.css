@@ -203,3 +203,31 @@
   .no-os-message {
       text-align: center; padding: 3rem 0; font-size: 1.1rem; color: #64748B;
   }
+
+
+.filtros-container {
+    display: flex;
+    flex-wrap: wrap; /* Ajuda na responsividade dos filtros */
+    gap: 15px;       /* Espaçamento geral entre os itens de filtro */
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filtro-data-item {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Espaço entre o texto "De:"/"Até:" e o campo de data */
+}
+
+.filtro-data-item label {
+    font-size: 14px;
+    color: #333;
+}
+
+.filtro-input-data {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit; /* Usa a mesma fonte do resto da página */
+}
