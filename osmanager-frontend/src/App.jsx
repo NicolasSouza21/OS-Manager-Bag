@@ -9,7 +9,7 @@ import Footer from './components/Footer';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import VisualizarOsPage from './pages/VisualizarOsPage';
-import CalendarioPage from './pages/CalendarioPage'; // ✅ IMPORT DO CALENDÁRIO ADICIONADO
+import CalendarioPage from './pages/CalendarioPage'; 
 
 // Fluxo de Criação de OS
 import EscolherTipoOsPage from './pages/EscolherTipoOsPage';
@@ -27,6 +27,10 @@ import EquipamentoMenuPage from './pages/admin/equipamento/EquipamentoMenuPage';
 import LocaisListPage from './pages/admin/equipamento/LocaisListPage';
 import LocalAddPage from './pages/admin/equipamento/LocalAddPage';
 import GerenciarTiposServicoPage from './pages/admin/equipamento/GerenciarTiposServicoPage';
+
+// ✨ ALTERAÇÃO AQUI: Corrigido o caminho dos imports para refletir sua estrutura de pastas
+import GerenciarFrequenciasPage from './pages/admin/equipamento/GerenciarFrequenciasPage';
+// ✨ ALTERAÇÃO AQUI: Import de "GerenciarSetoresPage" removido
 
 
 /**
@@ -54,7 +58,6 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/os/:id" element={<VisualizarOsPage />} />
         
-        {/* ✅ ROTA DO CALENDÁRIO ADICIONADA */}
         <Route path="/calendario" element={<CalendarioPage />} />
 
         {/* Rotas de Criação de OS */}
@@ -75,6 +78,9 @@ function App() {
         {/* Rotas de Administração de Locais */}
         <Route path="/admin/equipamentos/locais" element={<LocaisListPage />} />
         <Route path="/admin/equipamentos/locais/adicionar" element={<LocalAddPage />} />
+
+        <Route path="/admin/frequencias/gerenciar" element={<GerenciarFrequenciasPage />} />
+        {/* ✨ ALTERAÇÃO AQUI: Rota de "GerenciarSetores" removida */}
       </Route>
 
       {/* Redirecionamentos padrão */}

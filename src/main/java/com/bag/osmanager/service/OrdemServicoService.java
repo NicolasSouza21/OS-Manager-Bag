@@ -3,8 +3,13 @@ package com.bag.osmanager.service;
 import com.bag.osmanager.dto.*;
 import com.bag.osmanager.exception.ResourceNotFoundException;
 import com.bag.osmanager.model.*;
-import com.bag.osmanager.model.enums.*;
-import com.bag.osmanager.repository.*;
+// ✨ ALTERAÇÃO AQUI: Import do Enum Frequencia foi REMOVIDO e o de TipoFuncionario foi ADICIONADO
+import com.bag.osmanager.model.enums.Prioridade;
+import com.bag.osmanager.model.enums.StatusOrdemServico;
+import com.bag.osmanager.model.enums.StatusVerificacao;
+import com.bag.osmanager.model.enums.TipoFuncionario; // ✅ CORREÇÃO: Import adicionado
+import com.bag.osmanager.model.enums.TipoManutencao;
+   import com.bag.osmanager.repository.*;
 import com.bag.osmanager.service.specification.OrdemServicoSpecification;
 
 import lombok.RequiredArgsConstructor;
@@ -31,11 +36,12 @@ public class OrdemServicoService {
     private final EquipamentoRepository equipamentoRepository;
     private final LocalRepository localRepository;
     private final TipoServicoRepository tipoServicoRepository;
+    private final FrequenciaRepository frequenciaRepository;
 
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
-        BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoId");
+        BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoId", "frequenciaId");
 
         os.setDataSolicitacao(LocalDateTime.now());
         os.setStatus(StatusOrdemServico.ABERTA);
@@ -52,14 +58,18 @@ public class OrdemServicoService {
         }
 
         if (dto.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
-            if (dto.getTipoServicoId() == null || dto.getFrequencia() == null || dto.getDataInicioPreventiva() == null) {
+            if (dto.getTipoServicoId() == null || dto.getFrequenciaId() == null || dto.getDataInicioPreventiva() == null) {
                 throw new IllegalArgumentException("Para OS Preventiva, o serviço, a frequência e a data de início são obrigatórios.");
             }
             TipoServico tipoServico = tipoServicoRepository.findById(dto.getTipoServicoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Tipo de Serviço com ID " + dto.getTipoServicoId() + " não encontrado!"));
 
+            Frequencia frequencia = frequenciaRepository.findById(dto.getFrequenciaId())
+                    // ✅ CORREÇÃO: Erro de digitação de ".DorElseThrow" para ".orElseThrow"
+                    .orElseThrow(() -> new ResourceNotFoundException("Frequência com ID " + dto.getFrequenciaId() + " não encontrada!"));
+
             os.setTipoServico(tipoServico);
-            os.setFrequencia(dto.getFrequencia());
+            os.setFrequencia(frequencia);
             os.setDescricaoProblema(tipoServico.getNome());
             os.setDataInicioPreventiva(dto.getDataInicioPreventiva());
 
@@ -73,7 +83,7 @@ public class OrdemServicoService {
                 case MEDIA: os.setDataLimite(LocalDateTime.now().plusDays(4)); break;
                 case BAIXA: os.setDataLimite(LocalDateTime.now().plusDays(7)); break;
             }
-
+            // ✅ CORREÇÃO: Erro de digitação de "CORRETiva" para "CORRETIVA"
             long proximoNumero = osRepository.findMaxNumeroCorretivaByTipoManutencao(TipoManutencao.CORRETIVA).orElse(0L) + 1;
             os.setNumeroCorretiva(proximoNumero);
             os.setCodigoOs(String.valueOf(proximoNumero));
@@ -107,6 +117,7 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
+    // ... (Os outros métodos permanecem os mesmos)
     @Transactional
     public OrdemServicoDTO iniciarExecucao(Long osId) {
         OrdemServico os = osRepository.findById(osId)
@@ -200,6 +211,7 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
+
     public Page<OrdemServicoDTO> buscarComFiltros(
             String keyword,
             StatusOrdemServico status,
@@ -240,17 +252,28 @@ public class OrdemServicoService {
         LocalDate dataBase = osConcluida.getDataInicioPreventiva();
         LocalDate proximaData;
 
-        switch (osConcluida.getFrequencia()) {
-            case DIARIO: proximaData = dataBase.plusDays(1); break;
-            case BIDIARIO: proximaData = dataBase.plusDays(2); break;
-            case SEMANAL: proximaData = dataBase.plusWeeks(1); break;
-            case QUINZENAL: proximaData = dataBase.plusWeeks(2); break;
-            case MENSAL: proximaData = dataBase.plusMonths(1); break;
-            case BIMESTRAL: proximaData = dataBase.plusMonths(2); break;
-            case TRIMESTRAL: proximaData = dataBase.plusMonths(3); break;
-            case SEMESTRAL: proximaData = dataBase.plusMonths(6); break;
-            case ANUAL: proximaData = dataBase.plusYears(1); break;
-            default: return;
+        String nomeFrequencia = osConcluida.getFrequencia().getNome().toUpperCase();
+
+        if ("DIARIO".equals(nomeFrequencia)) {
+            proximaData = dataBase.plusDays(1);
+        } else if ("BIDIARIO".equals(nomeFrequencia)) {
+            proximaData = dataBase.plusDays(2);
+        } else if ("SEMANAL".equals(nomeFrequencia)) {
+            proximaData = dataBase.plusWeeks(1);
+        } else if ("QUINZENAL".equals(nomeFrequencia)) {
+            proximaData = dataBase.plusWeeks(2);
+        } else if ("MENSAL".equals(nomeFrequencia)) {
+            proximaData = dataBase.plusMonths(1);
+        } else if ("BIMESTRAL".equals(nomeFrequencia)) {
+            proximaData = dataBase.plusMonths(2);
+        } else if ("TRIMESTRAL".equals(nomeFrequencia)) {
+            proximaData = dataBase.plusMonths(3);
+        } else if ("SEMESTRAL".equals(nomeFrequencia)) {
+            proximaData = dataBase.plusMonths(6);
+        } else if ("ANUAL".equals(nomeFrequencia)) {
+            proximaData = dataBase.plusYears(1);
+        } else {
+            return;
         }
 
         if (proximaData.getDayOfWeek() == DayOfWeek.SUNDAY) {
@@ -280,7 +303,7 @@ public class OrdemServicoService {
 
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto);
+        BeanUtils.copyProperties(os, dto, "frequencia");
 
         dto.setCodigoOs(os.getCodigoOs());
 
@@ -317,8 +340,11 @@ public class OrdemServicoService {
             dto.setTipoServicoId(os.getTipoServico().getId());
             dto.setTipoServicoNome(os.getTipoServico().getNome());
         }
+        
         if (os.getFrequencia() != null) {
-            dto.setFrequencia(os.getFrequencia());
+            FrequenciaDTO freqDTO = new FrequenciaDTO();
+            BeanUtils.copyProperties(os.getFrequencia(), freqDTO);
+            dto.setFrequencia(freqDTO);
         }
         return dto;
     }

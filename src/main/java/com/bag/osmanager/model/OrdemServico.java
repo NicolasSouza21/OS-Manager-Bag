@@ -33,11 +33,9 @@ public class OrdemServico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // This field remains as the final, user-facing code (não precisa ser único)
     @Column(name = "codigo_os", nullable = true)
     private String codigoOs;
 
-    // Sequências separadas para cada tipo
     @Column(name = "numero_corretiva", nullable = true)
     private Long numeroCorretiva;
 
@@ -123,6 +121,8 @@ public class OrdemServico {
     @JoinColumn(name = "tipo_servico_id")
     private TipoServico tipoServico;
 
-    @Enumerated(EnumType.STRING)
+    // ✨ ALTERAÇÃO AQUI: O campo 'frequencia' agora é uma relação com a nova entidade Frequencia.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "frequencia_id", nullable = true) // nullable=true pois OS Corretiva não tem frequência
     private Frequencia frequencia;
 }

@@ -15,11 +15,17 @@ function EquipamentoMenuPage() {
           <p>Cadastrar equipamentos e configurar seus planos de manutenção preventiva.</p>
         </Link>
         
-        {/* ✅ NOVO CARD ADICIONADO AQUI */}
         <Link to="/admin/equipamentos/servicos" className="equipamento-menu-card">
-          <h2 className="equipamento-menu-card-title">Gerenciar Catálogo de Serviços</h2>
+          <h2 className="equipamento-menu-card-title">Gerenciar Serviços de manutenção</h2>
           <p>Adicionar ou remover os serviços disponíveis para os planos de manutenção.</p>
         </Link>
+
+        <Link to="/admin/frequencias/gerenciar" className="equipamento-menu-card">
+          <h2 className="equipamento-menu-card-title">Gerenciar Frequências</h2>
+          <p>Adicionar, editar ou remover as frequências de manutenção (diário, semanal, etc.).</p>
+        </Link>
+
+        {/* ✨ ALTERAÇÃO AQUI: Card de "Gerenciar Setores" removido */}
 
         <Link to="/admin/equipamentos/locais" className="equipamento-menu-card">
           <h2 className="equipamento-menu-card-title">Listar Locais</h2>

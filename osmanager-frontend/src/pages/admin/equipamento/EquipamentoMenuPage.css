@@ -1,50 +1,51 @@
 .equipamento-menu-container {
-    max-width: 900px;
-    margin: 40px auto 0 auto;
-    text-align: center;
-  }
-  
-  .equipamento-menu-container h1 {
-    font-size: 2.6rem;
-    font-weight: bold;
-    margin-bottom: 12px;
-  }
-  
-  .equipamento-menu-subtitle {
-    color: #555;
-    font-size: 1.2rem;
-    margin-bottom: 38px;
-  }
-  
-  .equipamento-menu-cards {
-    display: flex;
-    gap: 38px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .equipamento-menu-card {
-    background: #fff;
-    border: 1.5px solid #ececec;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px #0001;
-    padding: 32px 36px;
-    width: 320px;
-    text-align: center;
-    text-decoration: none;
-    color: #111;
-    transition: box-shadow 0.2s, border 0.2s;
-    cursor: pointer;
-  }
-  
-  .equipamento-menu-card:hover {
-    border-color: #1a73e8;
-    box-shadow: 0 4px 16px #1a73e810;
-  }
-  
-  .equipamento-menu-card-title {
-    color: #1976d2;
-    font-size: 1.6rem;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
+  /* ✨ ALTERAÇÃO AQUI: Aumentei a largura máxima para comportar 3 cards */
+  max-width: 1100px; 
+  margin: 40px auto 0 auto;
+  text-align: center;
+}
+
+.equipamento-menu-container h1 {
+  font-size: 2.6rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.equipamento-menu-subtitle {
+  color: #555;
+  font-size: 1.2rem;
+  margin-bottom: 38px;
+}
+
+.equipamento-menu-cards {
+  display: grid;
+  /* ✨ ALTERAÇÃO AQUI: Força exatamente 3 colunas de tamanho igual */
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 38px;
+  justify-content: center;
+}
+
+.equipamento-menu-card {
+  background: #fff;
+  border: 1.5px solid #ececec;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #0001;
+  padding: 32px 36px;
+  text-align: center;
+  text-decoration: none;
+  color: #111;
+  transition: box-shadow 0.2s, border 0.2s;
+  cursor: pointer;
+}
+
+.equipamento-menu-card:hover {
+  border-color: #1a73e8;
+  box-shadow: 0 4px 16px #1a73e810;
+}
+
+.equipamento-menu-card-title {
+  color: #1976d2;
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}

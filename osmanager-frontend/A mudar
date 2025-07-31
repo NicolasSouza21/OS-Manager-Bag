@@ -3,23 +3,23 @@
 -Adicionar Filtro de Início/Fim (X)
 -Número sequencial igual, porem sendo diferente um dos outros (X)
 
--Tela de Gerenciamento
-1.Tela de gerenciamento Equipamentos
-2.Tela de gerenciamento Serviço
-3.Tela de gerenciar frequencias
-4.Tela de Gerenciar Setores 
-5.Gerenciamento de Locais
+-Tela de Gerenciamento (X)
+1.Tela de gerenciamento Equipamentos (X)
+2.Tela de gerenciamento Serviço (X)
+3.Tela de gerenciar frequencias (X)
+4.Tela de Gerenciar Setores (X)
+5.Gerenciamento de Locais (X)
 
 -Equipamento
 1.Descrição
 2.Numero do Ativo
 
--Cadastrar Serviço
-1.Nome do Serviço
-2.Descrição
+-Cadastrar Serviço (X)
+1.Nome do Serviço (X)
+2.Descrição (X)
 
 -Frequencia
-1.Descrição
+1.Descrição(X)
 
 -Locais
 1.Cadastrar o Setor

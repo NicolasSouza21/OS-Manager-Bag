@@ -38,7 +38,6 @@ export const registrarExecucao = (osId, dadosExecucao) => api.put(`/ordens-servi
 export const verificarOS = (osId, dadosVerificacao) => api.post(`/ordens-servico/${osId}/verificar`, dadosVerificacao);
 
 /** FUNCIONÁRIOS */
-// ✅ CORREÇÃO: Unificado e usando 'api' consistentemente
 export const getAllFuncionarios = () => api.get('/funcionarios');
 export const getFuncionarioById = (id) => api.get(`/funcionarios/${id}`);
 export const cadastrarFuncionario = (funcionarioData) => api.post('/funcionarios', funcionarioData);
@@ -67,5 +66,12 @@ export const deletarPlano = (planoId) => api.delete(`/planos-preventiva/${planoI
 export const getTiposServico = () => api.get('/tipos-servico');
 export const createTipoServico = (servicoData) => api.post('/tipos-servico', servicoData);
 export const deleteTipoServico = (id) => api.delete(`/tipos-servico/${id}`);
+
+// ✨ ALTERAÇÃO AQUI: Novas funções para o CRUD de Frequências
+/** FREQUÊNCIAS */
+export const getFrequencias = () => api.get('/frequencias');
+export const createFrequencia = (frequenciaData) => api.post('/frequencias', frequenciaData);
+export const deleteFrequencia = (id) => api.delete(`/frequencias/${id}`);
+
 
 export default api;
