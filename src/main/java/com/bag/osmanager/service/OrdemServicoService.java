@@ -63,9 +63,9 @@ public class OrdemServicoService {
             os.setDescricaoProblema(tipoServico.getNome());
             os.setDataInicioPreventiva(dto.getDataInicioPreventiva());
 
-            long proximoNumero = osRepository.findMaxNumeroPreventiva().orElse(0L) + 1;
+            long proximoNumero = osRepository.findMaxNumeroPreventivaByTipoManutencao(TipoManutencao.PREVENTIVA).orElse(0L) + 1;
             os.setNumeroPreventiva(proximoNumero);
-            os.setCodigoOs(proximoNumero + "-E");
+            os.setCodigoOs(String.valueOf(proximoNumero));
 
         } else { // CORRETIVA
             switch (dto.getPrioridade()) {
@@ -74,7 +74,7 @@ public class OrdemServicoService {
                 case BAIXA: os.setDataLimite(LocalDateTime.now().plusDays(7)); break;
             }
 
-            long proximoNumero = osRepository.findMaxNumeroCorretiva().orElse(0L) + 1;
+            long proximoNumero = osRepository.findMaxNumeroCorretivaByTipoManutencao(TipoManutencao.CORRETIVA).orElse(0L) + 1;
             os.setNumeroCorretiva(proximoNumero);
             os.setCodigoOs(String.valueOf(proximoNumero));
         }
@@ -212,7 +212,6 @@ public class OrdemServicoService {
             LocalDate dataFim,
             Pageable pageable
     ) {
-        // ✨ CORREÇÃO APLICADA AQUI: Passando dataInicio e dataFim para a Specification
         Specification<OrdemServico> spec = OrdemServicoSpecification.comFiltros(
                 keyword, status, tipoManutencao, equipamentoId, localId, mecanicoId, statusVerificacao, dataInicio, dataFim
         );
@@ -272,9 +271,9 @@ public class OrdemServicoService {
         proximaOS.setStatus(StatusOrdemServico.ABERTA);
         proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
 
-        long proximoNumero = osRepository.findMaxNumeroPreventiva().orElse(0L) + 1;
+        long proximoNumero = osRepository.findMaxNumeroPreventivaByTipoManutencao(TipoManutencao.PREVENTIVA).orElse(0L) + 1;
         proximaOS.setNumeroPreventiva(proximoNumero);
-        proximaOS.setCodigoOs(proximoNumero + "-E");
+        proximaOS.setCodigoOs(String.valueOf(proximoNumero));
 
         osRepository.save(proximaOS);
     }

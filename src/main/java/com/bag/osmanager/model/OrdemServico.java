@@ -13,11 +13,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "ordens_servico", indexes = {
-    // Adding indexes to the new columns for faster lookups
-    @Index(name = "idx_numero_corretiva", columnList = "numero_corretiva"),
-    @Index(name = "idx_numero_preventiva", columnList = "numero_preventiva")
-})
+@Table(
+    name = "ordens_servico",
+    indexes = {
+        @Index(name = "idx_numero_corretiva", columnList = "numero_corretiva"),
+        @Index(name = "idx_numero_preventiva", columnList = "numero_preventiva")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(name = "unica_corretiva_numero_por_tipo", columnNames = {"numero_corretiva", "tipo_manutencao"}),
+        @UniqueConstraint(name = "unica_preventiva_numero_por_tipo", columnNames = {"numero_preventiva", "tipo_manutencao"})
+    }
+)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,17 +33,16 @@ public class OrdemServico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // This field remains as the final, user-facing unique code
-    @Column(name = "codigo_os", unique = true, nullable = true)
+    // This field remains as the final, user-facing code (não precisa ser único)
+    @Column(name = "codigo_os", nullable = true)
     private String codigoOs;
 
-    // ✅ --- NEW COLUMNS FOR SEPARATE SEQUENCES ---
-    @Column(name = "numero_corretiva", unique = true, nullable = true)
+    // Sequências separadas para cada tipo
+    @Column(name = "numero_corretiva", nullable = true)
     private Long numeroCorretiva;
 
-    @Column(name = "numero_preventiva", unique = true, nullable = true)
+    @Column(name = "numero_preventiva", nullable = true)
     private Long numeroPreventiva;
-    // --- END OF NEW COLUMNS ---
 
     @ManyToOne
     @JoinColumn(name = "equipamento_id", referencedColumnName = "id", nullable = false)

@@ -1,9 +1,9 @@
 -Dashboard
 
--Adicionar Filtro de Início/Fim
--Número sequencial igual, porem sendo diferente um dos outros
+-Adicionar Filtro de Início/Fim (X)
+-Número sequencial igual, porem sendo diferente um dos outros (X)
 
--Tela de Gerenciar Equipamentos
+-Tela de Gerenciamento
 1.Tela de gerenciamento Equipamentos
 2.Tela de gerenciamento Serviço
 3.Tela de gerenciar frequencias
@@ -15,7 +15,6 @@
 2.Numero do Ativo
 
 -Cadastrar Serviço
-
 1.Nome do Serviço
 2.Descrição
 
@@ -31,3 +30,4 @@
 
 Calendário
 1.Colocar as ordens corretivas
+2.Retirar Preventiva Aberta/Andamento
