@@ -1,9 +1,5 @@
-/* osmanager-frontend/src/pages/VisualizarOsPage.print.css */
-
-/* ✨ ALTERAÇÃO AQUI: Esconde a área de impressão na tela normal */
-.printable-area-wrapper {
-    display: none;
-}
+/* ✅ CORREÇÃO: A regra que escondia o wrapper na tela foi removida daqui. */
+/* A responsabilidade de esconder o componente na tela normal é do 'VisualizarOsPage.css' */
 
 /* Regras aplicadas APENAS na hora de imprimir */
 @media print {
@@ -13,9 +9,10 @@
         display: none !important;
     }
 
-    /* 2. ✨ ALTERAÇÃO AQUI: Mostra a área de impressão que estava escondida */
+    /* 2. Mostra a área de impressão que estava escondida (pelo CSS principal) */
     .printable-area-wrapper {
         display: block !important;
+        position: static; /* Garante que ele ocupe a página toda ao imprimir */
     }
 
     /* 3. Estilos base do documento impresso para ficar limpo no papel */

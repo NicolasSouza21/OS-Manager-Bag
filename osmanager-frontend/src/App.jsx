@@ -17,6 +17,7 @@ import CalendarioPage from './pages/CalendarioPage';
 // import CriarOsPreventivaPage from './pages/CriarOsPreventivaPage';
 // ✨ ALTERAÇÃO AQUI: Import da nova página unificada
 import CriarOsPage from './pages/CriarOsPage';
+import TesteImpressaoPage from './pages/TesteImpressaoPage';
 
 
 // Páginas de Administração de Funcionários
@@ -30,6 +31,7 @@ import EquipamentoMenuPage from './pages/admin/equipamento/EquipamentoMenuPage';
 import LocaisListPage from './pages/admin/equipamento/LocaisListPage';
 import LocalAddPage from './pages/admin/equipamento/LocalAddPage';
 import GerenciarTiposServicoPage from './pages/admin/equipamento/GerenciarTiposServicoPage';
+
 import GerenciarFrequenciasPage from './pages/admin/equipamento/GerenciarFrequenciasPage';
 
 /**
@@ -58,6 +60,8 @@ function App() {
         <Route path="/os/:id" element={<VisualizarOsPage />} />
         
         <Route path="/calendario" element={<CalendarioPage />} />
+        <Route path="/teste-impressao" element={<TesteImpressaoPage />} />
+
 
         {/* ✨ ALTERAÇÃO AQUI: Rotas antigas de criação de OS removidas e substituídas pela nova rota unificada */}
         <Route path="/criar-os" element={<CriarOsPage />} />
