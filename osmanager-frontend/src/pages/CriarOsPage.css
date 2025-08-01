@@ -1,44 +1,67 @@
+/* --- Variáveis de Cores e Estilos Globais --- */
+:root {
+  --cor-primaria: #3b82f6;
+  --cor-primaria-hover: #2563eb;
+  --cor-perigo: #ef4444;
+  --cor-perigo-hover: #dc2626;
+  --cor-fundo-pagina: #f4f7fc;
+  --cor-fundo-card: #ffffff;
+  --cor-borda: #e5e7eb;
+  --cor-texto-label: #4b5563;
+  --cor-texto-input: #111827;
+  --sombra-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --raio-borda: 8px;
+}
+
 /* --- Layout Geral da Página --- */
 .os-page-container {
-  background-color: #f0f2f5;
+  background-color: var(--cor-fundo-pagina);
   padding: 2rem;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  margin-top: 8px;
-  margin-left: -8px;
-  margin-right: -8px;
 }
 
-/* --- Estilo do Card Principal do Formulário --- */
+/* --- Card Principal do Formulário --- */
 .os-form-container {
   width: 100%;
   max-width: 850px;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  background: var(--cor-fundo-card);
+  border-radius: var(--raio-borda);
+  box-shadow: var(--sombra-card);
   overflow: hidden;
-  border: 1px solid #e0e0e0;
 }
 
-/* --- Cabeçalho --- */
+/* --- Cabeçalho e Títulos --- */
 .os-form-header {
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #eeeeee;
+  border-bottom: 1px solid var(--cor-borda);
   text-align: center;
+  background-color: var(--cor-fundo-pagina);
 }
 
 .os-form-header h1 {
   margin: 0;
   font-size: 1.5rem;
-  color: #333;
+  color: var(--cor-texto-input);
+  font-weight: 600;
 }
+
+.form-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--cor-primaria);
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--cor-primaria);
+  margin-bottom: 1.5rem;
+}
+
 
 /* --- Corpo do Formulário --- */
 .os-form-body {
-  padding: 1.5rem 2rem;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -59,20 +82,21 @@
 
 .input-group label {
   margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: #555;
-  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cor-texto-label);
+  font-size: 0.875rem;
 }
 
 .input-group input,
 .input-group select,
 .input-group textarea {
   width: 100%;
-  padding: 0.8rem;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
+  padding: 0.8rem 1rem;
+  border-radius: var(--raio-borda);
+  border: 1px solid var(--cor-borda);
   background-color: #f9fafb;
   font-size: 1rem;
+  color: var(--cor-texto-input);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -80,63 +104,84 @@
 .input-group select:focus,
 .input-group textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .input-group input:disabled {
-  background-color: #e9ecef;
+  background-color: #f3f4f6;
   cursor: not-allowed;
+  color: #6b7280;
 }
 
-/* --- Rodapé e Botões --- */
+
+/* --- Botões de Seleção de Tipo (Corretiva/Preventiva) --- */
+.maintenance-type-selector {
+  display: flex;
+  width: 100%;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-borda);
+  overflow: hidden;
+}
+
+.maintenance-btn {
+  flex: 1;
+  padding: 0.8rem;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--cor-texto-label);
+  transition: all 0.2s ease-in-out;
+}
+
+.maintenance-btn.active {
+  background-color: var(--cor-primaria);
+  color: white;
+  font-weight: 600;
+}
+
+
+/* --- Rodapé e Botões de Ação --- */
 .os-form-footer {
   padding: 1.5rem 2rem;
-  background-color: #f9fafb;
-  border-top: 1px solid #eeeeee;
+  background-color: var(--cor-fundo-pagina);
+  border-top: 1px solid var(--cor-borda);
   display: flex;
+  justify-content: flex-end; /* Alinha os botões à direita */
   gap: 1rem;
-
-  /* ✅ A CORREÇÃO FINAL ESTÁ AQUI */
-  /* Garante que todos os itens no container se estiquem para ter a mesma altura */
-  align-items: stretch;
 }
 
 .button-save, .button-cancel {
-  flex: 1; 
-  padding: 1rem 1.5rem; /* Aumenta um pouco o padding vertical para consistência */
+  padding: 0.8rem 2rem;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--raio-borda);
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 600;
   color: white;
   cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
+  transition: all 0.2s ease;
 }
 
-.button-save:hover:not(:disabled), .button-cancel:hover:not(:disabled) {
+.button-save:hover:not(:disabled) {
+  background-color: var(--cor-primaria-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.button-cancel:hover:not(:disabled) {
+  background-color: var(--cor-perigo-hover);
+  transform: translateY(-2px);
 }
 
 .button-save {
-  background-color: #3b82f6; /* Azul */
+  background-color: var(--cor-primaria);
 }
 
 .button-cancel {
-  background-color: #ef4444; /* Vermelho */
+  background-color: var(--cor-perigo);
 }
 
 .button-save:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
-}
-
-.error-message {
-  padding: 1rem;
-  border-radius: 8px;
-  text-align: center;
-  color: white;
-  background-color: #ef4444;
 }

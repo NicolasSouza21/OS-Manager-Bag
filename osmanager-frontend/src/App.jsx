@@ -11,10 +11,13 @@ import DashboardPage from './pages/DashboardPage';
 import VisualizarOsPage from './pages/VisualizarOsPage';
 import CalendarioPage from './pages/CalendarioPage'; 
 
-// Fluxo de Criação de OS
-import EscolherTipoOsPage from './pages/EscolherTipoOsPage';
-import CriarOsCorretivaPage from './pages/CriarOsCorretivaPage';
-import CriarOsPreventivaPage from './pages/CriarOsPreventivaPage';
+// ✨ ALTERAÇÃO AQUI: Imports das páginas antigas removidos
+// import EscolherTipoOsPage from './pages/EscolherTipoOsPage';
+// import CriarOsCorretivaPage from './pages/CriarOsCorretivaPage';
+// import CriarOsPreventivaPage from './pages/CriarOsPreventivaPage';
+// ✨ ALTERAÇÃO AQUI: Import da nova página unificada
+import CriarOsPage from './pages/CriarOsPage';
+
 
 // Páginas de Administração de Funcionários
 import CadastroUsuarioPage from './pages/admin/CadastroUsuarioPage';
@@ -27,11 +30,7 @@ import EquipamentoMenuPage from './pages/admin/equipamento/EquipamentoMenuPage';
 import LocaisListPage from './pages/admin/equipamento/LocaisListPage';
 import LocalAddPage from './pages/admin/equipamento/LocalAddPage';
 import GerenciarTiposServicoPage from './pages/admin/equipamento/GerenciarTiposServicoPage';
-
-// ✨ ALTERAÇÃO AQUI: Corrigido o caminho dos imports para refletir sua estrutura de pastas
 import GerenciarFrequenciasPage from './pages/admin/equipamento/GerenciarFrequenciasPage';
-// ✨ ALTERAÇÃO AQUI: Import de "GerenciarSetoresPage" removido
-
 
 /**
  * Componente de Layout:
@@ -60,10 +59,10 @@ function App() {
         
         <Route path="/calendario" element={<CalendarioPage />} />
 
-        {/* Rotas de Criação de OS */}
-        <Route path="/criar-os" element={<EscolherTipoOsPage />} />
-        <Route path="/criar-os/corretiva" element={<CriarOsCorretivaPage />} />
-        <Route path="/criar-os/preventiva" element={<CriarOsPreventivaPage />} />
+        {/* ✨ ALTERAÇÃO AQUI: Rotas antigas de criação de OS removidas e substituídas pela nova rota unificada */}
+        <Route path="/criar-os" element={<CriarOsPage />} />
+        {/* <Route path="/criar-os/corretiva" element={<CriarOsCorretivaPage />} /> */}
+        {/* <Route path="/criar-os/preventiva" element={<CriarOsPreventivaPage />} /> */}
 
         {/* Rotas de Administração de Funcionários */}
         <Route path="/admin/funcionarios" element={<GerenciarFuncionariosPage />} />
@@ -80,7 +79,6 @@ function App() {
         <Route path="/admin/equipamentos/locais/adicionar" element={<LocalAddPage />} />
 
         <Route path="/admin/frequencias/gerenciar" element={<GerenciarFrequenciasPage />} />
-        {/* ✨ ALTERAÇÃO AQUI: Rota de "GerenciarSetores" removida */}
       </Route>
 
       {/* Redirecionamentos padrão */}

@@ -1,15 +1,20 @@
 /* osmanager-frontend/src/pages/VisualizarOsPage.print.css */
 
+/* ✨ ALTERAÇÃO AQUI: Esconde a área de impressão na tela normal */
+.printable-area-wrapper {
+    display: none;
+}
+
 /* Regras aplicadas APENAS na hora de imprimir */
 @media print {
 
-    /* 1. Esconde a página da web, deixando apenas o conteúdo da impressão visível */
-    body > #root > div > .view-os-page {
+    /* 1. Esconde a página da web que o usuário vê */
+    .view-os-page {
         display: none !important;
     }
 
-    /* 2. Garante que o container da impressão ocupe todo o espaço */
-    .print-container {
+    /* 2. ✨ ALTERAÇÃO AQUI: Mostra a área de impressão que estava escondida */
+    .printable-area-wrapper {
         display: block !important;
     }
 

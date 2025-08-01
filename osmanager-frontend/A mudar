@@ -11,8 +11,8 @@
 5.Gerenciamento de Locais (X)
 
 -Equipamento
-1.Descrição
-2.Numero do Ativo
+1.Descrição (x)
+2.Numero do Ativo (X)
 
 -Cadastrar Serviço (X)
 1.Nome do Serviço (X)
@@ -26,8 +26,8 @@
 2.Cadastrar Local(não obrigatório)
 
 -Criação de OS
--Juntar as duas telas(Alterar tabelas entre Preventiva e Corretiva)
+-Juntar as duas telas(Alterar tabelas entre Preventiva e Corretiva) (X)
 
 Calendário
-1.Colocar as ordens corretivas
-2.Retirar Preventiva Aberta/Andamento
+1.Colocar as ordens corretivas (X)
+2.Retirar Preventiva Aberta/Andamento (X)

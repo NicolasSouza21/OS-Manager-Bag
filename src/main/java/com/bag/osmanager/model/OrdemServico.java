@@ -8,8 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalDateTime; // Import alterado
 import java.util.List;
 
 @Entity
@@ -33,6 +32,7 @@ public class OrdemServico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ... (todos os outros campos permanecem iguais)
     @Column(name = "codigo_os", nullable = true)
     private String codigoOs;
 
@@ -114,15 +114,15 @@ public class OrdemServico {
     @Column(nullable = false)
     private StatusOrdemServico status;
 
+    // ✅ CORREÇÃO APLICADA AQUI
     @Column(nullable = true)
-    private LocalDate dataInicioPreventiva;
+    private LocalDateTime dataInicioPreventiva;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tipo_servico_id")
     private TipoServico tipoServico;
 
-    // ✨ ALTERAÇÃO AQUI: O campo 'frequencia' agora é uma relação com a nova entidade Frequencia.
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "frequencia_id", nullable = true) // nullable=true pois OS Corretiva não tem frequência
+    @JoinColumn(name = "frequencia_id", nullable = true)
     private Frequencia frequencia;
 }

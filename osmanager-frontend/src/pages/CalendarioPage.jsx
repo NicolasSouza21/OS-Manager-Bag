@@ -16,7 +16,6 @@ const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales
 const messages = { allDay: 'Dia todo', previous: 'Anterior', next: 'Próximo', today: 'Hoje', month: 'Mês', week: 'Semana', day: 'Dia', agenda: 'Agenda', date: 'Data', time: 'Hora', event: 'Evento', noEventsInRange: 'Não há eventos neste período.', showMore: total => `+ ver mais (${total})`};
 const formats = { dayHeaderFormat: (date, culture, localizer) => localizer.format(date, "EEEE, dd 'de' MMMM", culture), dayRangeHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'dd', culture)} - ${localizer.format(end, "dd 'de' MMMM", culture)}`, agendaHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'dd/MM/yyyy', culture)} - ${localizer.format(end, 'dd/MM/yyyy', culture)}`};
 
-// ✅ Componente Legenda ATUALIZADO
 const Legenda = () => (
     <div className="legenda-container">
         <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#a2d2ff', border: '1px dashed #003566' }}></span>Preventiva Prevista</div>
@@ -26,13 +25,15 @@ const Legenda = () => (
     </div>
 );
 
-// ✅ Componente CustomEvent ATUALIZADO para usar o título do evento
+// ✅ CORREÇÃO APLICADA AQUI
 const CustomEvent = ({ event }) => {
-    const frequencia = event.resource.frequencia;
+    // Acessamos o objeto frequencia que vem da API
+    const frequenciaObj = event.resource.frequencia;
     return (
         <div className="custom-event">
             <strong>{event.title}</strong>
-            {frequencia && <span className="event-frequencia">{frequencia.toLowerCase()}</span>}
+            {/* Agora exibimos a propriedade .nome do objeto, se ele existir */}
+            {frequenciaObj && <span className="event-frequencia">{frequenciaObj.nome}</span>}
         </div>
     );
 };
@@ -40,12 +41,16 @@ const CustomEvent = ({ event }) => {
 // Componente da Barra de Ferramentas Personalizada (sem alterações)
 const CustomToolbar = ({ label, onNavigate, onView, views, view }) => { const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1); const viewNames = { month: 'Mês', week: 'Semana', day: 'Dia', agenda: 'Agenda' }; return ( <div className="rbc-toolbar"> <div className="rbc-btn-group"> <button type="button" onClick={() => onNavigate('TODAY')}>Hoje</button> <button type="button" onClick={() => onNavigate('PREV')}>Anterior</button> <button type="button" onClick={() => onNavigate('NEXT')}>Próximo</button> </div> <span className="rbc-toolbar-label">{label}</span> <div className="rbc-btn-group"> {views.map(viewName => ( <button key={viewName} type="button" className={view === viewName ? 'rbc-active' : ''} onClick={() => onView(viewName)} > {viewNames[viewName] || capitalize(viewName)} </button>))} </div> </div> ); };
 
-// ✅ NOVA FUNÇÃO: Calcula a próxima data baseada na frequência
-const getNextDate = (startDate, frequencia) => {
+// ✅ FUNÇÃO getNextDate ATUALIZADA para usar o objeto Frequencia
+const getNextDate = (startDate, frequenciaObj) => {
+    if (!frequenciaObj || !frequenciaObj.nome) return null;
+
     const date = new Date(startDate);
     date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); // Corrige fuso horário
 
-    switch (frequencia) {
+    const nomeFrequencia = frequenciaObj.nome.toUpperCase();
+
+    switch (nomeFrequencia) {
         case 'DIARIO': date.setDate(date.getDate() + 1); break;
         case 'BIDIARIO': date.setDate(date.getDate() + 2); break;
         case 'SEMANAL': date.setDate(date.getDate() + 7); break;
@@ -67,7 +72,6 @@ function CalendarioPage() {
     const [date, setDate] = useState(new Date());
     const [view, setView] = useState('month');
 
-    // ✅ FETCHEVENTS REESTRUTURADO para projetar eventos futuros
     const fetchEvents = useCallback(async () => {
         setLoading(true);
         try {
@@ -101,8 +105,8 @@ function CalendarioPage() {
                     equipamentoNome: equipamentoNome,
                 });
 
-                // 2. LÓGICA DE PROJEÇÃO: Gera os eventos futuros "virtuais"
-                if (os.frequencia && os.frequencia !== 'UNICA' && os.dataInicioPreventiva) {
+                // ✅ LÓGICA DE PROJEÇÃO ATUALIZADA
+                if (os.frequencia && os.frequencia.nome !== 'UNICA' && os.dataInicioPreventiva) {
                     let currentDate = new Date(os.dataInicioPreventiva);
                     const endDateLimit = new Date();
                     endDateLimit.setFullYear(endDateLimit.getFullYear() + 2); // Projeta por 2 anos
@@ -140,7 +144,6 @@ function CalendarioPage() {
         fetchEvents();
     }, [fetchEvents]);
 
-    // ✅ Ação de clique ATUALIZADA para diferenciar eventos
     const handleSelectEvent = (event) => {
         if (String(event.id).includes('-virtual-')) {
             alert(`Esta é uma ocorrência futura prevista para ${event.start.toLocaleDateString('pt-BR')}.\n\nA Ordem de Serviço real será criada no sistema assim que a anterior for concluída.`);
@@ -149,7 +152,6 @@ function CalendarioPage() {
         navigate(`/os/${event.id}`);
     };
 
-    // ✅ Estilo dos eventos ATUALIZADO para diferenciar os tipos
     const eventStyleGetter = (event) => {
         const os = event.resource;
         let style = {

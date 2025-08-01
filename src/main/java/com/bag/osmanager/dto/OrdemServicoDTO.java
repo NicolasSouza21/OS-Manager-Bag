@@ -1,11 +1,8 @@
 package com.bag.osmanager.dto;
 
 import com.bag.osmanager.model.enums.*;
-// import com.bag.osmanager.model.enums.Frequencia; // ✨ ALTERAÇÃO AQUI: Import do enum antigo removido
-
 import lombok.Data;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalDateTime; // ✨ ALTERAÇÃO AQUI: Import de LocalDate removido e LocalDateTime adicionado
 import java.util.List;
 
 @Data
@@ -53,10 +50,10 @@ public class OrdemServicoDTO {
     private LocalDateTime dataAprovacao;
     
     // Dados da Preventiva
-    private LocalDate dataInicioPreventiva;
+    // ✨ ALTERAÇÃO AQUI: O tipo do campo foi alterado para LocalDateTime
+    private LocalDateTime dataInicioPreventiva;
     private Long tipoServicoId;
     private String tipoServicoNome;
     
-    // ✨ ALTERAÇÃO AQUI: O campo 'frequencia' agora é do tipo FrequenciaDTO
     private FrequenciaDTO frequencia;
 }

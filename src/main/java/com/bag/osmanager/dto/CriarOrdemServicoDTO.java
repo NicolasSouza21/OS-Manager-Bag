@@ -6,7 +6,7 @@ import com.bag.osmanager.model.enums.Turno;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import java.time.LocalDate;
+import java.time.LocalDateTime; // ✨ ALTERAÇÃO AQUI: Import alterado de LocalDate para LocalDateTime
 
 @Data
 public class CriarOrdemServicoDTO {
@@ -28,10 +28,9 @@ public class CriarOrdemServicoDTO {
     private String descricaoProblema;
     private String solicitante;
 
-    // Campos específicos para OS Preventiva
-    private LocalDate dataInicioPreventiva;
+    // ✨ ALTERAÇÃO AQUI: O tipo do campo foi alterado para LocalDateTime
+    private LocalDateTime dataInicioPreventiva;
+    
     private Long tipoServicoId;
-
-    // ✅ CORREÇÃO FINAL ESTÁ AQUI: O campo agora é 'frequenciaId' e do tipo Long.
     private Long frequenciaId;
 }

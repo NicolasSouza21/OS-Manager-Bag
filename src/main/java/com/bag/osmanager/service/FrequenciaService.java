@@ -6,6 +6,7 @@ import com.bag.osmanager.model.Frequencia;
 import com.bag.osmanager.repository.FrequenciaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.dao.DataIntegrityViolationException; // ✨ ALTERAÇÃO AQUI: Import necessário
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,27 +17,18 @@ import java.util.stream.Collectors;
  * Contém a lógica de negócio para o gerenciamento de Frequências.
  */
 @Service
-@RequiredArgsConstructor // Injeta as dependências via construtor (melhor prática)
+@RequiredArgsConstructor
 public class FrequenciaService {
 
     private final FrequenciaRepository frequenciaRepository;
 
-    /**
-     * Busca todas as frequências cadastradas.
-     * @return Uma lista de FrequenciaDTO.
-     */
-    @Transactional(readOnly = true) // Otimização para operações de leitura
+    @Transactional(readOnly = true)
     public List<FrequenciaDTO> getAllFrequencias() {
         return frequenciaRepository.findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Cria uma nova frequência no banco de dados.
-     * @param frequenciaDTO Os dados da nova frequência.
-     * @return O DTO da frequência criada.
-     */
     @Transactional
     public FrequenciaDTO createFrequencia(FrequenciaDTO frequenciaDTO) {
         Frequencia frequencia = new Frequencia();
@@ -45,22 +37,31 @@ public class FrequenciaService {
         return convertToDTO(savedFrequencia);
     }
 
-    /**
-     * Deleta uma frequência pelo seu ID.
-     * @param id O ID da frequência a ser deletada.
-     */
+    // ✨ ALTERAÇÃO AQUI: Novo método para atualizar uma frequência
     @Transactional
-    public void deleteFrequencia(Long id) {
+    public FrequenciaDTO updateFrequencia(Long id, FrequenciaDTO frequenciaDTO) {
         Frequencia frequencia = frequenciaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Frequência com ID " + id + " não encontrada."));
-        frequenciaRepository.delete(frequencia);
+            .orElseThrow(() -> new ResourceNotFoundException("Frequência com ID " + id + " não encontrada."));
+        
+        BeanUtils.copyProperties(frequenciaDTO, frequencia, "id"); // Copia os dados, mas ignora o ID
+        Frequencia updatedFrequencia = frequenciaRepository.save(frequencia);
+        return convertToDTO(updatedFrequencia);
     }
 
-    /**
-     * Método utilitário para converter uma entidade Frequencia em um FrequenciaDTO.
-     * @param frequencia A entidade a ser convertida.
-     * @return O DTO correspondente.
-     */
+    // ✨ ALTERAÇÃO AQUI: Método de exclusão agora trata o erro de integridade
+    @Transactional
+    public void deleteFrequencia(Long id) {
+        if (!frequenciaRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Frequência com ID " + id + " não encontrada.");
+        }
+        try {
+            frequenciaRepository.deleteById(id);
+        } catch (DataIntegrityViolationException e) {
+            // Lança uma exceção mais amigável que será convertida em uma resposta 400 (Bad Request)
+            throw new IllegalStateException("Não é possível excluir a frequência, pois ela já está em uso.");
+        }
+    }
+
     private FrequenciaDTO convertToDTO(Frequencia frequencia) {
         FrequenciaDTO dto = new FrequenciaDTO();
         BeanUtils.copyProperties(frequencia, dto);

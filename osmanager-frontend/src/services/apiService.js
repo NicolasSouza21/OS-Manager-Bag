@@ -67,10 +67,11 @@ export const getTiposServico = () => api.get('/tipos-servico');
 export const createTipoServico = (servicoData) => api.post('/tipos-servico', servicoData);
 export const deleteTipoServico = (id) => api.delete(`/tipos-servico/${id}`);
 
-// ✨ ALTERAÇÃO AQUI: Novas funções para o CRUD de Frequências
 /** FREQUÊNCIAS */
 export const getFrequencias = () => api.get('/frequencias');
 export const createFrequencia = (frequenciaData) => api.post('/frequencias', frequenciaData);
+// ✨ ALTERAÇÃO AQUI: Nova função para ATUALIZAR uma frequência
+export const updateFrequencia = (id, frequenciaData) => api.put(`/frequencias/${id}`, frequenciaData);
 export const deleteFrequencia = (id) => api.delete(`/frequencias/${id}`);
 
 

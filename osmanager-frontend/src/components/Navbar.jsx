@@ -7,16 +7,13 @@ function Navbar() {
     const navigate = useNavigate();
     const userRole = localStorage.getItem('userRole');
 
-    // 👇 ALTERAÇÃO FOCADA AQUI 👇
-    // Normalizamos a role para funcionar com ou sem o prefixo "ROLE_"
     const normalizedRole = userRole ? userRole.replace('ROLE_', '') : '';
 
     const isAdmin = normalizedRole === 'ADMIN';
     const isLider = normalizedRole === 'LIDER';
     const isEncarregado = normalizedRole === 'ENCARREGADO';
     const isMecanico = normalizedRole === 'MECANICO';
-    // ☝️ FIM DA ALTERAÇÃO ☝️
-
+    
     // Usuários com permissão para acessar áreas de gestão
     const isGestor = isAdmin || isLider || isEncarregado;
 
@@ -35,25 +32,13 @@ function Navbar() {
                     <Link to="/dashboard" className="nav-link">Dashboard</Link>
                 </li>
                 
-                {/* ✅ NOVO LINK PARA O CALENDÁRIO */}
                 <li>
                     <Link to="/calendario" className="nav-link">Calendário</Link>
                 </li>
 
-                <li className="nav-item dropdown">
-                    <a href="#" className="nav-link dropdown-toggle">Criar OS</a>
-                    <ul className="dropdown-menu">
-                        <li>
-                            <Link to="/criar-os/corretiva" className="dropdown-item">
-                                🔧 OS Corretiva
-                            </Link>
-                        </li>
-                        <li>
-                            <Link to="/criar-os/preventiva" className="dropdown-item">
-                                🗓️ OS Preventiva
-                            </Link>
-                        </li>
-                    </ul>
+                {/* ✨ ALTERAÇÃO AQUI: O dropdown foi substituído por um link direto */}
+                <li>
+                    <Link to="/criar-os" className="nav-link">Criar OS</Link>
                 </li>
 
                 {/* Link "Gerenciar Funcionários" - Apenas para ADMIN */}

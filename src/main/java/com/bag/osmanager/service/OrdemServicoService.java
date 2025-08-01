@@ -3,15 +3,9 @@ package com.bag.osmanager.service;
 import com.bag.osmanager.dto.*;
 import com.bag.osmanager.exception.ResourceNotFoundException;
 import com.bag.osmanager.model.*;
-// ✨ ALTERAÇÃO AQUI: Import do Enum Frequencia foi REMOVIDO e o de TipoFuncionario foi ADICIONADO
-import com.bag.osmanager.model.enums.Prioridade;
-import com.bag.osmanager.model.enums.StatusOrdemServico;
-import com.bag.osmanager.model.enums.StatusVerificacao;
-import com.bag.osmanager.model.enums.TipoFuncionario; // ✅ CORREÇÃO: Import adicionado
-import com.bag.osmanager.model.enums.TipoManutencao;
-   import com.bag.osmanager.repository.*;
+import com.bag.osmanager.model.enums.*; // ✨ ALTERAÇÃO AQUI: Importa o novo Enum de UnidadeTempo
+import com.bag.osmanager.repository.*;
 import com.bag.osmanager.service.specification.OrdemServicoSpecification;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -38,6 +32,7 @@ public class OrdemServicoService {
     private final TipoServicoRepository tipoServicoRepository;
     private final FrequenciaRepository frequenciaRepository;
 
+    // O método criarOS já está correto e compatível com LocalDateTime
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
@@ -65,7 +60,6 @@ public class OrdemServicoService {
                     .orElseThrow(() -> new ResourceNotFoundException("Tipo de Serviço com ID " + dto.getTipoServicoId() + " não encontrado!"));
 
             Frequencia frequencia = frequenciaRepository.findById(dto.getFrequenciaId())
-                    // ✅ CORREÇÃO: Erro de digitação de ".DorElseThrow" para ".orElseThrow"
                     .orElseThrow(() -> new ResourceNotFoundException("Frequência com ID " + dto.getFrequenciaId() + " não encontrada!"));
 
             os.setTipoServico(tipoServico);
@@ -83,7 +77,6 @@ public class OrdemServicoService {
                 case MEDIA: os.setDataLimite(LocalDateTime.now().plusDays(4)); break;
                 case BAIXA: os.setDataLimite(LocalDateTime.now().plusDays(7)); break;
             }
-            // ✅ CORREÇÃO: Erro de digitação de "CORRETiva" para "CORRETIVA"
             long proximoNumero = osRepository.findMaxNumeroCorretivaByTipoManutencao(TipoManutencao.CORRETIVA).orElse(0L) + 1;
             os.setNumeroCorretiva(proximoNumero);
             os.setCodigoOs(String.valueOf(proximoNumero));
@@ -93,6 +86,7 @@ public class OrdemServicoService {
         return converteParaDTO(osSalva);
     }
 
+    // ... (Os outros métodos como registrarCiencia, executar, etc. não precisam de alteração)
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
         OrdemServico os = osRepository.findById(osId)
@@ -117,7 +111,6 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
-    // ... (Os outros métodos permanecem os mesmos)
     @Transactional
     public OrdemServicoDTO iniciarExecucao(Long osId) {
         OrdemServico os = osRepository.findById(osId)
@@ -244,40 +237,40 @@ public class OrdemServicoService {
         osRepository.delete(os);
     }
 
+    // ✨ ALTERAÇÃO AQUI: Lógica de agendamento completamente refeita
     private void agendarProximaPreventiva(OrdemServico osConcluida) {
         if (osConcluida.getTipoManutencao() != TipoManutencao.PREVENTIVA || osConcluida.getFrequencia() == null || osConcluida.getDataInicioPreventiva() == null) {
             return;
         }
 
-        LocalDate dataBase = osConcluida.getDataInicioPreventiva();
-        LocalDate proximaData;
+        Frequencia frequencia = osConcluida.getFrequencia();
+        LocalDateTime dataBase = osConcluida.getDataInicioPreventiva();
+        LocalDateTime proximaDataHora;
 
-        String nomeFrequencia = osConcluida.getFrequencia().getNome().toUpperCase();
-
-        if ("DIARIO".equals(nomeFrequencia)) {
-            proximaData = dataBase.plusDays(1);
-        } else if ("BIDIARIO".equals(nomeFrequencia)) {
-            proximaData = dataBase.plusDays(2);
-        } else if ("SEMANAL".equals(nomeFrequencia)) {
-            proximaData = dataBase.plusWeeks(1);
-        } else if ("QUINZENAL".equals(nomeFrequencia)) {
-            proximaData = dataBase.plusWeeks(2);
-        } else if ("MENSAL".equals(nomeFrequencia)) {
-            proximaData = dataBase.plusMonths(1);
-        } else if ("BIMESTRAL".equals(nomeFrequencia)) {
-            proximaData = dataBase.plusMonths(2);
-        } else if ("TRIMESTRAL".equals(nomeFrequencia)) {
-            proximaData = dataBase.plusMonths(3);
-        } else if ("SEMESTRAL".equals(nomeFrequencia)) {
-            proximaData = dataBase.plusMonths(6);
-        } else if ("ANUAL".equals(nomeFrequencia)) {
-            proximaData = dataBase.plusYears(1);
-        } else {
-            return;
+        switch (frequencia.getUnidadeTempo()) {
+            case HORA:
+                proximaDataHora = dataBase.plusHours(frequencia.getIntervalo());
+                break;
+            case DIA:
+                proximaDataHora = dataBase.plusDays(frequencia.getIntervalo());
+                break;
+            case SEMANA:
+                proximaDataHora = dataBase.plusWeeks(frequencia.getIntervalo());
+                break;
+            case MES:
+                proximaDataHora = dataBase.plusMonths(frequencia.getIntervalo());
+                break;
+            case ANO:
+                proximaDataHora = dataBase.plusYears(frequencia.getIntervalo());
+                break;
+            default:
+                // Se a unidade de tempo for desconhecida, não reagenda.
+                return;
         }
 
-        if (proximaData.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            proximaData = proximaData.plusDays(1);
+        // Regra de pular o domingo (apenas para frequências maiores ou iguais a um dia)
+        if (frequencia.getUnidadeTempo() != UnidadeTempo.HORA && proximaDataHora.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            proximaDataHora = proximaDataHora.plusDays(1);
         }
 
         OrdemServico proximaOS = new OrdemServico();
@@ -286,11 +279,11 @@ public class OrdemServicoService {
         proximaOS.setTipoManutencao(TipoManutencao.PREVENTIVA);
         proximaOS.setTipoServico(osConcluida.getTipoServico());
         proximaOS.setFrequencia(osConcluida.getFrequencia());
-        proximaOS.setDescricaoProblema(osConcluida.getDescricaoProblema());
+        proximaOS.setDescricaoProblema(osConcluida.getTipoServico().getNome()); // Usa o nome do serviço como descrição
         proximaOS.setSolicitante("SISTEMA (AUTO)");
-        proximaOS.setPrioridade(Prioridade.MEDIA);
+        proximaOS.setPrioridade(Prioridade.MEDIA); // Prioridade padrão
         proximaOS.setDataSolicitacao(LocalDateTime.now());
-        proximaOS.setDataInicioPreventiva(proximaData);
+        proximaOS.setDataInicioPreventiva(proximaDataHora); // Define a nova data E HORA
         proximaOS.setStatus(StatusOrdemServico.ABERTA);
         proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
 
@@ -300,7 +293,8 @@ public class OrdemServicoService {
 
         osRepository.save(proximaOS);
     }
-
+    
+    // O método converteParaDTO já está correto e compatível com LocalDateTime
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto, "frequencia");

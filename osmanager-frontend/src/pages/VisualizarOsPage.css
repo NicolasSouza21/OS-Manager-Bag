@@ -234,3 +234,11 @@
   gap: 0.5rem;
   cursor: pointer;
 }
+
+/* ✨ ADIÇÃO AQUI: Esconde a área de impressão fora da tela */
+.printable-area-wrapper {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  z-index: -1; /* Garante que não interfira com cliques */
+}

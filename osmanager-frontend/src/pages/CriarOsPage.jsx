@@ -1,87 +1,113 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createOrdemServico, getEquipamentos, getLocais } from '../services/apiService';
+import { createOrdemServico, getEquipamentos, getLocais, getTiposServico, getFrequencias } from '../services/apiService';
 import './CriarOsPage.css';
 
-const formatDateForInput = (date) => {
-    if (!date) return '';
+// ✨ ALTERAÇÃO AQUI: Nova função para formatar data e hora para o input
+const formatDateTimeForInput = (date) => {
     const d = new Date(date);
-    d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
-    let month = '' + (d.getMonth() + 1);
-    let day = '' + d.getDate();
-    const year = d.getFullYear();
+    // Ajusta para o fuso horário local para evitar problemas de um dia a menos
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    // Formata para 'YYYY-MM-DDTHH:mm'
+    return d.toISOString().slice(0, 16);
+};
 
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-
-    return [year, month, day].join('-');
-}
 
 function CriarOsPage() {
     const navigate = useNavigate();
 
     const [tipoManutencao, setTipoManutencao] = useState('CORRETIVA');
-    const [prioridade, setPrioridade] = useState('MEDIA');
-    const [solicitante, setSolicitante] = useState('');
-    const [descricaoProblema, setDescricaoProblema] = useState('');
-    const [observacao, setObservacao] = useState('');
-    const [equipamentoId, setEquipamentoId] = useState('');
-    const [localId, setLocalId] = useState('');
+    const [formData, setFormData] = useState({
+        equipamentoId: '',
+        localId: '',
+        prioridade: 'MEDIA',
+        turno: 'PRIMEIRO', 
+        solicitante: '',
+        descricaoProblema: '',
+        // ✨ ALTERAÇÃO AQUI: O valor inicial agora usa a nova função de data e hora
+        dataInicioPreventiva: formatDateTimeForInput(new Date()),
+        tipoServicoId: '',
+        frequenciaId: '',
+    });
+
     const [listaEquipamentos, setListaEquipamentos] = useState([]);
     const [listaLocais, setListaLocais] = useState([]);
+    const [listaTiposServico, setListaTiposServico] = useState([]);
+    const [listaFrequencias, setListaFrequencias] = useState([]);
+
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    const [dataInicioPreventiva, setDataInicioPreventiva] = useState(formatDateForInput(new Date()));
-    const [dataFimPreventiva, setDataFimPreventiva] = useState('');
+    const equipamentoSelecionado = listaEquipamentos.find(e => e.id === Number(formData.equipamentoId));
 
-    const equipamentoSelecionado = listaEquipamentos.find(e => e.id === Number(equipamentoId));
+    const carregarDadosIniciais = useCallback(async () => {
+        try {
+            const [resEquipamentos, resLocais, resTiposServico, resFrequencias] = await Promise.all([
+                getEquipamentos(),
+                getLocais(),
+                getTiposServico(),
+                getFrequencias()
+            ]);
+            setListaEquipamentos(resEquipamentos.data);
+            setListaLocais(resLocais.data);
+            setListaTiposServico(resTiposServico.data);
+            setListaFrequencias(resFrequencias.data);
+        } catch (err) {
+            console.error("Erro ao carregar dados", err);
+            setError("Não foi possível carregar os dados para o formulário.");
+        }
+    }, []);
 
     useEffect(() => {
-        const carregarDadosIniciais = async () => {
-            try {
-                const [resEquipamentos, resLocais] = await Promise.all([
-                    getEquipamentos(),
-                    getLocais()
-                ]);
-                setListaEquipamentos(resEquipamentos.data);
-                setListaLocais(resLocais.data);
-            } catch (err) {
-                console.error("Erro ao carregar dados", err);
-                setError("Não foi possível carregar os dados para o formulário.");
-            }
-        };
         carregarDadosIniciais();
-        setSolicitante(localStorage.getItem('userName') || 'Usuário');
-    }, []);
+        setFormData(prev => ({ ...prev, solicitante: localStorage.getItem('userName') || 'Usuário' }));
+    }, [carregarDadosIniciais]);
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleTipoManutencaoChange = (tipo) => {
+        setTipoManutencao(tipo);
+        setFormData(prev => ({
+            ...prev,
+            dataInicioPreventiva: formatDateTimeForInput(new Date()), // Reseta com data e hora atual
+            tipoServicoId: '',
+            frequenciaId: '',
+            prioridade: 'MEDIA',
+            descricaoProblema: ''
+        }));
+    };
 
     const handleSubmit = async (evento) => {
         evento.preventDefault();
         setError(null);
 
-        if (tipoManutencao === 'PREVENTIVA' && (!dataInicioPreventiva || !dataFimPreventiva)) {
-            alert('Para manutenção preventiva, as datas de início e fim programado são obrigatórias.');
+        if (tipoManutencao === 'PREVENTIVA' && (!formData.tipoServicoId || !formData.frequenciaId)) {
+            alert('Para manutenção preventiva, o Tipo de Serviço e a Frequência são obrigatórios.');
             return;
         }
 
         setSubmitting(true);
         
-        // =========================================================
-        //         👇👇 CORREÇÃO NOS NOMES DOS CAMPOS 👇👇
-        // =========================================================
         const dadosParaApi = {
             tipoManutencao,
-            equipamentoId: Number(equipamentoId),
-            localId: Number(localId),
-            prioridade,
-            solicitante,
-            descricaoProblema,
-            observacao,
-            ...(tipoManutencao === 'PREVENTIVA' && {
-                dataInicioPreventiva, // Nome correto
-                dataFimPreventiva   // Nome correto
-            })
+            equipamentoId: Number(formData.equipamentoId),
+            localId: Number(formData.localId),
+            solicitante: formData.solicitante,
+            turno: formData.turno,
         };
+
+        if (tipoManutencao === 'CORRETIVA') {
+            dadosParaApi.prioridade = formData.prioridade;
+            dadosParaApi.descricaoProblema = formData.descricaoProblema;
+        } else { // PREVENTIVA
+            dadosParaApi.prioridade = 'MEDIA';
+            dadosParaApi.dataInicioPreventiva = formData.dataInicioPreventiva;
+            dadosParaApi.tipoServicoId = Number(formData.tipoServicoId);
+            dadosParaApi.frequenciaId = Number(formData.frequenciaId);
+        }
 
         try {
             await createOrdemServico(dadosParaApi);
@@ -89,8 +115,9 @@ function CriarOsPage() {
             navigate('/dashboard');
         } catch (err) {
             console.error("Erro ao criar OS:", err.response?.data || err.message);
-            setError(err.response?.data?.message || 'Falha ao criar a Ordem de Serviço.');
-            alert(err.response?.data?.message || 'Falha ao criar a Ordem de Serviço.');
+            const errorMsg = err.response?.data?.message || 'Falha ao criar a Ordem de Serviço.';
+            setError(errorMsg);
+            alert(errorMsg);
         } finally {
             setSubmitting(false);
         }
@@ -100,9 +127,7 @@ function CriarOsPage() {
         <div className="os-page-container">
             <form className="os-form-container" onSubmit={handleSubmit}>
                 <header className="os-form-header">
-                    <div className="os-header-title">
-                        <h1>ORDEM DE SERVIÇO DE MANUTENÇÃO</h1>
-                    </div>
+                    <h1>ORDEM DE SERVIÇO DE MANUTENÇÃO</h1>
                     <div className="os-number-box">
                         <label>Nº OS:</label>
                         <span>AUTOMÁTICO</span>
@@ -119,50 +144,25 @@ function CriarOsPage() {
                                 <button
                                     type="button"
                                     className={`maintenance-btn ${tipoManutencao === 'CORRETIVA' ? 'active' : ''}`}
-                                    onClick={() => setTipoManutencao('CORRETIVA')}
+                                    onClick={() => handleTipoManutencaoChange('CORRETIVA')}
                                 >
                                     Corretiva
                                 </button>
                                 <button
                                     type="button"
                                     className={`maintenance-btn ${tipoManutencao === 'PREVENTIVA' ? 'active' : ''}`}
-                                    onClick={() => setTipoManutencao('PREVENTIVA')}
+                                    onClick={() => handleTipoManutencaoChange('PREVENTIVA')}
                                 >
                                     Preventiva
                                 </button>
                             </div>
                         </div>
                     </div>
-                    
-                    {tipoManutencao === 'PREVENTIVA' && (
-                        <div className="form-row preventiva-fields">
-                            <div className="input-group">
-                                <label htmlFor="dataInicioPreventiva">INÍCIO PROGRAMADO:</label>
-                                <input
-                                    type="date"
-                                    id="dataInicioPreventiva"
-                                    value={dataInicioPreventiva}
-                                    onChange={(e) => setDataInicioPreventiva(e.target.value)}
-                                    required={tipoManutencao === 'PREVENTIVA'}
-                                />
-                            </div>
-                             <div className="input-group">
-                                <label htmlFor="dataFimPreventiva">FIM PROGRAMADO:</label>
-                                <input
-                                    type="date"
-                                    id="dataFimPreventiva"
-                                    value={dataFimPreventiva}
-                                    onChange={(e) => setDataFimPreventiva(e.target.value)}
-                                    required={tipoManutencao === 'PREVENTIVA'}
-                                />
-                            </div>
-                        </div>
-                    )}
 
                     <div className="form-row">
                         <div className="input-group">
                             <label htmlFor="equipamento">EQUIPAMENTO:</label>
-                            <select id="equipamento" value={equipamentoId} onChange={(e) => setEquipamentoId(e.target.value)} required>
+                            <select id="equipamento" name="equipamentoId" value={formData.equipamentoId} onChange={handleInputChange} required>
                                 <option value="" disabled>Selecione...</option>
                                 {listaEquipamentos.map((equip) => (
                                     <option key={equip.id} value={equip.id}>{equip.nome}</option>
@@ -170,12 +170,12 @@ function CriarOsPage() {
                             </select>
                         </div>
                         <div className="input-group">
-                            <label>Nº EQUIPAMENTO:</label>
+                            <label>Nº ATIVO:</label>
                             <input type="text" value={equipamentoSelecionado?.tag || ''} disabled />
                         </div>
                         <div className="input-group">
                             <label htmlFor="local">LOCAL:</label>
-                            <select id="local" value={localId} onChange={(e) => setLocalId(e.target.value)} required>
+                            <select id="local" name="localId" value={formData.localId} onChange={handleInputChange} required>
                                 <option value="" disabled>Selecione...</option>
                                 {listaLocais.map((local) => (
                                     <option key={local.id} value={local.id}>{local.nome}</option>
@@ -184,45 +184,81 @@ function CriarOsPage() {
                         </div>
                     </div>
 
-                    <div className="form-row">
-                        <div className="input-group full-width">
-                            <label htmlFor="descricaoProblema">DESCRIÇÃO DO PROBLEMA/SERVIÇO:</label>
-                            <textarea id="descricaoProblema" rows="3" value={descricaoProblema} onChange={(e) => setDescricaoProblema(e.target.value)} required></textarea>
+                    {tipoManutencao === 'CORRETIVA' && (
+                        <>
+                            <div className="form-row">
+                                <div className="input-group full-width">
+                                    <label htmlFor="descricaoProblema">DESCRIÇÃO DO PROBLEMA/SERVIÇO:</label>
+                                    <textarea id="descricaoProblema" name="descricaoProblema" rows="3" value={formData.descricaoProblema} onChange={handleInputChange} required></textarea>
+                                </div>
+                            </div>
+                            <div className="form-row">
+                                <div className="input-group">
+                                    <label htmlFor="prioridade">PRIORIDADE:</label>
+                                    <select id="prioridade" name="prioridade" value={formData.prioridade} onChange={handleInputChange} required>
+                                        <option value="BAIXA">Baixa</option>
+                                        <option value="MEDIA">Média</option>
+                                        <option value="ALTA">Alta</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {tipoManutencao === 'PREVENTIVA' && (
+                        <div className="form-row preventiva-fields">
+                             <div className="input-group">
+                                <label htmlFor="tipoServicoId">TIPO DE SERVIÇO:</label>
+                                <select id="tipoServicoId" name="tipoServicoId" value={formData.tipoServicoId} onChange={handleInputChange} required>
+                                    <option value="" disabled>Selecione...</option>
+                                    {listaTiposServico.map((servico) => (
+                                        <option key={servico.id} value={servico.id}>{servico.nome}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="frequenciaId">FREQUÊNCIA:</label>
+                                <select id="frequenciaId" name="frequenciaId" value={formData.frequenciaId} onChange={handleInputChange} required>
+                                    <option value="" disabled>Selecione...</option>
+                                    {listaFrequencias.map((freq) => (
+                                        <option key={freq.id} value={freq.id}>{freq.nome}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <label htmlFor="dataInicioPreventiva">INÍCIO PROGRAMADO:</label>
+                                {/* ✅ CORREÇÃO: O tipo do input foi alterado para 'datetime-local' */}
+                                <input
+                                    type="datetime-local"
+                                    id="dataInicioPreventiva"
+                                    name="dataInicioPreventiva"
+                                    value={formData.dataInicioPreventiva}
+                                    onChange={handleInputChange}
+                                    required
+                                />
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div className="form-row">
-                        <div className="input-group">
-                            <label htmlFor="criticidade">CRITICIDADE:</label>
-                            <select id="criticidade" value={prioridade} onChange={(e) => setPrioridade(e.target.value)} required>
-                                <option value="BAIXA">Baixa</option>
-                                <option value="MEDIA">Média</option>
-                                <option value="ALTA">Alta</option>
+                    )}
+                     <div className="form-row">
+                         <div className="input-group">
+                             <label>SOLICITANTE:</label>
+                             <input type="text" name="solicitante" value={formData.solicitante} disabled />
+                         </div>
+                         <div className="input-group">
+                            <label htmlFor="turno">TURNO:</label>
+                            <select id="turno" name="turno" value={formData.turno} onChange={handleInputChange} required>
+                                <option value="PRIMEIRO">Primeiro</option>
+                                <option value="SEGUNDO">Segundo</option>
+                                <option value="TERCEIRO">Terceiro</option>
                             </select>
                         </div>
-                        <div className="input-group">
-                            <label>SOLICITANTE:</label>
-                            <input type="text" value={solicitante} disabled />
-                        </div>
-                    </div>
-
-                     <div className="form-row">
-                        <div className="input-group full-width">
-                            <label htmlFor="observacao">OBSERVAÇÃO:</label>
-                            <textarea id="observacao" rows="3" value={observacao} onChange={(e) => setObservacao(e.target.value)}></textarea>
-                        </div>
-                    </div>
+                     </div>
                 </main>
 
                 <footer className="os-form-footer">
                     <div className="form-actions">
-                        <button type="submit" className="button-save" disabled={submitting}>{submitting ? 'Salvando...' : 'Salvar'}</button>
+                        <button type="submit" className="button-save" disabled={submitting}>{submitting ? 'Criando OS...' : 'Criar Ordem de Serviço'}</button>
                         <button type="button" className="button-cancel" onClick={() => navigate(-1)}>CANCELAR</button>
-                    </div>
-                    <div className="footer-info">
-                        <span>FO 012 - ORDEM DE SERVIÇO DE MANUTENÇÃO</span>
-                        <span>REV01</span>
-                        <span>DATA: {new Date().toLocaleDateString('pt-BR')}</span>
                     </div>
                 </footer>
             </form>

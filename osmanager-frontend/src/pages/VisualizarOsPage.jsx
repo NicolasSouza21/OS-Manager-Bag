@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useReactToPrint } from 'react-to-print'; // 1. Importa a biblioteca de impressão
+import { useReactToPrint } from 'react-to-print';
 
 import {
     getOsById,
@@ -10,23 +10,23 @@ import {
     verificarOS,
 } from '../services/apiService';
 import './VisualizarOsPage.css';
-import './VisualizarOsPage.print.css'; // O CSS que vamos ajustar a seguir
+import './VisualizarOsPage.print.css';
 
-// ===================================================================================
-// 2. COMPONENTE DE IMPRESSÃO (Fiel à imagem do Excel)
-//    Este componente fica "escondido" e só é usado na hora de imprimir.
-// ===================================================================================
+const formatFrequencia = (frequencia) => {
+    if (!frequencia || !frequencia.nome) return 'N/A';
+    const unidade = frequencia.unidadeTempo.toLowerCase() + (frequencia.intervalo > 1 ? 's' : '');
+    return `${frequencia.nome} (a cada ${frequencia.intervalo} ${unidade})`;
+};
+
 const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
     if (!os) return null;
 
     const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return { date: '__/__/____', time: '__:__' };
         const date = new Date(dateTimeString);
-        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        const correctedDate = new Date(date.getTime() + userTimezoneOffset);
         return {
-            date: correctedDate.toLocaleDateString('pt-BR'),
-            time: correctedDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            date: date.toLocaleDateString('pt-BR'),
+            time: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
         };
     };
     
@@ -35,7 +35,6 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
     const dataTermino = formatDateTime(os.termino);
     const dataAprovacao = formatDateTime(os.dataVerificacao);
 
-    // Lógica para os checkboxes dinâmicos
     const isRealizado = ['CONCLUIDA', 'AGUARDANDO_VERIFICACAO'].includes(os.status);
     const isNaoRealizado = os.status === 'CANCELADA';
     const trocouPecas = os.trocaPecas === true;
@@ -80,7 +79,7 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                                 <tbody>
                                     <tr>
                                         <td className="desc-cell">
-                                            <p><strong>Descrição e Ações Realizadas:</strong> ({os.frequencia ? os.frequencia.toLowerCase() : os.tipoManutencao?.toLowerCase()})</p>
+                                            <p><strong>Descrição e Ações Realizadas:</strong> ({os.frequencia ? os.frequencia.nome : os.tipoManutencao?.toLowerCase()})</p>
                                             <p>{os.descricaoProblema}</p>
                                         </td>
                                         <td className="status-cell">
@@ -99,53 +98,53 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                         </td>
                     </tr>
                     <tr>
-                         <td colSpan="3" className="no-padding">
-                             <table className="info-table">
-                                 <tbody>
-                                     <tr>
-                                         <td colSpan="4"><strong>Executado por:</strong> {os.executadoPorNome || '________________________________'}</td>
-                                     </tr>
-                                     <tr>
-                                         <td><strong>Início:</strong> Data: {dataInicio.date}</td>
-                                         <td>Hora: {dataInicio.time}</td>
-                                         <td rowSpan="2" colSpan="2" className="pecas-check-cell">
-                                             <strong>Ocorreu troca de peças?</strong>
-                                             <div>
-                                                (&nbsp;{trocouPecas ? 'X' : ' '}&nbsp;) Sim
-                                                (&nbsp;{naoTrocouPecas ? 'X' : ' '}&nbsp;) Não
-                                             </div>
-                                         </td>
-                                     </tr>
-                                     <tr>
-                                        <td><strong>Término:</strong> Data: {dataTermino.date}</td>
-                                        <td>Hora: {dataTermino.time}</td>
-                                     </tr>
-                                     <tr>
-                                         <td colSpan="4" className="pecas-cell">
-                                            <strong>Quais?</strong> 
-                                            <p>
-                                                {os.pecasSubstituidas && os.pecasSubstituidas.length > 0
-                                                    ? os.pecasSubstituidas.map(p => `${p.quantidade}x ${p.nome}`).join(', ')
-                                                    : ''
-                                                }
-                                            </p>
-                                        </td>
-                                     </tr>
-                                 </tbody>
-                             </table>
-                        </td>
+                       <td colSpan="3" className="no-padding">
+                           <table className="info-table">
+                               <tbody>
+                                   <tr>
+                                       <td colSpan="4"><strong>Executado por:</strong> {os.executadoPorNome || '________________________________'}</td>
+                                   </tr>
+                                   <tr>
+                                       <td><strong>Início:</strong> Data: {dataInicio.date}</td>
+                                       <td>Hora: {dataInicio.time}</td>
+                                       <td rowSpan="2" colSpan="2" className="pecas-check-cell">
+                                           <strong>Ocorreu troca de peças?</strong>
+                                           <div>
+                                               (&nbsp;{trocouPecas ? 'X' : ' '}&nbsp;) Sim
+                                               (&nbsp;{naoTrocouPecas ? 'X' : ' '}&nbsp;) Não
+                                           </div>
+                                       </td>
+                                   </tr>
+                                   <tr>
+                                       <td><strong>Término:</strong> Data: {dataTermino.date}</td>
+                                       <td>Hora: {dataTermino.time}</td>
+                                   </tr>
+                                   <tr>
+                                       <td colSpan="4" className="pecas-cell">
+                                           <strong>Quais?</strong> 
+                                           <p>
+                                               {os.pecasSubstituidas && os.pecasSubstituidas.length > 0
+                                                   ? os.pecasSubstituidas.map(p => `${p.quantidade}x ${p.nome}`).join(', ')
+                                                   : ''
+                                               }
+                                           </p>
+                                       </td>
+                                   </tr>
+                               </tbody>
+                           </table>
+                       </td>
                     </tr>
                     <tr>
                         <td colSpan="3" className="no-padding">
-                             <table className="info-table">
-                                 <tbody>
-                                     <tr>
-                                         <td style={{ width: '60%' }}><strong>Aprovado por (Encarregado):</strong> {os.verificadoPorNome || '________________'}</td>
-                                         <td style={{ width: '20%' }}><strong>Data:</strong> {dataAprovacao.date}</td>
-                                         <td style={{ width: '20%' }}><strong>Verificado CQ:</strong></td>
-                                     </tr>
-                                 </tbody>
-                             </table>
+                            <table className="info-table">
+                                <tbody>
+                                    <tr>
+                                       <td style={{ width: '60%' }}><strong>Aprovado por (Encarregado):</strong> {os.verificadoPorNome || '________________'}</td>
+                                       <td style={{ width: '20%' }}><strong>Data:</strong> {dataAprovacao.date}</td>
+                                       <td style={{ width: '20%' }}><strong>Verificado CQ:</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </td>
                     </tr>
                     <tr className="footer-row">
@@ -161,9 +160,6 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
     );
 });
 
-// ===================================================================================
-// SEU COMPONENTE ORIGINAL DA PÁGINA, COM A LÓGICA DE IMPRESSÃO INTEGRADA
-// ===================================================================================
 function VisualizarOsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -176,39 +172,70 @@ function VisualizarOsPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const userRole = localStorage.getItem('userRole');
 
-    // 3. Prepara a referência e a função de impressão
+    // ✨ ALTERAÇÃO AQUI: Novo estado para controlar a impressão
+    const [isPrinting, setIsPrinting] = useState(false);
+
     const componentRef = useRef();
-    const handlePrint = useReactToPrint({
+
+    // ✨ ALTERAÇÃO AQUI: Lógica de impressão refeita
+    const handleTriggerPrint = useReactToPrint({
         content: () => componentRef.current,
+        onAfterPrint: () => setIsPrinting(false), // Desativa o modo de impressão depois
     });
 
-    const fetchData = async () => {
-        if (!id) return;
-        try {
-            setLoading(true);
-            const [osRes, equipsRes, locaisRes] = await Promise.all([getOsById(id), getEquipamentos(), getLocais()]);
-            const osData = osRes.data;
-            setOrdemServico(osData);
-            setEquipamento(equipsRes.data.find(e => e.id === osData.equipamentoId) || null);
-            setLocal(locaisRes.data.find(l => l.id === osData.localId) || null);
-            setError(null);
-        } catch (err) {
-            setError('Falha ao carregar os detalhes da Ordem de Serviço.');
-        } finally {
-            setLoading(false);
+    // ✨ ALTERAÇÃO AQUI: useEffect para disparar a impressão
+    useEffect(() => {
+        // Se o estado 'isPrinting' for verdadeiro e o componente já estiver montado, chama a impressão
+        if (isPrinting && componentRef.current) {
+            handleTriggerPrint();
         }
-    };
+    }, [isPrinting, handleTriggerPrint]);
 
     useEffect(() => {
+        const fetchData = async () => {
+            if (!id) return;
+            try {
+                setLoading(true);
+                const osRes = await getOsById(id);
+                const osData = osRes.data;
+                setOrdemServico(osData);
+
+                const [equipsRes, locaisRes] = await Promise.all([getEquipamentos(), getLocais()]);
+                setEquipamento(equipsRes.data.find(e => e.id === osData.equipamentoId) || null);
+                setLocal(locaisRes.data.find(l => l.id === osData.localId) || null);
+                
+                setError(null);
+            } catch (err) {
+                setError('Falha ao carregar os detalhes da Ordem de Serviço.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchData();
     }, [id]);
 
-    const handleDelete = async () => { /* ... sua lógica de delete ... */ };
+    const handleDelete = async () => {
+        if (window.confirm('Tem certeza que deseja excluir esta Ordem de Serviço?')) {
+            setActionLoading(true);
+            try {
+                await deleteOrdemServico(id);
+                alert('Ordem de Serviço excluída com sucesso!');
+                navigate('/dashboard');
+            } catch (err) {
+                alert('Falha ao excluir a Ordem de Serviço.');
+                setActionLoading(false);
+            }
+        }
+    };
+    
     const handleVerificacaoSubmit = async (dadosVerificacao) => { /* ... sua lógica de verificação ... */ };
+
     const formatDateTime = (dateTimeString) => {
         if (!dateTimeString) return "—";
         return new Date(dateTimeString).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
+
     const formatStatusLabel = (status) => {
         if (!status) return 'Pendente';
         return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
@@ -219,16 +246,16 @@ function VisualizarOsPage() {
     if (!ordemServico) return <div className="no-data-details">Ordem de Serviço não encontrada.</div>;
 
     const podeExcluir = userRole === 'ADMIN' || userRole === 'LIDER';
-    const isEncarregado = userRole === 'ENCARREGADO';
 
     return (
         <div>
-            {/* 4. A versão de impressão fica aqui, invisível, apenas como um template */}
-            <div style={{ display: 'none' }}>
-                <PrintableOs ref={componentRef} os={ordemServico} equipamento={equipamento} />
-            </div>
+            {/* ✨ ALTERAÇÃO AQUI: O componente de impressão só é renderizado quando isPrinting é true */}
+            {isPrinting && (
+                <div className="printable-area-wrapper">
+                    <PrintableOs ref={componentRef} os={ordemServico} equipamento={equipamento} />
+                </div>
+            )}
 
-            {/* 5. A SUA PÁGINA de visualização normal, exatamente como era antes */}
             <div className="view-os-page">
                 <div className="view-os-form">
                     <header className="form-header-main">
@@ -242,9 +269,11 @@ function VisualizarOsPage() {
                         <header><h2>Abertura e Detalhes</h2></header>
                         <div className="grid-container">
                             <div className="input-group"><label>Tipo de Manutenção</label><input type="text" value={formatStatusLabel(ordemServico.tipoManutencao)} disabled /></div>
+                            
                             {ordemServico.tipoManutencao === 'PREVENTIVA' && ordemServico.frequencia && (
-                                <div className="input-group"><label>Frequência</label><input type="text" value={formatStatusLabel(ordemServico.frequencia)} disabled /></div>
+                                <div className="input-group"><label>Frequência</label><input type="text" value={formatFrequencia(ordemServico.frequencia)} disabled /></div>
                             )}
+
                             <div className="input-group"><label>Solicitante</label><input type="text" value={ordemServico.solicitante || '—'} disabled /></div>
                             <div className="input-group"><label>Data da Solicitação</label><input type="text" value={formatDateTime(ordemServico.dataSolicitacao)} disabled /></div>
                             <div className="input-group"><label>Equipamento</label><input type="text" value={equipamento?.nome || '—'} disabled /></div>
@@ -262,11 +291,9 @@ function VisualizarOsPage() {
                         <div className="input-group full-width" style={{marginTop: '1rem'}}><label>Ação Realizada</label><textarea value={ordemServico.acaoRealizada || 'Aguardando preenchimento no Dashboard.'} rows="3" disabled></textarea></div>
                     </section>
                     
-                    {/* ... Suas outras seções e o PainelVerificacao ... */}
-                    
                     <footer className="form-actions">
-                        {/* 6. O botão de imprimir chama a função correta */}
-                        <button type="button" className="button-print" onClick={handlePrint}>
+                        {/* ✨ ALTERAÇÃO AQUI: O botão agora apenas ativa o estado de impressão */}
+                        <button type="button" className="button-print" onClick={() => setIsPrinting(true)}>
                             Imprimir
                         </button>
                         <button type="button" className="button-cancel" onClick={() => navigate(-1)}>
