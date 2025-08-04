@@ -120,7 +120,7 @@ function GerenciarFrequenciasPage() {
             <div className="form-card">
                 <h2>Cadastrar Nova Frequência</h2>
                 <form onSubmit={handleSubmit} className="form-nova-frequencia">
-                    <input type="text" name="nome" value={novaFrequencia.nome} onChange={handleInputChange} placeholder="Nome (ex: Ronda de Verificação)" required style={{ flex: 2 }}/>
+                    <input type="text" name="nome" value={novaFrequencia.nome} onChange={handleInputChange} placeholder="Tipo (ex: Mensal, Bimestral, etc)" required style={{ flex: 2 }}/>
                     <input type="number" name="intervalo" value={novaFrequencia.intervalo} onChange={handleInputChange} placeholder="Intervalo" required min="1" style={{ flex: 1 }}/>
                     <select name="unidadeTempo" value={novaFrequencia.unidadeTempo} onChange={handleInputChange} required style={{ flex: 1 }}>
                         {UNIDADE_TEMPO_OPTIONS.map(option => (<option key={option} value={option}>{option}</option>))}

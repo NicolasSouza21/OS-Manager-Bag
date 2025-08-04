@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getTiposServico, createTipoServico, deleteTipoServico, getEquipamentos } from '../../../services/apiService';
+import { FaCheck } from 'react-icons/fa'; // Importa o ícone de check
 import './GerenciarTiposServicoPage.css';
 
 function GerenciarTiposServicoPage() {
@@ -7,8 +8,6 @@ function GerenciarTiposServicoPage() {
     const [loading, setLoading] = useState(true);
     const [novoServico, setNovoServico] = useState({ nome: '', descricao: '', equipamentoIds: new Set() });
     const [mensagem, setMensagem] = useState({ tipo: '', texto: '' });
-    
-    // ✅ Novo estado para armazenar a lista de equipamentos
     const [equipamentos, setEquipamentos] = useState([]);
 
     useEffect(() => {
@@ -31,7 +30,6 @@ function GerenciarTiposServicoPage() {
         setNovoServico(prev => ({ ...prev, [name]: value }));
     };
     
-    // ✅ Nova função para lidar com a seleção dos checkboxes de equipamento
     const handleEquipamentoSelect = (equipamentoId) => {
         setNovoServico(prev => {
             const newEquipamentoIds = new Set(prev.equipamentoIds);
@@ -48,7 +46,6 @@ function GerenciarTiposServicoPage() {
         e.preventDefault();
         setMensagem({ tipo: '', texto: '' });
         
-        // Converte o Set de IDs para um Array para enviar à API
         const dadosParaApi = {
             ...novoServico,
             equipamentoIds: Array.from(novoServico.equipamentoIds)
@@ -57,8 +54,8 @@ function GerenciarTiposServicoPage() {
         try {
             await createTipoServico(dadosParaApi);
             setMensagem({ tipo: 'sucesso', texto: 'Serviço cadastrado e associado com sucesso!' });
-            setNovoServico({ nome: '', descricao: '', equipamentoIds: new Set() }); // Limpa o formulário
-            carregarDadosIniciais(); // Recarrega tudo
+            setNovoServico({ nome: '', descricao: '', equipamentoIds: new Set() });
+            carregarDadosIniciais();
         } catch (err) {
             setMensagem({ tipo: 'erro', texto: 'Erro ao cadastrar serviço.' });
         }
@@ -89,20 +86,32 @@ function GerenciarTiposServicoPage() {
                         <textarea id="descricao" name="descricao" value={novoServico.descricao} onChange={handleNovoChange} placeholder="Detalhes sobre o que fazer neste serviço" rows={2} />
                     </div>
                     
-                    {/* ✅ NOVO SELETOR DE EQUIPAMENTOS */}
                     <div className="input-group">
                         <label>Associar este serviço aos seguintes equipamentos:</label>
-                        <div className="equipamentos-checkbox-list">
-                            {equipamentos.map(equip => (
-                                <label key={equip.id} className="checkbox-label">
-                                    <input 
-                                        type="checkbox"
-                                        checked={novoServico.equipamentoIds.has(equip.id)}
-                                        onChange={() => handleEquipamentoSelect(equip.id)}
-                                    />
-                                    {equip.nome} ({equip.tag})
-                                </label>
-                            ))}
+                        <div className="equipamentos-card-list">
+                            {equipamentos.map(equip => {
+                                const isSelecionado = novoServico.equipamentoIds.has(equip.id);
+                                return (
+                                    <div 
+                                        key={equip.id} 
+                                        className={`equipamento-card ${isSelecionado ? 'selecionado' : ''}`}
+                                        onClick={() => handleEquipamentoSelect(equip.id)}
+                                    >
+                                        <input 
+                                            type="checkbox"
+                                            checked={isSelecionado}
+                                            readOnly
+                                            style={{ display: 'none' }}
+                                        />
+                                        <div>
+                                            <strong>{equip.nome}</strong>
+                                            <br />
+                                            <small>Tag: {equip.tag || 'N/A'}</small>
+                                        </div>
+                                        {isSelecionado && <span className="check-icon"><FaCheck /></span>}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 

@@ -24,7 +24,7 @@ api.interceptors.request.use(
 /** AUTENTICAÇÃO */
 export const login = (credentials) => api.post('/auth/login', credentials);
 export const logout = () => {
-    localStorage.clear(); // Limpa todo o storage para garantir um logout limpo
+    localStorage.clear();
 };
 
 /** ORDENS DE SERVIÇO */
@@ -53,8 +53,19 @@ export const listarServicosPorEquipamento = (equipamentoId) => api.get(`/equipam
 export const associarServico = (equipamentoId, servicoId) => api.post(`/equipamentos/${equipamentoId}/servicos/${servicoId}`);
 export const desassociarServico = (equipamentoId, servicoId) => api.delete(`/equipamentos/${equipamentoId}/servicos/${servicoId}`);
 
+// ✨ ALTERAÇÃO AQUI: Funções para SETORES e LOCAIS adicionadas/atualizadas
+/** SETORES */
+export const getSetores = () => api.get('/setores');
+export const createSetor = (setorData) => api.post('/setores', setorData);
+export const updateSetor = (id, setorData) => api.put(`/setores/${id}`, setorData);
+export const deleteSetor = (id) => api.delete(`/setores/${id}`);
+
 /** LOCAIS */
 export const getLocais = () => api.get('/locais');
+export const createLocal = (localData) => api.post('/locais', localData);
+export const updateLocal = (id, localData) => api.put(`/locais/${id}`, localData);
+export const deleteLocal = (id) => api.delete(`/locais/${id}`);
+
 
 /** PLANOS DE MANUTENÇÃO PREVENTIVA */
 export const getPlanosPorEquipamento = (equipamentoId) => api.get(`/planos-preventiva/equipamento/${equipamentoId}`);
@@ -70,7 +81,6 @@ export const deleteTipoServico = (id) => api.delete(`/tipos-servico/${id}`);
 /** FREQUÊNCIAS */
 export const getFrequencias = () => api.get('/frequencias');
 export const createFrequencia = (frequenciaData) => api.post('/frequencias', frequenciaData);
-// ✨ ALTERAÇÃO AQUI: Nova função para ATUALIZAR uma frequência
 export const updateFrequencia = (id, frequenciaData) => api.put(`/frequencias/${id}`, frequenciaData);
 export const deleteFrequencia = (id) => api.delete(`/frequencias/${id}`);
 

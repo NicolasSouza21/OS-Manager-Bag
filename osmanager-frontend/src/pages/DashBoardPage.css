@@ -3,231 +3,246 @@
     ======================= */
 
     .dashboard-container {
-      width: 100%;
-      padding: 2rem;
-      background-color: #F4F7FC;
-      box-sizing: border-box;
-      min-height: 100vh;
-      margin-top: 8px;
-      margin-left: -8px;
-      padding-right: 20px;
-      max-width: 100%;
-  }
+        width: 100%;
+        padding: 2rem;
+        background-color: #F4F7FC;
+        box-sizing: border-box;
+        min-height: 100vh;
+        margin-top: 8px;
+        margin-left: -8px;
+        padding-right: 20px;
+        max-width: 100%;
+    }
+    
+    .dashboard-title {
+        color: #334155;
+        font-size: 1.8rem;
+        margin-bottom: 2rem;
+        font-weight: 700;
+    }
+    
+    /* ===================
+        FILTROS
+        =================== */
+    
+    .filtros-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+        padding: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2.2rem;
+    }
+    
+    .filtro-input-busca {
+        flex: 2 1 250px;
+        padding: 10px 14px;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+    }
+    
+    .filtro-select {
+        flex: 1 1 160px;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        font-size: 1rem;
+        background: #f7fafc;
+        color: #334155;
+    }
+    
+    .filtro-btn-rapido {
+        padding: 10px 16px;
+        background: #f4f7fc;
+        border: 1.5px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1976d2;
+        cursor: pointer;
+        transition: all 0.18s;
+    }
+    
+    .filtro-btn-rapido.ativo,
+    .filtro-btn-rapido:hover {
+        background: #1976d2;
+        color: #fff;
+        border-color: #1976d2;
+    }
+    
+    /* =======================
+        GRUPOS DE ORDENS
+        ======================= */
+    
+    .os-date-group {
+        margin-bottom: 2rem;
+    }
+    
+    .date-header {
+        padding: 0.5rem 1.2rem;
+        background-color: #e9ecef;
+        color: #495057;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    /* =====================
+        TABELA DE ORDENS
+        ===================== */
+    
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        background-color: #ffffff;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    
+    .os-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+        background: #fff;
+        /* ✅ Garante que o layout da tabela seja fixo */
+        table-layout: fixed;
+    }
+    
+    .os-table th,
+    .os-table td {
+        padding: 14px 17px;
+        text-align: left;
+        border-bottom: 1px solid #eef2f9;
+        /* ✅ Impede que o texto quebre de forma estranha */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .os-table th {
+        background-color: #f8f9fa;
+        font-weight: 700;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+    
+    /* ✅ LARGURAS FIXAS PARA AS COLUNAS */
+    .os-table th:nth-child(1), .os-table td:nth-child(1) { width: 140px; } /* Status */
+    .os-table th:nth-child(2), .os-table td:nth-child(2) { width: 80px; }  /* Nº O.S. */
+    .os-table th:nth-child(3), .os-table td:nth-child(3) { width: 180px; } /* Data */
+    .os-table th:nth-child(4), .os-table td:nth-child(4) { width: 120px; } /* Tipo */
+    .os-table th:nth-child(5), .os-table td:nth-child(5) { width: 20%; }   /* Equipamento */
+    .os-table th:nth-child(6), .os-table td:nth-child(6) { width: 15%; }   /* Solicitante */
+    .os-table th:nth-child(7), .os-table td:nth-child(7) { width: 15%; }   /* Ciência Por */
+    .os-table th:nth-child(8), .os-table td:nth-child(8) { width: 15%; }   /* Executado Por */
+    .os-table th:nth-child(9), .os-table td:nth-child(9) { width: 100px; text-align: right; } /* Ações */
+    
+    
+    .os-table tbody tr:hover {
+        background-color: #eaf2fa;
+    }
+    
+    /* =========================
+        STATUS PILL (ETIQUETA)
+        ========================= */
+    .status-pill, .tipo-pill {
+        display: inline-block;
+        padding: 0.3em 1em;
+        border-radius: 18px;
+        font-weight: 600;
+        font-size: 0.9em;
+        text-align: center;
+    }
+    
+    .status-aberta { background-color: #eaf7eb; color: #4caf50; }
+    .status-ciente { background-color: #e7f3fe; color: #007bff; }
+    .status-em_execucao, .status-em-execucao { background-color: #fff8e1; color: #ffab00; }
+    .status-aguardando_verificacao { background-color: #fff0e7; color: #ff6f00; }
+    .status-concluida { background-color: #f1f3f5; color: #6c757d; }
+    .status-cancelada { background-color: #fbe9eb; color: #dc3545; }
+    
+    .tipo-preventiva { background-color: #e7f3fe; color: #007bff; }
+    .tipo-corretiva { background-color: #fff0e7; color: #ff6f00; }
+    
+    /* =========================
+        BOTÕES DE AÇÃO
+        ========================= */
+        .actions-cell {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .action-button-circle {
+            width: 32px; height: 32px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; border: none;
+            color: white; font-size: 1rem; cursor: pointer; transition: all 0.2s;
+        }
+        
+        .action-button-circle:hover { transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+        .ciencia-btn { background-color: #28a745; }
+        .iniciar-btn { background-color: #17a2b8; }
+        .executar-btn { background-color: #007bff; }
+        .verificar-btn { background-color: #ffc107; }
+        
+        /* ✨ CORREÇÃO FINAL AQUI: Usando um seletor mais específico para garantir a visibilidade */
+        .os-table .actions-cell .view-button {
+            background-color: transparent; /* Começa transparente */
+            border: none;
+            color: #868e96; /* Ícone cinza */
+            font-size: 1.2rem;
+            padding: 5px; 
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            /* Garante que esteja sempre visível e não transparente */
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .os-table tbody tr:hover .view-button {
+            background-color: #e2e8f0; /* Fundo aparece no hover da linha */
+            color: #1a1a1a;
+        }
+    
+    .view-button:hover { color: #1976d2; background: #e2e8f0; }
+    
+    .no-os-message {
+        text-align: center; padding: 3rem 0; font-size: 1.1rem; color: #64748B;
+    }
   
-  .dashboard-title {
-      color: #334155;
-      font-size: 1.8rem;
-      margin-bottom: 2rem;
-      font-weight: 700;
-  }
-  
-  /* ===================
-      FILTROS
-      =================== */
   
   .filtros-container {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.07);
-      padding: 1.5rem;
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: wrap; /* Ajuda na responsividade dos filtros */
+      gap: 15px;       /* Espaçamento geral entre os itens de filtro */
       align-items: center;
-      gap: 1rem;
-      margin-bottom: 2.2rem;
+      margin-bottom: 20px;
   }
   
-  .filtro-input-busca {
-      flex: 2 1 250px;
-      padding: 10px 14px;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #d1d5db;
-  }
-  
-  .filtro-select {
-      flex: 1 1 160px;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #d1d5db;
-      font-size: 1rem;
-      background: #f7fafc;
-      color: #334155;
-  }
-  
-  .filtro-btn-rapido {
-      padding: 10px 16px;
-      background: #f4f7fc;
-      border: 1.5px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #1976d2;
-      cursor: pointer;
-      transition: all 0.18s;
-  }
-  
-  .filtro-btn-rapido.ativo,
-  .filtro-btn-rapido:hover {
-      background: #1976d2;
-      color: #fff;
-      border-color: #1976d2;
-  }
-  
-  /* =======================
-      GRUPOS DE ORDENS
-      ======================= */
-  
-  .os-date-group {
-      margin-bottom: 2rem;
-  }
-  
-  .date-header {
-      padding: 0.5rem 1.2rem;
-      background-color: #e9ecef;
-      color: #495057;
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      border-radius: 8px 8px 0 0;
-  }
-  
-  /* =====================
-      TABELA DE ORDENS
-      ===================== */
-  
-  .table-container {
-      width: 100%;
-      overflow-x: auto;
-      background-color: #ffffff;
-      border-radius: 0 0 8px 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-  }
-  
-  .os-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.95rem;
-      background: #fff;
-      /* ✅ Garante que o layout da tabela seja fixo */
-      table-layout: fixed;
-  }
-  
-  .os-table th,
-  .os-table td {
-      padding: 14px 17px;
-      text-align: left;
-      border-bottom: 1px solid #eef2f9;
-      /* ✅ Impede que o texto quebre de forma estranha */
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-  }
-  
-  .os-table th {
-      background-color: #f8f9fa;
-      font-weight: 700;
-      color: #6c757d;
-      text-transform: uppercase;
-      font-size: 0.8rem;
-      letter-spacing: 0.5px;
-  }
-  
-  /* ✅ LARGURAS FIXAS PARA AS COLUNAS */
-  .os-table th:nth-child(1), .os-table td:nth-child(1) { width: 140px; } /* Status */
-  .os-table th:nth-child(2), .os-table td:nth-child(2) { width: 80px; }  /* Nº O.S. */
-  .os-table th:nth-child(3), .os-table td:nth-child(3) { width: 180px; } /* Data */
-  .os-table th:nth-child(4), .os-table td:nth-child(4) { width: 120px; } /* Tipo */
-  .os-table th:nth-child(5), .os-table td:nth-child(5) { width: 20%; }   /* Equipamento */
-  .os-table th:nth-child(6), .os-table td:nth-child(6) { width: 15%; }   /* Solicitante */
-  .os-table th:nth-child(7), .os-table td:nth-child(7) { width: 15%; }   /* Ciência Por */
-  .os-table th:nth-child(8), .os-table td:nth-child(8) { width: 15%; }   /* Executado Por */
-  .os-table th:nth-child(9), .os-table td:nth-child(9) { width: 100px; text-align: right; } /* Ações */
-  
-  
-  .os-table tbody tr:hover {
-      background-color: #eaf2fa;
-  }
-  
-  /* =========================
-      STATUS PILL (ETIQUETA)
-      ========================= */
-  .status-pill, .tipo-pill {
-      display: inline-block;
-      padding: 0.3em 1em;
-      border-radius: 18px;
-      font-weight: 600;
-      font-size: 0.9em;
-      text-align: center;
-  }
-  
-  .status-aberta { background-color: #eaf7eb; color: #4caf50; }
-  .status-ciente { background-color: #e7f3fe; color: #007bff; }
-  .status-em_execucao, .status-em-execucao { background-color: #fff8e1; color: #ffab00; }
-  .status-aguardando_verificacao { background-color: #fff0e7; color: #ff6f00; }
-  .status-concluida { background-color: #f1f3f5; color: #6c757d; }
-  .status-cancelada { background-color: #fbe9eb; color: #dc3545; }
-  
-  .tipo-preventiva { background-color: #e7f3fe; color: #007bff; }
-  .tipo-corretiva { background-color: #fff0e7; color: #ff6f00; }
-  
-  /* =========================
-      BOTÕES DE AÇÃO
-      ========================= */
-  .actions-cell {
+  .filtro-data-item {
       display: flex;
-      justify-content: flex-end;
       align-items: center;
-      gap: 8px;
+      gap: 8px; /* Espaço entre o texto "De:"/"Até:" e o campo de data */
   }
   
-  .action-button-circle {
-      width: 32px; height: 32px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; border: none;
-      color: white; font-size: 1rem; cursor: pointer; transition: all 0.2s;
+  .filtro-data-item label {
+      font-size: 14px;
+      color: #333;
   }
   
-  .action-button-circle:hover { transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-  .ciencia-btn { background-color: #28a745; }
-  .iniciar-btn { background-color: #17a2b8; }
-  .executar-btn { background-color: #007bff; }
-  .verificar-btn { background-color: #ffc107; }
-  
-  .view-button {
-      background: none; border: none; color: #6c757d; font-size: 1.2rem;
-      padding: 5px; cursor: pointer; border-radius: 50%; transition: all 0.2s;
+  .filtro-input-data {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit; /* Usa a mesma fonte do resto da página */
   }
-  
-  .view-button:hover { color: #1976d2; background: #e2e8f0; }
-  
-  .no-os-message {
-      text-align: center; padding: 3rem 0; font-size: 1.1rem; color: #64748B;
-  }
-
-
-.filtros-container {
-    display: flex;
-    flex-wrap: wrap; /* Ajuda na responsividade dos filtros */
-    gap: 15px;       /* Espaçamento geral entre os itens de filtro */
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.filtro-data-item {
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Espaço entre o texto "De:"/"Até:" e o campo de data */
-}
-
-.filtro-data-item label {
-    font-size: 14px;
-    color: #333;
-}
-
-.filtro-input-data {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-    font-family: inherit; /* Usa a mesma fonte do resto da página */
-}

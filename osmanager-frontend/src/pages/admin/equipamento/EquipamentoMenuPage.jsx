@@ -25,15 +25,10 @@ function EquipamentoMenuPage() {
           <p>Adicionar, editar ou remover as frequências de manutenção (diário, semanal, etc.).</p>
         </Link>
 
-        {/* ✨ ALTERAÇÃO AQUI: Card de "Gerenciar Setores" removido */}
-
-        <Link to="/admin/equipamentos/locais" className="equipamento-menu-card">
-          <h2 className="equipamento-menu-card-title">Listar Locais</h2>
-          <p>Visualize todos os locais cadastrados.</p>
-        </Link>
-        <Link to="/admin/equipamentos/locais/adicionar" className="equipamento-menu-card">
-          <h2 className="equipamento-menu-card-title">Cadastrar Novo Local</h2>
-          <p>Adicione um novo local para equipamentos.</p>
+        {/* ✨ ALTERAÇÃO AQUI: Os dois links de locais foram unificados em um só */}
+        <Link to="/admin/locais/gerenciar" className="equipamento-menu-card">
+          <h2 className="equipamento-menu-card-title">Gerenciar Setores e Locais</h2>
+          <p>Cadastre setores e os locais de manutenção da fábrica.</p>
         </Link>
       </div>
     </div>
