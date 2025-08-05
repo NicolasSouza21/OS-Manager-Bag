@@ -18,7 +18,8 @@ const formatFrequencia = (frequencia) => {
     return `${frequencia.nome} (a cada ${frequencia.intervalo} ${unidade})`;
 };
 
-const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
+// ✨ ALTERAÇÃO AQUI: O componente agora recebe o 'local' como prop
+const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
     if (!os) return null;
 
     const formatDateTime = (dateTimeString) => {
@@ -56,6 +57,7 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
             <table className="print-main-table">
                 <thead>
                     <tr>
+                        {/* ✨ ALTERAÇÃO AQUI: Removida a data do cabeçalho */}
                         <th className="header-logo-cell"><strong>BagCleaner</strong></th>
                         <th className="header-title-cell">Ordem de Serviço de Manutenção</th>
                         <th className="header-os-number-cell">
@@ -70,9 +72,14 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                             <table className="info-table">
                                 <tbody>
                                     <tr>
-                                        <td style={{ width: '50%' }}><strong>Nº Máquina:</strong> {equipamento?.tag || 'N/A'}</td>
-                                        {/* ✅ CORREÇÃO FINAL: Exibe o tipo da OS e não do equipamento */}
-                                        <td style={{ width: '50%' }}><strong>Tipo de OS:</strong> {capitalize(os.tipoManutencao) || 'Não especificado'}</td>
+                                        {/* ✨ ALTERAÇÃO AQUI: Trocado "Nº Máquina" por "Equipamento" e usando o nome */}
+                                        <td><strong>Equipamento:</strong> {equipamento?.nome || 'N/A'}</td>
+                                        <td><strong>Tipo de OS:</strong> {capitalize(os.tipoManutencao) || 'Não especificado'}</td>
+                                    </tr>
+                                    {/* ✨ ALTERAÇÃO AQUI: Nova linha para Local e Setor */}
+                                    <tr>
+                                        <td><strong>Local:</strong> {local?.nome || 'N/A'}</td>
+                                        <td><strong>Setor:</strong> {local?.setorNome || 'N/A'}</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Solicitante:</strong> {os.solicitante || 'N/A'}</td>
@@ -229,7 +236,8 @@ function VisualizarOsPage() {
         <div>
             {!loading && ordemServico && (
                 <div className="printable-area-wrapper">
-                    <PrintableOs ref={componentRef} os={ordemServico} equipamento={equipamento} />
+                    {/* ✨ ALTERAÇÃO AQUI: Passando o 'local' para o componente de impressão */}
+                    <PrintableOs ref={componentRef} os={ordemServico} equipamento={equipamento} local={local} />
                 </div>
             )}
             <div className="view-os-page">

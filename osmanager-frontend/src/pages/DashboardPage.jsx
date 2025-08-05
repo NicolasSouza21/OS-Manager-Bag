@@ -15,27 +15,21 @@ import { jwtDecode } from 'jwt-decode';
 import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck } from 'react-icons/fa';
 import './DashBoardPage.css';
 
-// ✨ NOVO: Hook customizado para "atrasar" a busca (debounce)
+// Hook useDebounce (inalterado)
 function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
-
     useEffect(() => {
-        // Cria um timer que só vai atualizar o valor após o 'delay'
         const handler = setTimeout(() => {
             setDebouncedValue(value);
         }, delay);
-
-        // Limpa o timer se o valor mudar antes do fim do 'delay'
-        // Isso garante que a busca só ocorra quando o usuário parar de digitar
         return () => {
             clearTimeout(handler);
         };
-    }, [value, delay]); // Roda apenas se o valor ou o delay mudarem
-
+    }, [value, delay]);
     return debouncedValue;
 }
 
-// Funções de formatação de data (SEU CÓDIGO ORIGINAL)
+// Funções de data (inalteradas)
 const parseSafeDate = (dateString) => {
     if (!dateString) return null;
     const date = new Date(dateString);
@@ -43,32 +37,25 @@ const parseSafeDate = (dateString) => {
     return new Date(date.getTime() + userTimezoneOffset);
 };
 
-// Função de agrupar por data (SEU CÓDIGO ORIGINAL)
 const groupOrdensByDate = (ordens) => {
     const groups = {};
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-
     ordens.forEach(os => {
         const dateString = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva 
             ? os.dataInicioPreventiva 
             : os.dataSolicitacao;
         const osDate = parseSafeDate(dateString);
-
         if (!osDate) {
             if (!groups['Sem Data']) { groups['Sem Data'] = []; }
             groups['Sem Data'].push(os);
             return;
         }
-        
         osDate.setHours(0, 0, 0, 0);
-
         let dateKey;
         if (osDate.getTime() === today.getTime()) { 
             dateKey = 'Hoje';
@@ -81,7 +68,6 @@ const groupOrdensByDate = (ordens) => {
         } else {
             dateKey = osDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
-
         if (!groups[dateKey]) { groups[dateKey] = []; }
         groups[dateKey].push(os);
     });
@@ -102,20 +88,12 @@ function DashboardPage() {
     const [isExecucaoModalOpen, setIsExecucaoModalOpen] = useState(false);
     const [isVerificacaoModalOpen, setIsVerificacaoModalOpen] = useState(false);
     
-    // O estado 'filtros' é atualizado instantaneamente a cada digitação
     const [filtros, setFiltros] = useState({
-        keyword: '', 
-        status: '', 
-        equipamentoId: '', 
-        localId: '',
-        tipoManutencao: '',
-        minhasTarefas: false, 
-        aguardandoVerificacao: false,
-        dataInicio: '',
-        dataFim: '',
+        keyword: '', status: '', equipamentoId: '', localId: '',
+        tipoManutencao: '', minhasTarefas: false, aguardandoVerificacao: false,
+        dataInicio: '', dataFim: '',
     });
     
-    // ✨ ALTERAÇÃO 1: Cria uma versão "atrasada" dos filtros que só atualiza 500ms após o usuário parar de digitar
     const debouncedFiltros = useDebounce(filtros, 500);
 
     const statusOptions = [
@@ -124,14 +102,11 @@ function DashboardPage() {
         { label: 'Concluída', value: 'CONCLUIDA' }, { label: 'Cancelada', value: 'CANCELADA' }
     ];
 
-    // ✨ ALTERAÇÃO 2: A função `fetchData` agora usa a versão "atrasada" (debounced) dos filtros
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const params = {
-                page: 0, 
-                size: 200, 
-                sort: 'dataSolicitacao,desc',
+                page: 0, size: 200, sort: 'dataSolicitacao,desc',
                 keyword: debouncedFiltros.keyword, 
                 status: debouncedFiltros.aguardandoVerificacao ? 'AGUARDANDO_VERIFICACAO' : debouncedFiltros.status,
                 tipoManutencao: debouncedFiltros.tipoManutencao,
@@ -151,15 +126,23 @@ function DashboardPage() {
         } finally {
             setLoading(false);
         }
-    }, [debouncedFiltros, userId]); // A dependência agora é a versão "atrasada"
+    }, [debouncedFiltros, userId]);
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
         if (token) {
-            const decoded = jwtDecode(token);
-            setUserRole(decoded.roles[0] || '');
-            setUserId(decoded.userId || null);
+            try {
+                const decoded = jwtDecode(token);
+                setUserRole(decoded.roles[0] || '');
+                setUserId(decoded.userId || null);
+            } catch (error) {
+                console.error("Token inválido:", error);
+                navigate('/login');
+            }
+        } else {
+            navigate('/login');
         }
+
         const fetchInitialData = async () => {
             try {
                 const [equipsRes, locaisRes] = await Promise.all([getEquipamentos(), getLocais()]);
@@ -168,10 +151,8 @@ function DashboardPage() {
             } catch (error) { console.error("Erro ao carregar equipamentos ou locais", error); }
         };
         fetchInitialData();
-    }, []);
+    }, [navigate]);
 
-    // ✨ ALTERAÇÃO 3: O useEffect que dispara a busca agora depende da função `fetchData`
-    // Ele só vai rodar quando o `debouncedFiltros` mudar, pois isso recria a `fetchData`.
     useEffect(() => {
         if (userId !== null) { 
             fetchData(); 
@@ -229,7 +210,7 @@ function DashboardPage() {
         try {
             await verificarOS(selectedOs.id, dadosVerificacao);
             alert(`OS #${selectedOs.codigoOs} foi verificada com sucesso!`);
-            setIsVerificacaoModalOpen(false);
+            setIsExecucaoModalOpen(false);
             setSelectedOs(null);
             fetchData();
         } catch (error) {
@@ -239,24 +220,44 @@ function DashboardPage() {
         }
     };
     
+    // ✨ ALTERAÇÃO AQUI: Lógica completa de permissões
     const renderAcoes = (os) => {
-        const isMecanicoOrLider = userRole.includes('MECANICO') || userRole.includes('LIDER');
+        const cargosDeAcao = ['ADMIN', 'LIDER', 'MECANICO'];
+        const podeExecutarAcao = cargosDeAcao.some(cargo => userRole.includes(cargo));
         const isEncarregado = userRole.includes('ENCARREGADO');
 
         return (
             <div className="actions-cell">
                 <div className="dynamic-actions-container">
-                    {isMecanicoOrLider && os.status === 'ABERTA' && (<button title="Dar Ciência" className="action-button-circle ciencia-btn" onClick={() => registrarCiencia(os.id).then(fetchData)}><FaCheck /></button>)}
-                    {isMecanicoOrLider && os.status === 'CIENTE' && (<button title="Iniciar Execução" className="action-button-circle iniciar-btn" onClick={() => iniciarExecucao(os.id).then(fetchData)}><FaPlay /></button>)}
-                    {isMecanicoOrLider && os.status === 'EM_EXECUCAO' && (<button title="Preencher e Finalizar OS" className="action-button-circle executar-btn" onClick={() => { setSelectedOs(os); setIsExecucaoModalOpen(true); }}><FaTools /></button>)}
+                    {/* Botão de Dar Ciência */}
+                    {podeExecutarAcao && os.status === 'ABERTA' && (
+                        <button title="Dar Ciência" className="action-button-circle ciencia-btn" onClick={() => registrarCiencia(os.id).then(fetchData)}>
+                            <FaCheck />
+                        </button>
+                    )}
+                    {/* Botão de Iniciar Execução */}
+                    {podeExecutarAcao && os.status === 'CIENTE' && (
+                        <button title="Iniciar Execução" className="action-button-circle iniciar-btn" onClick={() => iniciarExecucao(os.id).then(fetchData)}>
+                            <FaPlay />
+                        </button>
+                    )}
+                    {/* Botão de Registrar Execução */}
+                    {podeExecutarAcao && os.status === 'EM_EXECUCAO' && (
+                        <button title="Preencher e Finalizar OS" className="action-button-circle executar-btn" onClick={() => { setSelectedOs(os); setIsExecucaoModalOpen(true); }}>
+                            <FaTools />
+                        </button>
+                    )}
                     
-                    {isEncarregado && os.status === 'AGUARDANDO_VERIFICACAO' && (
+                    {/* Botão de Verificar (para Encarregado ou Admin) */}
+                    {(isEncarregado || userRole.includes('ADMIN')) && os.status === 'AGUARDANDO_VERIFICACAO' && (
                         <button title="Verificar OS" className="action-button-circle verificar-btn" onClick={() => { setSelectedOs(os); setIsVerificacaoModalOpen(true); }}>
                             <FaClipboardCheck />
                         </button>
                     )}
                 </div>
-                <button title="Visualizar Detalhes" className="view-button" onClick={() => navigate(`/os/${os.id}`)}><FaSearch /></button>
+                <button title="Visualizar Detalhes" className="view-button" onClick={() => navigate(`/os/${os.id}`)}>
+                    <FaSearch />
+                </button>
             </div>
         );
     };
@@ -282,20 +283,16 @@ function DashboardPage() {
         <div className="dashboard-container">
             <main>
                 <h1 className="dashboard-title">Painel de Ordens de Serviço</h1>
-
                 <div className="filtros-container">
                     <input type="text" name="keyword" className="filtro-input-busca" placeholder="Buscar por Nº OS ou Equipamento..." value={filtros.keyword} onChange={handleFilterChange} />
-                    
                     <div className="filtro-data-item">
                         <label htmlFor="dataInicio">De:</label>
                         <input type="date" name="dataInicio" id="dataInicio" className="filtro-input-data" value={filtros.dataInicio} onChange={handleFilterChange} />
                     </div>
-
                     <div className="filtro-data-item">
                         <label htmlFor="dataFim">Até:</label>
                         <input type="date" name="dataFim" id="dataFim" className="filtro-input-data" value={filtros.dataFim} onChange={handleFilterChange} />
                     </div>
-
                     <select name="tipoManutencao" className="filtro-select" value={filtros.tipoManutencao} onChange={handleFilterChange}>
                         <option value="">Tipo (Todos)</option>
                         <option value="CORRETIVA">Corretiva</option>
@@ -310,10 +307,8 @@ function DashboardPage() {
                         {equipamentos.map(e => (<option key={e.id} value={e.id}>{e.nome}</option>))}
                     </select>
                     <button className={`filtro-btn-rapido ${filtros.minhasTarefas ? 'ativo' : ''}`} onClick={() => handleToggleFilter('minhasTarefas')}>Minhas Tarefas</button>
-                    
                     {userRole.includes('ENCARREGADO') && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
                 </div>
-                
                 <div className="os-list-container">
                     {ordens.length > 0 ? (
                         orderedDateKeys.map(dateKey => (
@@ -358,7 +353,6 @@ function DashboardPage() {
                     )}
                 </div>
             </main>
-
             {isExecucaoModalOpen && selectedOs && (
                 <ExecucaoModal 
                     isOpen={isExecucaoModalOpen}
@@ -368,7 +362,6 @@ function DashboardPage() {
                     actionLoading={actionLoading}
                 />
             )}
-
             {isVerificacaoModalOpen && selectedOs && (
                 <VerificacaoModal
                     isOpen={isVerificacaoModalOpen}
