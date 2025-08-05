@@ -3,7 +3,7 @@ package com.bag.osmanager.service;
 import com.bag.osmanager.dto.*;
 import com.bag.osmanager.exception.ResourceNotFoundException;
 import com.bag.osmanager.model.*;
-import com.bag.osmanager.model.enums.*; // ✨ ALTERAÇÃO AQUI: Importa o novo Enum de UnidadeTempo
+import com.bag.osmanager.model.enums.*;
 import com.bag.osmanager.repository.*;
 import com.bag.osmanager.service.specification.OrdemServicoSpecification;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,8 @@ public class OrdemServicoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
         os.setEquipamento(equipamento);
 
-        if (dto.getLocalId() != null) {
+        // ✅ CORREÇÃO: Verifica se o localId não é nulo e é maior que zero
+        if (dto.getLocalId() != null && dto.getLocalId() > 0) {
             Local local = localRepository.findById(dto.getLocalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Local com ID " + dto.getLocalId() + " não encontrado!"));
             os.setLocal(local);
@@ -69,7 +70,7 @@ public class OrdemServicoService {
 
             long proximoNumero = osRepository.findMaxNumeroPreventivaByTipoManutencao(TipoManutencao.PREVENTIVA).orElse(0L) + 1;
             os.setNumeroPreventiva(proximoNumero);
-            os.setCodigoOs(String.valueOf(proximoNumero));
+            os.setCodigoOs("PRE-" + proximoNumero);
 
         } else { // CORRETIVA
             switch (dto.getPrioridade()) {
@@ -79,14 +80,13 @@ public class OrdemServicoService {
             }
             long proximoNumero = osRepository.findMaxNumeroCorretivaByTipoManutencao(TipoManutencao.CORRETIVA).orElse(0L) + 1;
             os.setNumeroCorretiva(proximoNumero);
-            os.setCodigoOs(String.valueOf(proximoNumero));
+            os.setCodigoOs("COR-" + proximoNumero);
         }
 
         OrdemServico osSalva = osRepository.save(os);
         return converteParaDTO(osSalva);
     }
 
-    // ... (Os outros métodos como registrarCiencia, executar, etc. não precisam de alteração)
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
         OrdemServico os = osRepository.findById(osId)
@@ -236,8 +236,8 @@ public class OrdemServicoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
         osRepository.delete(os);
     }
-
-    // ✨ ALTERAÇÃO AQUI: Lógica de agendamento completamente refeita
+    
+    // ✨ CORREÇÃO APLICADA AQUI
     private void agendarProximaPreventiva(OrdemServico osConcluida) {
         if (osConcluida.getTipoManutencao() != TipoManutencao.PREVENTIVA || osConcluida.getFrequencia() == null || osConcluida.getDataInicioPreventiva() == null) {
             return;
@@ -264,13 +264,12 @@ public class OrdemServicoService {
                 proximaDataHora = dataBase.plusYears(frequencia.getIntervalo());
                 break;
             default:
-                // Se a unidade de tempo for desconhecida, não reagenda.
                 return;
         }
 
-        // Regra de pular o domingo (apenas para frequências maiores ou iguais a um dia)
+        // ✅ Regra de pular o domingo foi movida para fora do switch para aplicar a todas as frequências baseadas em dias
         if (frequencia.getUnidadeTempo() != UnidadeTempo.HORA && proximaDataHora.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            proximaDataHora = proximaDataHora.plusDays(1);
+            proximaDataHora = proximaDataHora.plusDays(1); // Pula para segunda-feira
         }
 
         OrdemServico proximaOS = new OrdemServico();
@@ -279,22 +278,21 @@ public class OrdemServicoService {
         proximaOS.setTipoManutencao(TipoManutencao.PREVENTIVA);
         proximaOS.setTipoServico(osConcluida.getTipoServico());
         proximaOS.setFrequencia(osConcluida.getFrequencia());
-        proximaOS.setDescricaoProblema(osConcluida.getTipoServico().getNome()); // Usa o nome do serviço como descrição
+        proximaOS.setDescricaoProblema(osConcluida.getTipoServico().getNome());
         proximaOS.setSolicitante("SISTEMA (AUTO)");
-        proximaOS.setPrioridade(Prioridade.MEDIA); // Prioridade padrão
+        proximaOS.setPrioridade(Prioridade.MEDIA);
         proximaOS.setDataSolicitacao(LocalDateTime.now());
-        proximaOS.setDataInicioPreventiva(proximaDataHora); // Define a nova data E HORA
+        proximaOS.setDataInicioPreventiva(proximaDataHora);
         proximaOS.setStatus(StatusOrdemServico.ABERTA);
         proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
 
         long proximoNumero = osRepository.findMaxNumeroPreventivaByTipoManutencao(TipoManutencao.PREVENTIVA).orElse(0L) + 1;
         proximaOS.setNumeroPreventiva(proximoNumero);
-        proximaOS.setCodigoOs(String.valueOf(proximoNumero));
+        proximaOS.setCodigoOs("PRE-" + proximoNumero);
 
         osRepository.save(proximaOS);
     }
     
-    // O método converteParaDTO já está correto e compatível com LocalDateTime
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
         BeanUtils.copyProperties(os, dto, "frequencia");

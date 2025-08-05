@@ -1,30 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createOrdemServico, getEquipamentos, getLocais, getTiposServico, getFrequencias } from '../services/apiService';
+// ✨ ALTERAÇÃO AQUI: Adicionado 'getSetores'
+import { createOrdemServico, getEquipamentos, getLocais, getTiposServico, getFrequencias, getSetores } from '../services/apiService';
 import './CriarOsPage.css';
 
-// ✨ ALTERAÇÃO AQUI: Nova função para formatar data e hora para o input
 const formatDateTimeForInput = (date) => {
     const d = new Date(date);
-    // Ajusta para o fuso horário local para evitar problemas de um dia a menos
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-    // Formata para 'YYYY-MM-DDTHH:mm'
     return d.toISOString().slice(0, 16);
 };
 
-
 function CriarOsPage() {
     const navigate = useNavigate();
-
     const [tipoManutencao, setTipoManutencao] = useState('CORRETIVA');
     const [formData, setFormData] = useState({
         equipamentoId: '',
         localId: '',
         prioridade: 'MEDIA',
-        turno: 'PRIMEIRO', 
+        turno: 'PRIMEIRO',
         solicitante: '',
         descricaoProblema: '',
-        // ✨ ALTERAÇÃO AQUI: O valor inicial agora usa a nova função de data e hora
         dataInicioPreventiva: formatDateTimeForInput(new Date()),
         tipoServicoId: '',
         frequenciaId: '',
@@ -34,24 +29,29 @@ function CriarOsPage() {
     const [listaLocais, setListaLocais] = useState([]);
     const [listaTiposServico, setListaTiposServico] = useState([]);
     const [listaFrequencias, setListaFrequencias] = useState([]);
-
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+
+    const [listaSetores, setListaSetores] = useState([]);
+    const [setorSelecionadoId, setSetorSelecionadoId] = useState('');
+    const [locaisFiltrados, setLocaisFiltrados] = useState([]);
 
     const equipamentoSelecionado = listaEquipamentos.find(e => e.id === Number(formData.equipamentoId));
 
     const carregarDadosIniciais = useCallback(async () => {
         try {
-            const [resEquipamentos, resLocais, resTiposServico, resFrequencias] = await Promise.all([
+            const [resEquipamentos, resLocais, resTiposServico, resFrequencias, resSetores] = await Promise.all([
                 getEquipamentos(),
                 getLocais(),
                 getTiposServico(),
-                getFrequencias()
+                getFrequencias(),
+                getSetores()
             ]);
             setListaEquipamentos(resEquipamentos.data);
             setListaLocais(resLocais.data);
             setListaTiposServico(resTiposServico.data);
             setListaFrequencias(resFrequencias.data);
+            setListaSetores(resSetores.data);
         } catch (err) {
             console.error("Erro ao carregar dados", err);
             setError("Não foi possível carregar os dados para o formulário.");
@@ -62,17 +62,31 @@ function CriarOsPage() {
         carregarDadosIniciais();
         setFormData(prev => ({ ...prev, solicitante: localStorage.getItem('userName') || 'Usuário' }));
     }, [carregarDadosIniciais]);
+    
+    useEffect(() => {
+        if (setorSelecionadoId) {
+            const filtrados = listaLocais.filter(local => local.setorId === Number(setorSelecionadoId));
+            setLocaisFiltrados(filtrados);
+        } else {
+            setLocaisFiltrados([]);
+        }
+        setFormData(prev => ({ ...prev, localId: '' }));
+    }, [setorSelecionadoId, listaLocais]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleSetorChange = (e) => {
+        setSetorSelecionadoId(e.target.value);
     };
 
     const handleTipoManutencaoChange = (tipo) => {
         setTipoManutencao(tipo);
         setFormData(prev => ({
             ...prev,
-            dataInicioPreventiva: formatDateTimeForInput(new Date()), // Reseta com data e hora atual
+            dataInicioPreventiva: formatDateTimeForInput(new Date()),
             tipoServicoId: '',
             frequenciaId: '',
             prioridade: 'MEDIA',
@@ -94,10 +108,14 @@ function CriarOsPage() {
         const dadosParaApi = {
             tipoManutencao,
             equipamentoId: Number(formData.equipamentoId),
-            localId: Number(formData.localId),
             solicitante: formData.solicitante,
             turno: formData.turno,
         };
+        
+        // ✨ ALTERAÇÃO AQUI: Adiciona o localId apenas se ele for selecionado
+        if (formData.localId) {
+            dadosParaApi.localId = Number(formData.localId);
+        }
 
         if (tipoManutencao === 'CORRETIVA') {
             dadosParaApi.prioridade = formData.prioridade;
@@ -128,31 +146,17 @@ function CriarOsPage() {
             <form className="os-form-container" onSubmit={handleSubmit}>
                 <header className="os-form-header">
                     <h1>ORDEM DE SERVIÇO DE MANUTENÇÃO</h1>
-                    <div className="os-number-box">
-                        <label>Nº OS:</label>
-                        <span>AUTOMÁTICO</span>
-                    </div>
                 </header>
-
                 <main className="os-form-body">
                     <div className="form-section-title">SOLICITAÇÃO</div>
-                    
                     <div className="form-row">
                         <div className="input-group full-width">
                             <label>TIPO DE MANUTENÇÃO:</label>
                             <div className="maintenance-type-selector">
-                                <button
-                                    type="button"
-                                    className={`maintenance-btn ${tipoManutencao === 'CORRETIVA' ? 'active' : ''}`}
-                                    onClick={() => handleTipoManutencaoChange('CORRETIVA')}
-                                >
+                                <button type="button" className={`maintenance-btn ${tipoManutencao === 'CORRETIVA' ? 'active' : ''}`} onClick={() => handleTipoManutencaoChange('CORRETIVA')} >
                                     Corretiva
                                 </button>
-                                <button
-                                    type="button"
-                                    className={`maintenance-btn ${tipoManutencao === 'PREVENTIVA' ? 'active' : ''}`}
-                                    onClick={() => handleTipoManutencaoChange('PREVENTIVA')}
-                                >
+                                <button type="button" className={`maintenance-btn ${tipoManutencao === 'PREVENTIVA' ? 'active' : ''}`} onClick={() => handleTipoManutencaoChange('PREVENTIVA')} >
                                     Preventiva
                                 </button>
                             </div>
@@ -173,11 +177,27 @@ function CriarOsPage() {
                             <label>Nº ATIVO:</label>
                             <input type="text" value={equipamentoSelecionado?.tag || ''} disabled />
                         </div>
+                    </div>
+                    
+                    <div className="form-row">
+                        <div className="input-group">
+                            <label htmlFor="setor">SETOR:</label>
+                            {/* ✨ ALTERAÇÃO AQUI: A propriedade 'required' foi removida */}
+                            <select id="setor" name="setor" value={setorSelecionadoId} onChange={handleSetorChange}>
+                                <option value="">Selecione um setor (Opcional)</option>
+                                {listaSetores.map((setor) => (
+                                    <option key={setor.id} value={setor.id}>{setor.nome}</option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="input-group">
                             <label htmlFor="local">LOCAL:</label>
-                            <select id="local" name="localId" value={formData.localId} onChange={handleInputChange} required>
-                                <option value="" disabled>Selecione...</option>
-                                {listaLocais.map((local) => (
+                             {/* ✨ ALTERAÇÃO AQUI: A propriedade 'required' foi removida */}
+                            <select id="local" name="localId" value={formData.localId} onChange={handleInputChange} disabled={!setorSelecionadoId}>
+                                <option value="">
+                                    {setorSelecionadoId ? 'Selecione um local (Opcional)' : 'Escolha um setor primeiro'}
+                                </option>
+                                {locaisFiltrados.map((local) => (
                                     <option key={local.id} value={local.id}>{local.nome}</option>
                                 ))}
                             </select>
@@ -227,7 +247,6 @@ function CriarOsPage() {
                             </div>
                             <div className="input-group">
                                 <label htmlFor="dataInicioPreventiva">INÍCIO PROGRAMADO:</label>
-                                {/* ✅ CORREÇÃO: O tipo do input foi alterado para 'datetime-local' */}
                                 <input
                                     type="datetime-local"
                                     id="dataInicioPreventiva"
@@ -256,10 +275,8 @@ function CriarOsPage() {
                 </main>
 
                 <footer className="os-form-footer">
-                    <div className="form-actions">
-                        <button type="submit" className="button-save" disabled={submitting}>{submitting ? 'Criando OS...' : 'Criar Ordem de Serviço'}</button>
-                        <button type="button" className="button-cancel" onClick={() => navigate(-1)}>CANCELAR</button>
-                    </div>
+                    <button type="submit" className="button-save" disabled={submitting}>{submitting ? 'Criando OS...' : 'Criar Ordem de Serviço'}</button>
+                    <button type="button" className="button-cancel" onClick={() => navigate(-1)}>CANCELAR</button>
                 </footer>
             </form>
         </div>
