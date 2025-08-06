@@ -32,7 +32,6 @@ public class OrdemServicoService {
     private final TipoServicoRepository tipoServicoRepository;
     private final FrequenciaRepository frequenciaRepository;
 
-    // O método criarOS já está correto e compatível com LocalDateTime
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
@@ -46,12 +45,17 @@ public class OrdemServicoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
         os.setEquipamento(equipamento);
 
-        // ✅ CORREÇÃO: Verifica se o localId não é nulo e é maior que zero
         if (dto.getLocalId() != null && dto.getLocalId() > 0) {
             Local local = localRepository.findById(dto.getLocalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Local com ID " + dto.getLocalId() + " não encontrado!"));
             os.setLocal(local);
         }
+
+        long proximoNumero = osRepository.findMaxNumeroSequencial().orElse(0L) + 1;
+        os.setNumeroSequencial(proximoNumero);
+        
+        // ✨ CORREÇÃO AQUI: O código da OS agora é apenas o número, sem prefixo.
+        os.setCodigoOs(String.valueOf(proximoNumero));
 
         if (dto.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
             if (dto.getTipoServicoId() == null || dto.getFrequenciaId() == null || dto.getDataInicioPreventiva() == null) {
@@ -68,19 +72,12 @@ public class OrdemServicoService {
             os.setDescricaoProblema(tipoServico.getNome());
             os.setDataInicioPreventiva(dto.getDataInicioPreventiva());
 
-            long proximoNumero = osRepository.findMaxNumeroPreventivaByTipoManutencao(TipoManutencao.PREVENTIVA).orElse(0L) + 1;
-            os.setNumeroPreventiva(proximoNumero);
-            os.setCodigoOs("PRE-" + proximoNumero);
-
         } else { // CORRETIVA
             switch (dto.getPrioridade()) {
                 case ALTA: os.setDataLimite(LocalDateTime.now().with(LocalTime.MAX)); break;
                 case MEDIA: os.setDataLimite(LocalDateTime.now().plusDays(4)); break;
                 case BAIXA: os.setDataLimite(LocalDateTime.now().plusDays(7)); break;
             }
-            long proximoNumero = osRepository.findMaxNumeroCorretivaByTipoManutencao(TipoManutencao.CORRETIVA).orElse(0L) + 1;
-            os.setNumeroCorretiva(proximoNumero);
-            os.setCodigoOs("COR-" + proximoNumero);
         }
 
         OrdemServico osSalva = osRepository.save(os);
@@ -237,7 +234,6 @@ public class OrdemServicoService {
         osRepository.delete(os);
     }
     
-    // ✨ CORREÇÃO APLICADA AQUI
     private void agendarProximaPreventiva(OrdemServico osConcluida) {
         if (osConcluida.getTipoManutencao() != TipoManutencao.PREVENTIVA || osConcluida.getFrequencia() == null || osConcluida.getDataInicioPreventiva() == null) {
             return;
@@ -267,9 +263,8 @@ public class OrdemServicoService {
                 return;
         }
 
-        // ✅ Regra de pular o domingo foi movida para fora do switch para aplicar a todas as frequências baseadas em dias
         if (frequencia.getUnidadeTempo() != UnidadeTempo.HORA && proximaDataHora.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            proximaDataHora = proximaDataHora.plusDays(1); // Pula para segunda-feira
+            proximaDataHora = proximaDataHora.plusDays(1);
         }
 
         OrdemServico proximaOS = new OrdemServico();
@@ -285,10 +280,12 @@ public class OrdemServicoService {
         proximaOS.setDataInicioPreventiva(proximaDataHora);
         proximaOS.setStatus(StatusOrdemServico.ABERTA);
         proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
+        
+        long proximoNumero = osRepository.findMaxNumeroSequencial().orElse(0L) + 1;
+        proximaOS.setNumeroSequencial(proximoNumero);
 
-        long proximoNumero = osRepository.findMaxNumeroPreventivaByTipoManutencao(TipoManutencao.PREVENTIVA).orElse(0L) + 1;
-        proximaOS.setNumeroPreventiva(proximoNumero);
-        proximaOS.setCodigoOs("PRE-" + proximoNumero);
+        // ✨ CORREÇÃO AQUI: O código da OS agendada também é apenas o número.
+        proximaOS.setCodigoOs(String.valueOf(proximoNumero));
 
         osRepository.save(proximaOS);
     }

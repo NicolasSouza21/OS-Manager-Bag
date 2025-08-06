@@ -8,19 +8,15 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.LocalDateTime; // Import alterado
+import java.time.LocalDateTime;
 import java.util.List;
 
+// ✨ ALTERAÇÃO AQUI: Removidos os indexes e unique constraints dos campos antigos
 @Entity
 @Table(
     name = "ordens_servico",
     indexes = {
-        @Index(name = "idx_numero_corretiva", columnList = "numero_corretiva"),
-        @Index(name = "idx_numero_preventiva", columnList = "numero_preventiva")
-    },
-    uniqueConstraints = {
-        @UniqueConstraint(name = "unica_corretiva_numero_por_tipo", columnNames = {"numero_corretiva", "tipo_manutencao"}),
-        @UniqueConstraint(name = "unica_preventiva_numero_por_tipo", columnNames = {"numero_preventiva", "tipo_manutencao"})
+        @Index(name = "idx_numero_sequencial", columnList = "numero_sequencial", unique = true)
     }
 )
 @Data
@@ -32,22 +28,26 @@ public class OrdemServico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ... (todos os outros campos permanecem iguais)
+    // ✨ NOVO CAMPO: Este será o número sequencial único para todas as OS.
+    @Column(name = "numero_sequencial", nullable = false, unique = true)
+    private Long numeroSequencial;
+
     @Column(name = "codigo_os", nullable = true)
     private String codigoOs;
 
-    @Column(name = "numero_corretiva", nullable = true)
-    private Long numeroCorretiva;
-
-    @Column(name = "numero_preventiva", nullable = true)
-    private Long numeroPreventiva;
+    // ✨ REMOÇÃO: Os campos antigos foram removidos.
+    // @Column(name = "numero_corretiva", nullable = true)
+    // private Long numeroCorretiva;
+    //
+    // @Column(name = "numero_preventiva", nullable = true)
+    // private Long numeroPreventiva;
 
     @ManyToOne
     @JoinColumn(name = "equipamento_id", referencedColumnName = "id", nullable = false)
     private Equipamento equipamento;
 
     @ManyToOne
-    @JoinColumn(name = "local_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "local_id", referencedColumnName = "id", nullable = true) // Alterado para permitir nulo se necessário
     private Local local;
 
     @Enumerated(EnumType.STRING)
@@ -114,7 +114,6 @@ public class OrdemServico {
     @Column(nullable = false)
     private StatusOrdemServico status;
 
-    // ✅ CORREÇÃO APLICADA AQUI
     @Column(nullable = true)
     private LocalDateTime dataInicioPreventiva;
 
