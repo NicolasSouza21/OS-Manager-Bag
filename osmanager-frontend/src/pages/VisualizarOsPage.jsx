@@ -18,7 +18,6 @@ const formatFrequencia = (frequencia) => {
     return `${frequencia.nome} (a cada ${frequencia.intervalo} ${unidade})`;
 };
 
-// ✨ ALTERAÇÃO AQUI: O componente agora recebe o 'local' como prop
 const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
     if (!os) return null;
 
@@ -48,18 +47,19 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
     const trocouPecas = os.trocaPecas === true;
     const naoTrocouPecas = os.trocaPecas === false && isRealizado;
 
-    const tipoManutencaoFormatado = (os.tipoManutencao || 'MANUTENÇÃO').replace(/_/g, ' ');
-    const tituloFooter = `ORDEM DE SERVIÇO DA ${tipoManutencaoFormatado}`;
+    const tituloFooter = `ORDEM DE SERVIÇO DE MANUTENÇÃO`;
     const dataImpressao = new Date().toLocaleDateString('pt-BR');
 
     return (
         <div className="print-container" ref={ref}>
             <table className="print-main-table">
+                {/* O cabeçalho e o corpo da OS continuam os mesmos... */}
                 <thead>
                     <tr>
-                        {/* ✨ ALTERAÇÃO AQUI: Removida a data do cabeçalho */}
                         <th className="header-logo-cell"><strong>BagCleaner</strong></th>
-                        <th className="header-title-cell">Ordem de Serviço de Manutenção</th>
+                        <th className="header-title-cell">
+                            Ordem de Serviço de Manutenção {os.descricaoProblema ? `- ${os.descricaoProblema}` : ''}
+                        </th>
                         <th className="header-os-number-cell">
                             <div>Nº</div>
                             <div>{os.codigoOs || 'N/A'}</div>
@@ -72,18 +72,21 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
                             <table className="info-table">
                                 <tbody>
                                     <tr>
-                                        {/* ✨ ALTERAÇÃO AQUI: Trocado "Nº Máquina" por "Equipamento" e usando o nome */}
                                         <td><strong>Equipamento:</strong> {equipamento?.nome || 'N/A'}</td>
                                         <td><strong>Tipo de OS:</strong> {capitalize(os.tipoManutencao) || 'Não especificado'}</td>
                                     </tr>
-                                    {/* ✨ ALTERAÇÃO AQUI: Nova linha para Local e Setor */}
+                                    {os.tipoManutencao === 'PREVENTIVA' && (
+                                        <tr>
+                                            <td colSpan="2"><strong>Frequência:</strong> {os.frequencia?.nome || 'N/A'}</td>
+                                        </tr>
+                                    )}
                                     <tr>
                                         <td><strong>Local:</strong> {local?.nome || 'N/A'}</td>
                                         <td><strong>Setor:</strong> {local?.setorNome || 'N/A'}</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Solicitante:</strong> {os.solicitante || 'N/A'}</td>
-                                        <td><strong>Data:</strong> {dataSolicitacao.date}</td>
+                                        <td><strong>Data:</strong> {dataSolicitacao.date} <strong>Horas:</strong> {dataSolicitacao.time}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -98,9 +101,6 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
                                 <tbody>
                                     <tr>
                                         <td className="desc-cell">
-                                            <p><strong>Descrição do Problema / Serviço:</strong> ({os.frequencia ? os.frequencia.nome : capitalize(os.tipoManutencao)})</p>
-                                            <p>{os.descricaoProblema || 'Nenhuma descrição fornecida.'}</p>
-                                            <hr style={{border: 'none', borderTop: '1px solid #ccc', margin: '10px 0'}} />
                                             <p><strong>Ação Realizada:</strong></p>
                                             <p>{os.acaoRealizada || 'Nenhuma ação realizada informada.'}</p>
                                         </td>
@@ -118,7 +118,7 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
                            <table className="info-table">
                                <tbody>
                                    <tr>
-                                       <td colSpan="4"><strong>Executado por:</strong> {os.executadoPorNome || 'Aguardando execução...'}</td>
+                                      <td colSpan="4"><strong>Executado por:</strong> {os.executadoPorNome || 'Aguardando execução...'}</td>
                                    </tr>
                                    <tr>
                                        <td><strong>Início:</strong> Data: {dataInicio.date}</td>
@@ -155,20 +155,18 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
                             <table className="info-table">
                                 <tbody>
                                     <tr>
-                                        <td style={{ width: '60%' }}><strong>Aprovado por (Encarregado):</strong> {os.verificadoPorNome || '__________________________'}</td>
+                                        <td style={{ width: '60%' }}><strong>Aprovado por :</strong> {'__________________________'}</td>
                                         <td style={{ width: '20%' }}><strong>Data:</strong> {dataAprovacao.date}</td>
-                                        
                                     </tr>
                                 </tbody>
                             </table>
                         </td>
                     </tr>
+                    {/* ✨ ALTERAÇÃO AQUI: Dividimos o rodapé em três células para garantir o alinhamento horizontal */}
                     <tr className="footer-row">
-                        <td colSpan="3">
-                            <span>FO.169 - {tituloFooter}</span>
-                            <span>REV.00</span>
-                            <span>DATA: {dataImpressao}</span>
-                        </td>
+                        <td className="footer-cell-left">FO.169 - {tituloFooter}</td>
+                        <td className="footer-cell-center">REV.00</td>
+                        <td className="footer-cell-right">DATA: {dataImpressao}</td>
                     </tr>
                 </tbody>
             </table>
@@ -236,7 +234,6 @@ function VisualizarOsPage() {
         <div>
             {!loading && ordemServico && (
                 <div className="printable-area-wrapper">
-                    {/* ✨ ALTERAÇÃO AQUI: Passando o 'local' para o componente de impressão */}
                     <PrintableOs ref={componentRef} os={ordemServico} equipamento={equipamento} local={local} />
                 </div>
             )}

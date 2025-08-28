@@ -219,6 +219,7 @@ function CriarOsPage() {
                                         <option value="BAIXA">Baixa</option>
                                         <option value="MEDIA">Média</option>
                                         <option value="ALTA">Alta</option>
+                                        <option value="URGENTE">Urgente</option>
                                     </select>
                                 </div>
                             </div>

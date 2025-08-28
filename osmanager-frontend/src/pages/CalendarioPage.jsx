@@ -16,7 +16,6 @@ const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales
 const messages = { allDay: 'Dia todo', previous: 'Anterior', next: 'Próximo', today: 'Hoje', month: 'Mês', week: 'Semana', day: 'Dia', agenda: 'Agenda', date: 'Data', time: 'Hora', event: 'Evento', noEventsInRange: 'Não há eventos neste período.', showMore: total => `+ ver mais (${total})`};
 const formats = { dayHeaderFormat: (date, culture, localizer) => localizer.format(date, "EEEE, dd 'de' MMMM", culture), dayRangeHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'dd', culture)} - ${localizer.format(end, "dd 'de' MMMM", culture)}`, agendaHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'dd/MM/yyyy', culture)} - ${localizer.format(end, 'dd/MM/yyyy', culture)}`};
 
-// ✨ ALTERAÇÃO AQUI: Legenda atualizada para refletir os novos tipos de OS
 const Legenda = () => (
     <div className="legenda-container">
         <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#ffc107' }}></span>Corretiva</div>
@@ -26,12 +25,10 @@ const Legenda = () => (
     </div>
 );
 
-// ✨ ALTERAÇÃO AQUI: CustomEvent agora diferencia o título para corretivas
 const CustomEvent = ({ event }) => {
     const os = event.resource;
     const frequenciaObj = os.frequencia;
     
-    // Define um prefixo para o título baseado no tipo de manutenção
     const titlePrefix = os.tipoManutencao === 'CORRETIVA' ? 'Corretiva:' : `OS #${os.codigoOs || os.id}`;
 
     return (
@@ -42,30 +39,52 @@ const CustomEvent = ({ event }) => {
     );
 };
 
-
-// Componente da Barra de Ferramentas Personalizada (sem alterações)
 const CustomToolbar = ({ label, onNavigate, onView, views, view }) => { const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1); const viewNames = { month: 'Mês', week: 'Semana', day: 'Dia', agenda: 'Agenda' }; return ( <div className="rbc-toolbar"> <div className="rbc-btn-group"> <button type="button" onClick={() => onNavigate('TODAY')}>Hoje</button> <button type="button" onClick={() => onNavigate('PREV')}>Anterior</button> <button type="button" onClick={() => onNavigate('NEXT')}>Próximo</button> </div> <span className="rbc-toolbar-label">{label}</span> <div className="rbc-btn-group"> {views.map(viewName => ( <button key={viewName} type="button" className={view === viewName ? 'rbc-active' : ''} onClick={() => onView(viewName)} > {viewNames[viewName] || capitalize(viewName)} </button>))} </div> </div> ); };
 
-// FUNÇÃO getNextDate (sem alterações)
+// ✨ NOVA ALTERAÇÃO APLICADA AQUI
 const getNextDate = (startDate, frequenciaObj) => {
-    if (!frequenciaObj || !frequenciaObj.nome) return null;
+    if (!frequenciaObj || !frequenciaObj.unidadeTempo || !frequenciaObj.intervalo) {
+        return null;
+    }
+
+    // Guarda o dia original para a verificação de 'HORA'
+    const originalDay = new Date(startDate).getDate();
     const date = new Date(startDate);
     date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-    const nomeFrequencia = frequenciaObj.nome.toUpperCase();
-    switch (nomeFrequencia) {
-        case 'DIARIO': date.setDate(date.getDate() + 1); break;
-        case 'BIDIARIO': date.setDate(date.getDate() + 2); break;
-        case 'SEMANAL': date.setDate(date.getDate() + 7); break;
-        case 'QUINZENAL': date.setDate(date.getDate() + 14); break;
-        case 'MENSAL': date.setMonth(date.getMonth() + 1); break;
-        case 'BIMESTRAL': date.setMonth(date.getMonth() + 2); break;
-        case 'TRIMESTRAL': date.setMonth(date.getMonth() + 3); break;
-        case 'SEMESTRAL': date.setMonth(date.getMonth() + 6); break;
-        case 'ANUAL': date.setFullYear(date.getFullYear() + 1); break;
-        default: return null;
+
+    const { unidadeTempo, intervalo } = frequenciaObj;
+    
+    switch (unidadeTempo) {
+        case 'HORA':
+            date.setHours(date.getHours() + intervalo);
+            // Se o dia da nova data for diferente do dia original, a projeção para.
+            if (date.getDate() !== originalDay) {
+                return null; 
+            }
+            break;
+        case 'DIA':
+            date.setDate(date.getDate() + intervalo);
+            break;
+        case 'SEMANA':
+            date.setDate(date.getDate() + intervalo * 7);
+            break;
+        case 'MES':
+            date.setMonth(date.getMonth() + intervalo);
+            break;
+        case 'ANO':
+            date.setFullYear(date.getFullYear() + intervalo);
+            break;
+        default:
+            return null;
     }
+
+    if (unidadeTempo !== 'HORA' && date.getDay() === 0) {
+        date.setDate(date.getDate() + 1); 
+    }
+
     return date;
 };
+
 
 function CalendarioPage() {
     const navigate = useNavigate();
@@ -74,12 +93,11 @@ function CalendarioPage() {
     const [date, setDate] = useState(new Date());
     const [view, setView] = useState('month');
 
-    // ✨ ALTERAÇÃO GERAL AQUI: A lógica de busca de eventos foi reestruturada
     const fetchEvents = useCallback(async () => {
         setLoading(true);
         try {
             const [resOrdens, resEquipamentos] = await Promise.all([
-                getOrdensServico({ page: 0, size: 500 }), // Busca todas as OS
+                getOrdensServico({ page: 0, size: 500 }),
                 getEquipamentos()
             ]);
 
@@ -88,16 +106,12 @@ function CalendarioPage() {
             
             const formattedEvents = [];
 
-            // ✅ 1. Itera sobre TODAS as ordens de serviço
             todasAsOrdens.forEach(os => {
-                // Filtra OS em andamento ou abertas (não concluídas/canceladas)
                 const isConcluidaOuCancelada = ['CONCLUIDA', 'CANCELADA'].includes(os.status);
                 
                 if (isConcluidaOuCancelada && os.tipoManutencao === 'PREVENTIVA') {
-                    // Se for preventiva concluída, não adiciona ao calendário principal,
-                    // mas ainda a usa para projetar a próxima.
+                    // Não renderiza, mas usa para projetar a próxima
                 } else {
-                    // Adiciona Corretivas e Preventivas não-concluídas
                     const eventDateStr = os.tipoManutencao === 'PREVENTIVA' 
                         ? os.dataInicioPreventiva 
                         : os.dataSolicitacao;
@@ -119,14 +133,13 @@ function CalendarioPage() {
                     });
                 }
 
-                // ✅ 2. Lógica de projeção de preventivas continua, baseada em TODAS as preventivas
                 if (os.tipoManutencao === 'PREVENTIVA' && os.frequencia && os.frequencia.nome !== 'UNICA' && os.dataInicioPreventiva) {
                     let currentDate = new Date(os.dataInicioPreventiva);
                     const endDateLimit = new Date();
                     endDateLimit.setFullYear(endDateLimit.getFullYear() + 2);
 
                     while (currentDate < endDateLimit) {
-                        const nextDate = getNextDate(currentDate, os.frequencia);
+                        const nextDate = getNextDate(currentDate, os.frequencia); 
                         if (!nextDate || nextDate >= endDateLimit) break;
                         
                         const virtualId = `${os.id}-virtual-${nextDate.getTime()}`;
@@ -169,7 +182,6 @@ function CalendarioPage() {
         navigate(`/os/${event.id}`);
     };
 
-    // ✨ ALTERAÇÃO AQUI: Estilização dos eventos atualizada
     const eventStyleGetter = (event) => {
         const os = event.resource;
         let style = {
@@ -182,23 +194,22 @@ function CalendarioPage() {
         };
 
         if (os.status === 'PREVISTO') {
-            style.backgroundColor = '#a2d2ff'; // Azul claro para previstas
+            style.backgroundColor = '#a2d2ff';
             style.borderColor = '#6a9fca';
             style.color = '#003566';
             style.borderStyle = 'dashed';
         } else if (os.tipoManutencao === 'CORRETIVA') {
-            style.backgroundColor = '#ffc107'; // Amarelo para corretivas
+            style.backgroundColor = '#ffc107';
             style.color = '#333';
         } else if (os.status === 'CONCLUIDA' || os.status === 'CANCELADA') {
-            style.backgroundColor = '#6c757d'; // Cinza para concluídas
-        } else { // Preventivas agendadas (não concluídas)
-            style.backgroundColor = '#28a745'; // Verde para preventivas agendadas
+            style.backgroundColor = '#6c757d';
+        } else {
+            style.backgroundColor = '#28a745';
         }
         
         return { style };
     };
     
-    // O resto do componente não precisa de alterações
     const dayPropGetter = useCallback(() => ({ style: { overflow: 'hidden' } }), []);
     const onNavigate = useCallback((newDate) => setDate(newDate), [setDate]);
     const onView = useCallback((newView) => setView(newView), [setView]);
@@ -209,7 +220,6 @@ function CalendarioPage() {
 
     return (
         <div className="calendario-container">
-            {/* ✨ ALTERAÇÃO AQUI: Título da página atualizado */}
             <h1 className="calendario-title">Calendário de Manutenção</h1>
             <Legenda />
             <div className="calendario-wrapper">
