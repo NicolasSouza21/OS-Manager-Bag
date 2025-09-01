@@ -19,6 +19,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,7 +38,7 @@ public class OrdemServicoService {
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
-        BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoId", "frequenciaId");
+        BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoIds", "frequenciaId");
 
         os.setDataSolicitacao(LocalDateTime.now());
         os.setStatus(StatusOrdemServico.ABERTA);
@@ -54,22 +57,28 @@ public class OrdemServicoService {
         long proximoNumero = osRepository.findMaxNumeroSequencial().orElse(0L) + 1;
         os.setNumeroSequencial(proximoNumero);
         
-        // ✨ CORREÇÃO AQUI: O código da OS agora é apenas o número, sem prefixo.
         os.setCodigoOs(String.valueOf(proximoNumero));
 
         if (dto.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
-            if (dto.getTipoServicoId() == null || dto.getFrequenciaId() == null || dto.getDataInicioPreventiva() == null) {
-                throw new IllegalArgumentException("Para OS Preventiva, o serviço, a frequência e a data de início são obrigatórios.");
+            if (dto.getTipoServicoIds() == null || dto.getTipoServicoIds().isEmpty() || dto.getFrequenciaId() == null || dto.getDataInicioPreventiva() == null) {
+                throw new IllegalArgumentException("Para OS Preventiva, ao menos um serviço, a frequência e a data de início são obrigatórios.");
             }
-            TipoServico tipoServico = tipoServicoRepository.findById(dto.getTipoServicoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Tipo de Serviço com ID " + dto.getTipoServicoId() + " não encontrado!"));
+            
+            List<TipoServico> tiposServicoList = tipoServicoRepository.findAllById(dto.getTipoServicoIds());
+            if (tiposServicoList.size() != dto.getTipoServicoIds().size()) {
+                throw new ResourceNotFoundException("Um ou mais Tipos de Serviço não foram encontrados.");
+            }
+            os.setTiposServico(new HashSet<>(tiposServicoList));
 
             Frequencia frequencia = frequenciaRepository.findById(dto.getFrequenciaId())
                     .orElseThrow(() -> new ResourceNotFoundException("Frequência com ID " + dto.getFrequenciaId() + " não encontrada!"));
-
-            os.setTipoServico(tipoServico);
             os.setFrequencia(frequencia);
-            os.setDescricaoProblema(tipoServico.getNome());
+
+            String descricao = tiposServicoList.stream()
+                .map(TipoServico::getNome)
+                .collect(Collectors.joining(", "));
+            os.setDescricaoProblema(descricao);
+            
             os.setDataInicioPreventiva(dto.getDataInicioPreventiva());
 
         } else { // CORRETIVA
@@ -197,6 +206,7 @@ public class OrdemServicoService {
             osConcluida.setStatusVerificacao(StatusVerificacao.REPROVADO);
         }
 
+        // ✅ CORREÇÃO AQUI: A variável a ser salva é 'osConcluida', não 'os'.
         OrdemServico osAtualizada = osRepository.save(osConcluida);
         return converteParaDTO(osAtualizada);
     }
@@ -244,23 +254,12 @@ public class OrdemServicoService {
         LocalDateTime proximaDataHora;
 
         switch (frequencia.getUnidadeTempo()) {
-            case HORA:
-                proximaDataHora = dataBase.plusHours(frequencia.getIntervalo());
-                break;
-            case DIA:
-                proximaDataHora = dataBase.plusDays(frequencia.getIntervalo());
-                break;
-            case SEMANA:
-                proximaDataHora = dataBase.plusWeeks(frequencia.getIntervalo());
-                break;
-            case MES:
-                proximaDataHora = dataBase.plusMonths(frequencia.getIntervalo());
-                break;
-            case ANO:
-                proximaDataHora = dataBase.plusYears(frequencia.getIntervalo());
-                break;
-            default:
-                return;
+            case HORA: proximaDataHora = dataBase.plusHours(frequencia.getIntervalo()); break;
+            case DIA: proximaDataHora = dataBase.plusDays(frequencia.getIntervalo()); break;
+            case SEMANA: proximaDataHora = dataBase.plusWeeks(frequencia.getIntervalo()); break;
+            case MES: proximaDataHora = dataBase.plusMonths(frequencia.getIntervalo()); break;
+            case ANO: proximaDataHora = dataBase.plusYears(frequencia.getIntervalo()); break;
+            default: return;
         }
 
         if (frequencia.getUnidadeTempo() != UnidadeTempo.HORA && proximaDataHora.getDayOfWeek() == DayOfWeek.SUNDAY) {
@@ -271,9 +270,14 @@ public class OrdemServicoService {
         proximaOS.setEquipamento(osConcluida.getEquipamento());
         proximaOS.setLocal(osConcluida.getLocal());
         proximaOS.setTipoManutencao(TipoManutencao.PREVENTIVA);
-        proximaOS.setTipoServico(osConcluida.getTipoServico());
+        proximaOS.setTiposServico(new HashSet<>(osConcluida.getTiposServico()));
         proximaOS.setFrequencia(osConcluida.getFrequencia());
-        proximaOS.setDescricaoProblema(osConcluida.getTipoServico().getNome());
+        
+        String proximaDescricao = osConcluida.getTiposServico().stream()
+                .map(TipoServico::getNome)
+                .collect(Collectors.joining(", "));
+        proximaOS.setDescricaoProblema(proximaDescricao);
+
         proximaOS.setSolicitante("SISTEMA (AUTO)");
         proximaOS.setPrioridade(Prioridade.MEDIA);
         proximaOS.setDataSolicitacao(LocalDateTime.now());
@@ -283,8 +287,6 @@ public class OrdemServicoService {
         
         long proximoNumero = osRepository.findMaxNumeroSequencial().orElse(0L) + 1;
         proximaOS.setNumeroSequencial(proximoNumero);
-
-        // ✨ CORREÇÃO AQUI: O código da OS agendada também é apenas o número.
         proximaOS.setCodigoOs(String.valueOf(proximoNumero));
 
         osRepository.save(proximaOS);
@@ -292,7 +294,7 @@ public class OrdemServicoService {
     
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto, "frequencia");
+        BeanUtils.copyProperties(os, dto, "frequencia", "tiposServico");
 
         dto.setCodigoOs(os.getCodigoOs());
 
@@ -325,9 +327,13 @@ public class OrdemServicoService {
                 return pecaDTO;
             }).collect(Collectors.toList()));
         }
-        if (os.getTipoServico() != null) {
-            dto.setTipoServicoId(os.getTipoServico().getId());
-            dto.setTipoServicoNome(os.getTipoServico().getNome());
+        
+        if (os.getTiposServico() != null) {
+            dto.setTiposServico(os.getTiposServico().stream().map(servico -> {
+                TipoServicoDTO servicoDto = new TipoServicoDTO();
+                BeanUtils.copyProperties(servico, servicoDto);
+                return servicoDto;
+            }).collect(Collectors.toSet()));
         }
         
         if (os.getFrequencia() != null) {

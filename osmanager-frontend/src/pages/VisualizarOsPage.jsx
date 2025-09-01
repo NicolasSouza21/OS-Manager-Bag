@@ -41,24 +41,52 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
     const dataInicio = formatDateTime(os.dataExecucao);
     const dataTermino = formatDateTime(os.termino);
     const dataAprovacao = formatDateTime(os.dataVerificacao);
-
+    
     const isRealizado = ['CONCLUIDA', 'AGUARDANDO_VERIFICACAO'].includes(os.status);
-    const isNaoRealizado = os.status === 'CANCELADA';
     const trocouPecas = os.trocaPecas === true;
     const naoTrocouPecas = os.trocaPecas === false && isRealizado;
 
     const tituloFooter = `ORDEM DE SERVIÇO DE MANUTENÇÃO`;
     const dataImpressao = new Date().toLocaleDateString('pt-BR');
 
+    const renderAcaoRealizadaImpressao = () => {
+        const acao = os.acaoRealizada;
+        
+        if (os.tipoManutencao === 'PREVENTIVA' && acao && acao.includes(':')) {
+            const servicos = acao.split('\n').filter(line => line.trim() !== '');
+            return (
+                <div className="checklist-impressao">
+                    {servicos.map((servico, index) => {
+                        const partes = servico.split(':');
+                        const nome = partes[0]?.replace('-', '').trim();
+                        const status = partes[1]?.trim().toUpperCase();
+                        
+                        const checkRealizado = status === 'REALIZADO' ? 'X' : ' ';
+                        const checkNaoRealizado = status === 'NÃO REALIZADO' ? 'X' : ' ';
+                        
+                        return (
+                            <div key={index} className="checklist-item-impressao">
+                                <span className="checklist-nome-impressao">{nome}:</span>
+                                <span className="checklist-status-impressao">(&nbsp;{checkRealizado}&nbsp;) Realizado</span>
+                                <span className="checklist-status-impressao">(&nbsp;{checkNaoRealizado}&nbsp;) Não realizado</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+        return <p>{acao || 'Nenhuma ação realizada informada.'}</p>;
+    };
+
     return (
         <div className="print-container" ref={ref}>
             <table className="print-main-table">
-                {/* O cabeçalho e o corpo da OS continuam os mesmos... */}
                 <thead>
                     <tr>
                         <th className="header-logo-cell"><strong>BagCleaner</strong></th>
+                        {/* ✨ ALTERAÇÃO AQUI: Descrição removida do título principal */}
                         <th className="header-title-cell">
-                            Ordem de Serviço de Manutenção {os.descricaoProblema ? `- ${os.descricaoProblema}` : ''}
+                            Ordem de Serviço de Manutenção
                         </th>
                         <th className="header-os-number-cell">
                             <div>Nº</div>
@@ -95,22 +123,16 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
                     <tr className="section-header">
                         <td colSpan="3">Preenchimento da Manutenção</td>
                     </tr>
+                    {/* ✨ ALTERAÇÃO AQUI: Nova linha criada exclusivamente para a descrição do problema */}
                     <tr>
-                        <td colSpan="3" className="no-padding">
-                            <table className="content-table">
-                                <tbody>
-                                    <tr>
-                                        <td className="desc-cell">
-                                            <p><strong>Ação Realizada:</strong></p>
-                                            <p>{os.acaoRealizada || 'Nenhuma ação realizada informada.'}</p>
-                                        </td>
-                                        <td className="status-cell">
-                                            <span>(&nbsp;{isRealizado ? 'X' : ' '}&nbsp;) Realizado</span>
-                                            <span>(&nbsp;{isNaoRealizado ? 'X' : ' '}&nbsp;) Não realizado</span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <td colSpan="3" className="problem-desc-cell">
+                           <strong>Descrição do Problema/Serviço:</strong> {os.descricaoProblema || 'N/A'}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colSpan="3" className="desc-cell no-padding">
+                           <p style={{paddingLeft: '5px'}}><strong>Ação Realizada:</strong></p>
+                           {renderAcaoRealizadaImpressao()}
                         </td>
                     </tr>
                     <tr>
@@ -162,7 +184,6 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
                             </table>
                         </td>
                     </tr>
-                    {/* ✨ ALTERAÇÃO AQUI: Dividimos o rodapé em três células para garantir o alinhamento horizontal */}
                     <tr className="footer-row">
                         <td className="footer-cell-left">FO.169 - {tituloFooter}</td>
                         <td className="footer-cell-center">REV.00</td>

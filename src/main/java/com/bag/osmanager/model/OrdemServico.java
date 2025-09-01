@@ -9,9 +9,10 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
+import java.util.HashSet; // ✨ ALTERAÇÃO AQUI: import adicionado
 import java.util.List;
+import java.util.Set; // ✨ ALTERAÇÃO AQUI: import adicionado
 
-// ✨ ALTERAÇÃO AQUI: Removidos os indexes e unique constraints dos campos antigos
 @Entity
 @Table(
     name = "ordens_servico",
@@ -28,26 +29,18 @@ public class OrdemServico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ✨ NOVO CAMPO: Este será o número sequencial único para todas as OS.
     @Column(name = "numero_sequencial", nullable = false, unique = true)
     private Long numeroSequencial;
 
     @Column(name = "codigo_os", nullable = true)
     private String codigoOs;
 
-    // ✨ REMOÇÃO: Os campos antigos foram removidos.
-    // @Column(name = "numero_corretiva", nullable = true)
-    // private Long numeroCorretiva;
-    //
-    // @Column(name = "numero_preventiva", nullable = true)
-    // private Long numeroPreventiva;
-
     @ManyToOne
     @JoinColumn(name = "equipamento_id", referencedColumnName = "id", nullable = false)
     private Equipamento equipamento;
 
     @ManyToOne
-    @JoinColumn(name = "local_id", referencedColumnName = "id", nullable = true) // Alterado para permitir nulo se necessário
+    @JoinColumn(name = "local_id", referencedColumnName = "id", nullable = true)
     private Local local;
 
     @Enumerated(EnumType.STRING)
@@ -117,9 +110,15 @@ public class OrdemServico {
     @Column(nullable = true)
     private LocalDateTime dataInicioPreventiva;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tipo_servico_id")
-    private TipoServico tipoServico;
+    // ✨ ALTERAÇÃO AQUI: A relação de um-para-muitos foi trocada por muitos-para-muitos.
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "ordens_servico_tipos_servico", // Nome da nova tabela de junção
+        joinColumns = @JoinColumn(name = "ordem_servico_id"),
+        inverseJoinColumns = @JoinColumn(name = "tipo_servico_id")
+    )
+    private Set<TipoServico> tiposServico = new HashSet<>();
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "frequencia_id", nullable = true)

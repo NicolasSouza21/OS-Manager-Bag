@@ -101,11 +101,11 @@
   
       /* --- Células de Conteúdo Específico --- */
       .desc-cell {
-          width: 70%;
-          height: 140px; /* Espaço para descrição */
-          border-right: 1px solid black;
+        vertical-align: top; /* Garante alinhamento superior */
       }
-      .desc-cell p { min-height: 50px; margin: 5px 0 0 0; }
+      .desc-cell p { 
+        margin: 5px 0 0 0; 
+      }
       
       .status-cell {
           width: 30%;
@@ -114,6 +114,12 @@
       .status-cell span {
           display: block;
           margin-top: 10px;
+      }
+
+      /* ✨ ALTERAÇÃO AQUI: Estilo para a nova célula de descrição do problema */
+      .problem-desc-cell {
+          padding: 8px 5px;
+          min-height: 40px;
       }
   
       .obs-cell {
@@ -133,20 +139,37 @@
           min-height: 20px;
           margin: 5px 0 0 0;
       }
+
+      /* ✨ ALTERAÇÃO AQUI: Novos estilos para o checklist formatado */
+      .checklist-impressao {
+        padding: 0 5px;
+      }
+      
+      .checklist-item-impressao {
+        display: flex; /* Alinha os itens na horizontal */
+        justify-content: space-between; /* Separa o nome das opções */
+        padding: 3px 0;
+      }
+
+      .checklist-nome-impressao {
+        margin-right: auto; /* Empurra as opções para a direita */
+      }
+      
+      .checklist-status-impressao {
+        white-space: nowrap; /* Impede que "( ) Realizado" quebre a linha */
+        padding-left: 15px; /* Espaçamento entre as opções */
+      }
   
       /* --- Rodapé --- */
-      /* ✨ ALTERAÇÃO AQUI: Removemos o display:flex e estilizamos as novas células */
       .footer-row td {
           font-size: 8pt;
           font-weight: bold;
           padding: 2px 5px;
           border-top: 2px solid black;
-          /* A borda entre as células do rodapé será removida para um look mais limpo */
           border-left: none;
           border-right: none;
       }
 
-      /* ✨ ALTERAÇÃO AQUI: Novas classes para alinhar cada parte do rodapé */
       .footer-cell-left {
           text-align: left;
       }

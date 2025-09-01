@@ -2,8 +2,9 @@ package com.bag.osmanager.dto;
 
 import com.bag.osmanager.model.enums.*;
 import lombok.Data;
-import java.time.LocalDateTime; // ✨ ALTERAÇÃO AQUI: Import de LocalDate removido e LocalDateTime adicionado
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set; // ✨ ALTERAÇÃO AQUI: Import adicionado
 
 @Data
 public class OrdemServicoDTO {
@@ -50,10 +51,14 @@ public class OrdemServicoDTO {
     private LocalDateTime dataAprovacao;
     
     // Dados da Preventiva
-    // ✨ ALTERAÇÃO AQUI: O tipo do campo foi alterado para LocalDateTime
     private LocalDateTime dataInicioPreventiva;
-    private Long tipoServicoId;
-    private String tipoServicoNome;
+    
+    // ✨ ALTERAÇÃO AQUI: Os campos antigos de serviço único foram removidos.
+    // private Long tipoServicoId;
+    // private String tipoServicoNome;
+
+    // ✨ ALTERAÇÃO AQUI: Novo campo para a lista de serviços.
+    private Set<TipoServicoDTO> tiposServico;
     
     private FrequenciaDTO frequencia;
 }

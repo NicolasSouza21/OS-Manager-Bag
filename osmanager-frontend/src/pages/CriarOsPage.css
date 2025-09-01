@@ -185,3 +185,89 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ✨ ALTERAÇÃO AQUI: Novos estilos para a seção de checkboxes de serviços */
+.servicos-checkbox-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Colunas responsivas */
+    gap: 1rem;
+    background-color: #f9fafb; /* Fundo sutil */
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-borda);
+    padding: 1.5rem;
+    max-height: 220px;
+    overflow-y: auto; /* Barra de rolagem se houver muitos serviços */
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: var(--cor-fundo-card);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 2px solid var(--cor-borda);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    -webkit-user-select: none; /* Impede a seleção de texto ao clicar */
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.checkbox-label:hover {
+    border-color: var(--cor-primaria);
+    background-color: #eff6ff;
+}
+
+/* Estilo para o checkbox personalizado */
+.checkbox-label input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: var(--cor-fundo-card);
+    margin: 0;
+    font: inherit;
+    color: currentColor;
+    width: 1.5em;
+    height: 1.5em;
+    border: 2px solid #adb5bd;
+    border-radius: 4px;
+    transform: translateY(-0.075em);
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+    transition: all 120ms ease-in-out;
+}
+
+/* O "V" de check que aparece quando marcado */
+.checkbox-label input[type="checkbox"]::before {
+    content: "";
+    width: 0.8em;
+    height: 0.8em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em var(--cor-primaria);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+/* Quando o checkbox é marcado */
+.checkbox-label input[type="checkbox"]:checked {
+    border-color: var(--cor-primaria);
+    background-color: var(--cor-primaria);
+}
+
+.checkbox-label input[type="checkbox"]:checked::before {
+    transform: scale(1);
+    box-shadow: inset 1em 1em white; /* Cor do "V" de check */
+}
+
+/* Estilo do texto informativo (quando não há serviços) */
+.info-text {
+    padding: 1.5rem;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: var(--raio-borda);
+    color: var(--cor-texto-secundario);
+    font-style: italic;
+    border: 1px dashed var(--cor-borda);
+}
