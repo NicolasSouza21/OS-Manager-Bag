@@ -39,7 +39,7 @@ public class OsmanagerApplication {
                 admin.setTipoFuncionario(TipoFuncionario.ADMIN);
 
                 // 3. Salva o novo admin no banco
-                funcionarioRepository.save(admin);
+                funcionarioRepository.save(admin); 
                 
                 System.out.println("!! USUÁRIO ADMIN CRIADO COM SUCESSO !!");
             } else {

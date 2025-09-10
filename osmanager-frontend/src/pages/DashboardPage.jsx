@@ -1,3 +1,5 @@
+// Local do arquivo: osmanager-frontend/src/pages/DashboardPage.jsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -164,6 +166,27 @@ function DashboardPage() {
         setFiltros(prev => ({ ...prev, [name]: value }));
     };
 
+    // ✅ CORREÇÃO AQUI: Nova função para lidar com as datas de forma inteligente
+    const handleDateChange = (e) => {
+        const { name, value } = e.target;
+        
+        setFiltros(prevFiltros => {
+            const novosFiltros = { ...prevFiltros, [name]: value };
+
+            // Se a data final for anterior à data inicial, iguala a data inicial à final.
+            if (name === 'dataFim' && novosFiltros.dataInicio && value < novosFiltros.dataInicio) {
+                novosFiltros.dataInicio = value;
+            }
+            
+            // Se a data inicial for posterior à data final, iguala a data final à inicial.
+            if (name === 'dataInicio' && novosFiltros.dataFim && value > novosFiltros.dataFim) {
+                novosFiltros.dataFim = value;
+            }
+
+            return novosFiltros;
+        });
+    };
+
     const handleToggleFilter = (filterName) => {
         const newFilters = { 
             ...filtros, 
@@ -220,7 +243,6 @@ function DashboardPage() {
         }
     };
     
-    // ✨ ALTERAÇÃO AQUI: Lógica completa de permissões
     const renderAcoes = (os) => {
         const cargosDeAcao = ['ADMIN', 'LIDER', 'MECANICO'];
         const podeExecutarAcao = cargosDeAcao.some(cargo => userRole.includes(cargo));
@@ -229,26 +251,22 @@ function DashboardPage() {
         return (
             <div className="actions-cell">
                 <div className="dynamic-actions-container">
-                    {/* Botão de Dar Ciência */}
                     {podeExecutarAcao && os.status === 'ABERTA' && (
                         <button title="Dar Ciência" className="action-button-circle ciencia-btn" onClick={() => registrarCiencia(os.id).then(fetchData)}>
                             <FaCheck />
                         </button>
                     )}
-                    {/* Botão de Iniciar Execução */}
                     {podeExecutarAcao && os.status === 'CIENTE' && (
                         <button title="Iniciar Execução" className="action-button-circle iniciar-btn" onClick={() => iniciarExecucao(os.id).then(fetchData)}>
                             <FaPlay />
                         </button>
                     )}
-                    {/* Botão de Registrar Execução */}
                     {podeExecutarAcao && os.status === 'EM_EXECUCAO' && (
                         <button title="Preencher e Finalizar OS" className="action-button-circle executar-btn" onClick={() => { setSelectedOs(os); setIsExecucaoModalOpen(true); }}>
                             <FaTools />
                         </button>
                     )}
                     
-                    {/* Botão de Verificar (para Encarregado ou Admin) */}
                     {(isEncarregado || userRole.includes('ADMIN')) && os.status === 'AGUARDANDO_VERIFICACAO' && (
                         <button title="Verificar OS" className="action-button-circle verificar-btn" onClick={() => { setSelectedOs(os); setIsVerificacaoModalOpen(true); }}>
                             <FaClipboardCheck />
@@ -287,11 +305,13 @@ function DashboardPage() {
                     <input type="text" name="keyword" className="filtro-input-busca" placeholder="Buscar por Nº OS ou Equipamento..." value={filtros.keyword} onChange={handleFilterChange} />
                     <div className="filtro-data-item">
                         <label htmlFor="dataInicio">De:</label>
-                        <input type="date" name="dataInicio" id="dataInicio" className="filtro-input-data" value={filtros.dataInicio} onChange={handleFilterChange} />
+                        {/* ✅ CORREÇÃO AQUI: Usa a nova função com validação */}
+                        <input type="date" name="dataInicio" id="dataInicio" className="filtro-input-data" value={filtros.dataInicio} onChange={handleDateChange} />
                     </div>
                     <div className="filtro-data-item">
                         <label htmlFor="dataFim">Até:</label>
-                        <input type="date" name="dataFim" id="dataFim" className="filtro-input-data" value={filtros.dataFim} onChange={handleFilterChange} />
+                        {/* ✅ CORREÇÃO AQUI: Usa a nova função com validação */}
+                        <input type="date" name="dataFim" id="dataFim" className="filtro-input-data" value={filtros.dataFim} onChange={handleDateChange} />
                     </div>
                     <select name="tipoManutencao" className="filtro-select" value={filtros.tipoManutencao} onChange={handleFilterChange}>
                         <option value="">Tipo (Todos)</option>
