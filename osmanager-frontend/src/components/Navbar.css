@@ -1,117 +1,94 @@
-/* Seu novo design como base */
+/* Importa uma fonte do Google para um visual mais moderno (opcional) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+/* --- ESTRUTURA PRINCIPAL --- */
 .navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #2c3e50; /* Um azul escuro */
-  padding: 0 2rem;
-  color: white;
-  height: 60px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  /* A margem negativa pode causar problemas de layout. É mais seguro resetar no index.css ou App.css */
-  margin: -8px; 
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Espaça os itens: [brand+nav] ... [user] */
+    padding: 0 30px; /* Espaçamento interno */
+    height: 70px;
+    background-color: #2c3e50; /* Azul escuro */
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Sombra para profundidade */
+    font-family: 'Poppins', sans-serif; /* Aplica a fonte importada */
+    margin-left: -8px;
+    margin-top: -8px;
 }
 
 .navbar-brand a {
-  color: white;
-  text-decoration: none;
-  font-size: 1.5rem;
-  font-weight: bold;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 1.8em;
+    font-weight: 600;
 }
 
-.navbar-links {
-  list-style: none;
-  display: flex;
-  margin: 0;
-  padding: 0;
-  align-items: center; /* Alinha verticalmente os itens da nav */
+/* --- LINKS DE NAVEGAÇÃO --- */
+.navbar-nav {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 15px; /* Espaçamento entre os itens de menu */
+    /* Empurra os links para longe da marca */
+    margin-left: 40px; 
 }
-
 
 .nav-link {
-  color: white;
-  text-decoration: none;
-  font-size: 1rem;
-  transition: color 0.2s ease-in-out;
-  padding: 1rem; /* Adicionado padding para uma área de hover maior */
-  display: block;
+    display: flex; /* Essencial para alinhar ícone e texto */
+    align-items: center;
+    gap: 8px; /* Espaço entre o ícone e o texto */
+    color: #ecf0f1; /* Branco um pouco mais suave */
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave */
 }
 
+/* --- EFEITO HOVER (passar o mouse) --- */
 .nav-link:hover {
-  color: #1abc9c; /* Um verde-água para o hover */
+    background-color: #34495e;
+    color: #ffffff;
 }
 
-.admin-link {
-  background-color: #f39c12; /* Um laranja para destacar */
-  color: white !important; /* !important para sobrescrever outras regras */
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  font-weight: bold;
+/* --- ESTADO ATIVO DO LINK (página atual) --- */
+/* O NavLink do React adiciona a classe ".active" automaticamente */
+.nav-link.active {
+    background-color: #4a6fa5; /* Cor de destaque */
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* --- ÁREA DO USUÁRIO (direita) --- */
+.navbar-user {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Espaço entre a saudação e o botão */
+    margin-left: auto; /* Empurra a área do usuário para a direita */
+}
+
+.user-greeting {
+    color: #bdc3c7; /* Cinza claro para a saudação */
+    font-weight: 500;
+    white-space: nowrap; /* Evita que o nome quebre a linha */
 }
 
 .logout-button {
-  background-color: #e74c3c; /* Vermelho */
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: bold;
-  transition: background-color 0.2s ease-in-out;
+    display: flex; /* Para alinhar ícone e texto */
+    align-items: center;
+    gap: 8px;
+    background-color: #e74c3c; /* Vermelho */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 0.3s ease;
 }
 
 .logout-button:hover {
-  background-color: #c0392b; /* Vermelho mais escuro */
-}
-
-
-/* --- ✅ ESTILOS DO DROPDOWN ADAPTADOS PARA O NOVO DESIGN --- */
-.nav-item.dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  display: none; /* Escondido por padrão */
-  position: absolute;
-  top: 50px; /* Ajustado para a altura da navbar */
-  left: 0;
-  background-color: #2c3e50; /* Mesmo fundo da navbar */
-  list-style: none;
-  padding: 0.5rem 0;
-  margin: 0;
-  border-radius: 0 0 5px 5px; /* Bordas arredondadas apenas na parte inferior */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  min-width: 200px;
-  z-index: 1000;
-}
-
-.dropdown-item {
-  color: white;
-  padding: 0.75rem 1.5rem;
-  text-decoration: none;
-  display: block;
-  white-space: nowrap;
-  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
-}
-
-.dropdown-item:hover {
-  color: #1abc9c; /* Muda a cor do texto no hover */
-  background-color: #34495e; /* Um azul um pouco mais claro para o fundo */
-}
-
-.nav-item.dropdown:hover .dropdown-menu {
-  display: block; /* Mostra o menu no hover */
-}
-
-.dropdown-toggle::after {
-  content: ' ▼';
-  font-size: 0.7em;
-  display: inline-block;
-  margin-left: 0.5em;
-}
-
-/* Para o dropdown-toggle não navegar e se comportar como um nav-link */
-.dropdown-toggle {
-  cursor: pointer;
+    background-color: #c0392b; /* Vermelho mais escuro */
 }

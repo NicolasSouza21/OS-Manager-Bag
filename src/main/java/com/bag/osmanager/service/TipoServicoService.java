@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class TipoServicoService {
 
     private final TipoServicoRepository tipoServicoRepository;
-    private final EquipamentoRepository equipamentoRepository; // ✅ Repositório injetado
+    private final EquipamentoRepository equipamentoRepository;
 
     public List<TipoServicoDTO> listarTodos() {
         return tipoServicoRepository.findAll().stream()
@@ -28,24 +28,41 @@ public class TipoServicoService {
                 .collect(Collectors.toList());
     }
 
-    // ✅ MÉTODO 'criar' ATUALIZADO
     @Transactional
     public TipoServicoDTO criar(TipoServicoDTO dto) {
         TipoServico tipoServico = new TipoServico();
         BeanUtils.copyProperties(dto, tipoServico, "equipamentoIds");
         TipoServico salvo = tipoServicoRepository.save(tipoServico);
 
-        // Se o DTO veio com uma lista de IDs de equipamentos, faz a associação
         if (dto.getEquipamentoIds() != null && !dto.getEquipamentoIds().isEmpty()) {
             List<Equipamento> equipamentosParaAssociar = equipamentoRepository.findAllById(dto.getEquipamentoIds());
             for (Equipamento equip : equipamentosParaAssociar) {
                 equip.getServicosDisponiveis().add(salvo);
-                equipamentoRepository.save(equip); // Salva a associação
+                equipamentoRepository.save(equip);
             }
         }
         
         return converteParaDTO(salvo);
     }
+    
+    // ✨ ALTERAÇÃO AQUI: Novo método para a lógica de atualização.
+    @Transactional
+    public TipoServicoDTO atualizar(Long id, TipoServicoDTO dto) {
+        // 1. Busca o serviço existente no banco de dados.
+        TipoServico servico = tipoServicoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Tipo de serviço não encontrado com o ID: " + id));
+            
+        // 2. Copia as novas propriedades (nome, descricao) do DTO para a entidade.
+        //    Ignoramos o 'id' e 'equipamentoIds' para não alterar o ID nem as associações aqui.
+        BeanUtils.copyProperties(dto, servico, "id", "equipamentoIds");
+        
+        // 3. Salva a entidade atualizada no banco.
+        TipoServico servicoAtualizado = tipoServicoRepository.save(servico);
+        
+        // 4. Retorna o DTO correspondente à entidade atualizada.
+        return converteParaDTO(servicoAtualizado);
+    }
+
 
     public void deletar(Long id) {
         if (!tipoServicoRepository.existsById(id)) {
@@ -54,7 +71,6 @@ public class TipoServicoService {
         tipoServicoRepository.deleteById(id);
     }
 
-    // ✅ MÉTODO DE CONVERSÃO ATUALIZADO
     private TipoServicoDTO converteParaDTO(TipoServico tipoServico) {
         TipoServicoDTO dto = new TipoServicoDTO();
         BeanUtils.copyProperties(tipoServico, dto, "equipamentos");

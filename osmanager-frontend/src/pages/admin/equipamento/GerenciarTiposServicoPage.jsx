@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { getTiposServico, createTipoServico, deleteTipoServico, getEquipamentos } from '../../../services/apiService';
-import { FaCheck } from 'react-icons/fa'; // Importa o ícone de check
+import React, { useState, useEffect, useCallback } from 'react';
+// ✨ ALTERAÇÃO AQUI: Importa a nova função 'updateTipoServico' que criaremos a seguir.
+import { getTiposServico, createTipoServico, deleteTipoServico, getEquipamentos, updateTipoServico } from '../../../services/apiService';
+import { FaCheck } from 'react-icons/fa';
 import './GerenciarTiposServicoPage.css';
 
 function GerenciarTiposServicoPage() {
@@ -10,11 +11,11 @@ function GerenciarTiposServicoPage() {
     const [mensagem, setMensagem] = useState({ tipo: '', texto: '' });
     const [equipamentos, setEquipamentos] = useState([]);
 
-    useEffect(() => {
-        carregarDadosIniciais();
-    }, []);
+    // ✨ ALTERAÇÃO AQUI: Estados para controlar o modo de edição da tabela.
+    const [editandoId, setEditandoId] = useState(null);
+    const [formEdicao, setFormEdicao] = useState({ nome: '', descricao: '' });
 
-    const carregarDadosIniciais = () => {
+    const carregarDadosIniciais = useCallback(() => {
         setLoading(true);
         Promise.all([getTiposServico(), getEquipamentos()])
             .then(([servicosResp, equipamentosResp]) => {
@@ -23,7 +24,11 @@ function GerenciarTiposServicoPage() {
             })
             .catch(() => setMensagem({ tipo: 'erro', texto: 'Erro ao carregar dados da página.' }))
             .finally(() => setLoading(false));
-    };
+    }, []);
+
+    useEffect(() => {
+        carregarDadosIniciais();
+    }, [carregarDadosIniciais]);
 
     const handleNovoChange = (e) => {
         const { name, value } = e.target;
@@ -71,6 +76,33 @@ function GerenciarTiposServicoPage() {
                 .catch(() => setMensagem({ tipo: 'erro', texto: 'Erro ao excluir.' }));
         }
     };
+
+    // ✨ ALTERAÇÃO AQUI: Funções para controlar a edição na tabela.
+    const handleEditarClick = (servico) => {
+        setEditandoId(servico.id);
+        setFormEdicao({ nome: servico.nome, descricao: servico.descricao || '' });
+    };
+
+    const handleCancelarEdicao = () => {
+        setEditandoId(null);
+    };
+
+    const handleEdicaoChange = (e) => {
+        const { name, value } = e.target;
+        setFormEdicao(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSalvarEdicao = async (id) => {
+        try {
+            await updateTipoServico(id, formEdicao);
+            setMensagem({ tipo: 'sucesso', texto: 'Serviço atualizado com sucesso!' });
+            setEditandoId(null);
+            carregarDadosIniciais();
+        } catch (err) {
+            setMensagem({ tipo: 'erro', texto: err.response?.data?.message || 'Erro ao atualizar o serviço.' });
+        }
+    };
+
 
     return (
         <div className="gerenciar-servicos-container">
@@ -129,17 +161,46 @@ function GerenciarTiposServicoPage() {
                             <tr>
                                 <th>Nome do Serviço</th>
                                 <th>Descrição</th>
-                                <th>Ações</th>
+                                <th style={{ textAlign: 'right' }}>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {tiposServico.map(servico => (
                                 <tr key={servico.id}>
-                                    <td>{servico.nome}</td>
-                                    <td>{servico.descricao}</td>
-                                    <td>
-                                        <button onClick={() => excluirServico(servico.id)} className="btn-excluir">Excluir</button>
-                                    </td>
+                                    {/* ✨ ALTERAÇÃO AQUI: Lógica condicional para mostrar inputs ou texto */}
+                                    {editandoId === servico.id ? (
+                                        <>
+                                            <td>
+                                                <input
+                                                    type="text"
+                                                    name="nome"
+                                                    value={formEdicao.nome}
+                                                    onChange={handleEdicaoChange}
+                                                />
+                                            </td>
+                                            <td>
+                                                <input
+                                                    type="text"
+                                                    name="descricao"
+                                                    value={formEdicao.descricao}
+                                                    onChange={handleEdicaoChange}
+                                                />
+                                            </td>
+                                            <td className="actions-cell">
+                                                <button onClick={() => handleSalvarEdicao(servico.id)} className="btn-salvar">Salvar</button>
+                                                <button onClick={handleCancelarEdicao} className="btn-cancelar">Cancelar</button>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td>{servico.nome}</td>
+                                            <td>{servico.descricao}</td>
+                                            <td className="actions-cell">
+                                                <button onClick={() => handleEditarClick(servico)} className="btn-editar">Editar</button>
+                                                <button onClick={() => excluirServico(servico.id)} className="btn-excluir">Excluir</button>
+                                            </td>
+                                        </>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

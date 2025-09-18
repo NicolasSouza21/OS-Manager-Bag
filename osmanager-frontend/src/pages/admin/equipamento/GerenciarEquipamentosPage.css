@@ -8,25 +8,22 @@
 
 /* --- Variáveis Globais e Estilos Base --- */
 :root {
-  /* Paleta de Cores Refinada */
-  --cor-primaria: #005A9C;      /* Um azul mais sóbrio e profissional */
+  --cor-primaria: #005A9C;
   --cor-primaria-hover: #004070;
-  --cor-sucesso: #2a9d8f;       /* Verde azulado para sucesso */
+  --cor-sucesso: #2a9d8f;
   --cor-sucesso-hover: #26897f;
-  --cor-alerta: #e76f51;        /* Laranja/vermelho para perigo e exclusão */
+  --cor-alerta: #e76f51;
   --cor-alerta-hover: #d85d3f;
-  --cor-aviso: #f4a261;         /* Amarelo para edição e avisos */
+  --cor-aviso: #f4a261;
   --cor-aviso-hover: #e38d4a;
-  --cor-secundaria: #6c757d;    /* Cinza para ações secundárias (cancelar) */
+  --cor-secundaria: #6c757d;
   
-  /* Tons de Fundo e Texto */
-  --fundo-pagina: #f4f7f6;      /* Um fundo cinza muito claro para destacar os cards */
+  --fundo-pagina: #f4f7f6;
   --fundo-card: #ffffff;
   --cor-texto-principal: #343a40;
   --cor-texto-secundario: #6c757d;
   --cor-borda: #dee2e6;
 
-  /* Métricas e Efeitos */
   --sombra-card: 0 4px 15px rgba(0, 0, 0, 0.07);
   --raio-borda: 8px;
   --transicao-rapida: all 0.2s ease-in-out;
@@ -35,7 +32,7 @@
 body {
   background-color: var(--fundo-pagina);
   color: var(--cor-texto-principal);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte limpa e legível */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* --- Layout Principal e Cards --- */
@@ -45,7 +42,7 @@ body {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 2.5rem; /* Mais espaço entre os elementos principais */
+  gap: 2.5rem;
 }
 
 .form-card, .lista-card {
@@ -69,14 +66,14 @@ body {
 /* --- Formulários --- */
 .form-novo-equipamento {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Layout responsivo */
+  grid-template-columns: 1fr 1fr 1fr auto;
   gap: 1.5rem;
   align-items: flex-end;
 }
 
 .form-novo-equipamento input {
   width: 100%;
-  padding: 12px 15px; /* Inputs mais altos e confortáveis */
+  padding: 12px 15px;
   font-size: 1rem;
   border: 1px solid var(--cor-borda);
   border-radius: 6px;
@@ -93,9 +90,8 @@ body {
 /* --- Tabela de Equipamentos --- */
 .equipamentos-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 10px; /* Espaçamento entre as linhas para parecerem cards */
-  margin-top: -10px;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .equipamentos-table th {
@@ -106,50 +102,45 @@ body {
   border-bottom: 2px solid var(--cor-borda);
 }
 
+.equipamentos-table th:nth-child(1) { width: 20%; }
+.equipamentos-table th:nth-child(2) { width: 25%; }
+.equipamentos-table th:nth-child(3) { width: auto; }
+.equipamentos-table th:nth-child(4) { width: 250px; text-align: right; } /* ✨ ALTERAÇÃO AQUI: Largura ajustada */
+
 .equipamentos-table tbody tr {
-  background-color: var(--fundo-card);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  border-radius: var(--raio-borda);
+  border-bottom: 1px solid var(--cor-borda);
   transition: var(--transicao-rapida);
-  cursor: pointer;
+}
+
+.equipamentos-table tbody tr:last-child {
+  border-bottom: none;
 }
 
 .equipamentos-table tbody tr:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  background-color: #f8f9fa;
 }
 
 .equipamentos-table td {
   padding: 1.25rem 1.5rem;
-  border: none; /* Remove bordas internas */
   vertical-align: middle;
 }
 
-.equipamentos-table td:first-child { border-radius: var(--raio-borda) 0 0 var(--raio-borda); }
-.equipamentos-table td:last-child { border-radius: 0 var(--raio-borda) var(--raio-borda) 0; }
-
 .equipamentos-table tbody tr.selected-row {
   background-color: #eaf5ff;
-  box-shadow: inset 5px 0 0 var(--cor-primaria), 0 5px 15px rgba(0,0,0,0.1);
-  transform: translateY(-3px);
+  box-shadow: inset 4px 0 0 var(--cor-primaria);
 }
 
-/* Tabela em modo de edição */
-.equipamentos-table input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--cor-borda);
-  border-radius: 5px;
-}
-.equipamentos-table input:focus {
-  border-color: var(--cor-primaria);
-  outline: none;
+/* --- Célula de Ações e Botões --- */
+.equipamentos-table td:last-child {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
 }
 
-
-/* --- Botões --- */
 .btn-principal, .btn-servicos, .btn-editar, .btn-excluir, .btn-salvar, .btn-cancelar {
-  padding: 10px 20px;
+  padding: 10px 15px;
+  min-width: 100px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -160,127 +151,40 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px; /* Espaço para futuros ícones */
+  gap: 8px;
+  margin: 0;
 }
 
-.btn-principal { background-color: var(--cor-primaria); }
-.btn-principal:hover { background-color: var(--cor-primaria-hover); transform: scale(1.05); }
+/* ✨ ALTERAÇÃO AQUI: Nova seção para estilizar o modo de edição */
+/* --- Tabela em Modo de Edição --- */
+.equipamentos-table td input {
+    width: 100%;
+    padding: 10px 15px; /* Mesmo padding vertical dos botões para alinhar altura */
+    font-size: 0.95rem;  /* Mesma fonte dos botões */
+    border: 1px solid var(--cor-borda);
+    border-radius: 6px;
+    box-sizing: border-box; /* Garante que padding/border não alterem a largura final */
+    line-height: 1.5; /* Garante consistência de altura de linha */
+}
+.equipamentos-table td input:focus {
+    border-color: var(--cor-primaria);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 90, 156, 0.2);
+}
 
+
+.btn-principal { background-color: var(--cor-primaria); }
+.btn-principal:hover { background-color: var(--cor-primaria-hover); }
 .btn-servicos { background-color: var(--cor-sucesso); }
 .btn-servicos:hover { background-color: var(--cor-sucesso-hover); }
-
 .btn-editar { background-color: var(--cor-aviso); color: var(--fundo-card); }
 .btn-editar:hover { background-color: var(--cor-aviso-hover); }
-
 .btn-excluir { background-color: var(--cor-alerta); }
 .btn-excluir:hover { background-color: var(--cor-alerta-hover); }
-
 .btn-salvar { background-color: var(--cor-sucesso); }
 .btn-salvar:hover { background-color: var(--cor-sucesso-hover); }
-
 .btn-cancelar { background-color: var(--cor-secundaria); }
 .btn-cancelar:hover { filter: brightness(1.2); }
 
-td .btn-servicos, td .btn-editar, td .btn-excluir { margin: 0 4px; }
-
-
-/* --- Modal --- */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(10, 20, 30, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(5px);
-}
-
-.modal-content {
-  background: var(--fundo-card);
-  padding: 0; /* Padding será controlado por seções internas */
-  border-radius: var(--raio-borda);
-  width: 90%;
-  max-width: 550px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-content h2 {
-  font-size: 1.3rem;
-  padding: 1.5rem 2rem;
-  margin: 0;
-  color: var(--cor-primaria);
-  border-bottom: 1px solid var(--cor-borda);
-}
-
-.modal-content p {
-  padding: 0 2rem;
-  color: var(--cor-texto-secundario);
-}
-
-.lista-servicos-modal {
-  max-height: 350px;
-  overflow-y: auto;
-  padding: 0.5rem 2rem;
-  margin: 1rem 0;
-}
-
-.servico-item-modal label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: var(--transicao-rapida);
-}
-
-.servico-item-modal label:hover {
-  background-color: #eaf5ff;
-}
-
-.servico-item-modal input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-.btn-fechar-modal {
-  align-self: flex-end;
-  margin: 1.5rem 2rem;
-  padding: 10px 25px;
-  background-color: var(--cor-secundaria);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  transition: var(--transicao-rapida);
-}
-.btn-fechar-modal:hover {
-  filter: brightness(1.15);
-}
-
-/* --- Mensagens de Feedback --- */
-.mensagem {
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: var(--raio-borda);
-  font-weight: 500;
-  color: var(--fundo-card);
-  text-align: center;
-}
-
-.mensagem.sucesso { background-color: var(--cor-sucesso); }
-.mensagem.erro { background-color: var(--cor-alerta); }
-
-/* --- Linha de Planos de Manutenção --- */
-.planos-row td {
-  background-color: #fafafa;
-  box-shadow: inset 0 4px 8px -2px rgba(0,0,0,0.05);
-}
-
-.planos-preventiva-content {
-  padding: 1.5rem;
-}
+/* --- Modal, Mensagens e outros --- */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background-color:rgba(10,20,30,.7);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(5px)}.modal-content{background:var(--fundo-card);padding:0;border-radius:var(--raio-borda);width:90%;max-width:550px;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;flex-direction:column}.modal-content h2{font-size:1.3rem;padding:1.5rem 2rem;margin:0;color:var(--cor-primaria);border-bottom:1px solid var(--cor-borda)}.modal-content p{padding:0 2rem;color:var(--cor-texto-secundario)}.lista-servicos-modal{max-height:350px;overflow-y:auto;padding:.5rem 2rem;margin:1rem 0}.servico-item-modal label{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;border-radius:6px;transition:var(--transicao-rapida)}.servico-item-modal label:hover{background-color:#eaf5ff}.servico-item-modal input[type=checkbox]{width:18px;height:18px;cursor:pointer}.btn-fechar-modal{align-self:flex-end;margin:1.5rem 2rem;padding:10px 25px;background-color:var(--cor-secundaria);color:#fff;border:none;border-radius:6px;font-weight:700;transition:var(--transicao-rapida)}.btn-fechar-modal:hover{filter:brightness(1.15)}.mensagem{padding:1rem;margin-bottom:1rem;border-radius:var(--raio-borda);font-weight:500;color:var(--fundo-card);text-align:center}.mensagem.sucesso{background-color:var(--cor-sucesso)}.mensagem.erro{background-color:var(--cor-alerta)}.planos-row td{background-color:#fafafa;box-shadow:inset 0 4px 8px -2px rgba(0,0,0,.05)}.planos-preventiva-content{padding:1.5rem}

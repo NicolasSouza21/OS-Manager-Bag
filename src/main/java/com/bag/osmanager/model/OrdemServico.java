@@ -9,9 +9,9 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
-import java.util.HashSet; // ✨ ALTERAÇÃO AQUI: import adicionado
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set; // ✨ ALTERAÇÃO AQUI: import adicionado
+import java.util.Set;
 
 @Entity
 @Table(
@@ -72,6 +72,13 @@ public class OrdemServico {
 
     private Boolean maquinaParada;
     private Boolean trocaPecas;
+    
+    // ✨ ALTERAÇÃO AQUI: Novos campos para as justificativas
+    @Column(columnDefinition = "TEXT")
+    private String motivoMaquinaParada;
+
+    @Column(columnDefinition = "TEXT")
+    private String motivoTrocaPeca;
 
     @OneToMany(mappedBy = "ordemServico", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PecaSubstituida> pecasSubstituidas;
@@ -110,10 +117,9 @@ public class OrdemServico {
     @Column(nullable = true)
     private LocalDateTime dataInicioPreventiva;
 
-    // ✨ ALTERAÇÃO AQUI: A relação de um-para-muitos foi trocada por muitos-para-muitos.
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "ordens_servico_tipos_servico", // Nome da nova tabela de junção
+        name = "ordens_servico_tipos_servico",
         joinColumns = @JoinColumn(name = "ordem_servico_id"),
         inverseJoinColumns = @JoinColumn(name = "tipo_servico_id")
     )

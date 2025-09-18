@@ -29,6 +29,14 @@ public class TipoServicoController {
         return new ResponseEntity<>(novoServico, HttpStatus.CREATED);
     }
 
+    // ✨ ALTERAÇÃO AQUI: Novo endpoint para atualizar um serviço existente.
+    @PutMapping("/{id}")
+    public ResponseEntity<TipoServicoDTO> atualizar(@PathVariable Long id, @RequestBody TipoServicoDTO dto) {
+        TipoServicoDTO servicoAtualizado = tipoServicoService.atualizar(id, dto);
+        return ResponseEntity.ok(servicoAtualizado);
+    }
+
+
     // Deleta um tipo de serviço
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {

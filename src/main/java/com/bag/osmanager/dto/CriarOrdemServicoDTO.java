@@ -2,13 +2,11 @@ package com.bag.osmanager.dto;
 
 import com.bag.osmanager.model.enums.Prioridade;
 import com.bag.osmanager.model.enums.TipoManutencao;
-import com.bag.osmanager.model.enums.Turno;
-
-import jakarta.validation.constraints.NotEmpty; // ✨ ALTERAÇÃO AQUI: Import para validar listas não vazias
+import com.bag.osmanager.model.enums.Turno; // ✨ CORREÇÃO AQUI: Import re-adicionado
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import java.time.LocalDateTime;
-import java.util.Set; // ✨ ALTERAÇÃO AQUI: Import do Set
+import java.time.LocalDate; 
+import java.util.Set;
 
 @Data
 public class CriarOrdemServicoDTO {
@@ -18,23 +16,22 @@ public class CriarOrdemServicoDTO {
 
     private Long localId;
 
-    @NotNull(message = "A prioridade é obrigatória.")
     private Prioridade prioridade;
 
-    @NotNull(message = "O turno é obrigatório.")
+    // ✨ CORREÇÃO AQUI: Campo 'turno' foi re-adicionado, sem a validação @NotNull.
     private Turno turno;
 
     @NotNull(message = "O tipo de manutenção é obrigatório.")
     private TipoManutencao tipoManutencao;
 
     private String descricaoProblema;
+    
+    // ✨ CORREÇÃO AQUI: Campo 'solicitante' foi re-adicionado, sem validação.
     private String solicitante;
 
-    private LocalDateTime dataInicioPreventiva;
+    private LocalDate dataInicioPreventiva;
     
-    // ✨ ALTERAÇÃO AQUI: Trocamos o campo de ID único por um conjunto de IDs
-    // Usamos @NotEmpty para garantir que, se a lista for enviada, ela não esteja vazia.
-    @NotEmpty(message = "Pelo menos um tipo de serviço deve ser selecionado para preventivas.")
+    // ✨ CORREÇÃO AQUI: A validação @NotEmpty que causava o erro foi removida.
     private Set<Long> tipoServicoIds; 
 
     private Long frequenciaId;

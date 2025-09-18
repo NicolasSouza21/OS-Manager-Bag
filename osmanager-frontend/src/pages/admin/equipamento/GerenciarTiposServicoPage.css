@@ -11,6 +11,9 @@
     --cor-primaria: #005A9C;
     --cor-primaria-hover: #004070;
     --cor-sucesso: #2a9d8f;
+    --cor-alerta: #e76f51;
+    --cor-aviso: #f4a261;
+    --cor-neutra: #6c757d;
     --cor-borda: #dee2e6;
     --fundo-pagina: #f4f7f6;
     --fundo-card: #ffffff;
@@ -51,7 +54,7 @@
 
 .form-card h3 {
     font-size: 1.2rem;
-    margin-top: 2.5rem; /* Espaço antes do título "Associar" */
+    margin-top: 2.5rem;
     margin-bottom: 1rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--cor-borda);
@@ -92,7 +95,6 @@
     resize: vertical;
 }
 
-/* ✨ ALTERAÇÃO AQUI: Estilos para a nova lista de associação de equipamentos */
 .equipamentos-card-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -116,7 +118,7 @@
     cursor: pointer;
     transition: var(--transicao-rapida);
     font-weight: 500;
-    position: relative; /* Para o ícone de check */
+    position: relative;
 }
 
 .equipamento-card:hover {
@@ -125,7 +127,6 @@
     box-shadow: 0 3px 8px rgba(0,0,0,0.06);
 }
 
-/* ✅ CORREÇÃO AQUI: Estilo para o card quando ele tem a classe 'selecionado' */
 .equipamento-card.selecionado {
     border-color: var(--cor-primaria);
     background-color: #eaf5ff;
@@ -134,7 +135,7 @@
 }
 
 .equipamento-card input[type="checkbox"] {
-    display: none; /* Oculta o checkbox original */
+    display: none;
 }
 
 .equipamento-card .check-icon {
@@ -160,8 +161,6 @@
     transform: scale(1);
 }
 
-
-/* --- Botão Principal --- */
 .btn-submit {
     width: 100%;
     padding: 14px 20px;
@@ -195,3 +194,56 @@
     border-collapse: collapse;
     margin-top: 1.5rem;
 }
+
+/* ✨ ALTERAÇÃO AQUI: Adicionados estilos base para células da tabela */
+.servicos-table th,
+.servicos-table td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--cor-borda);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.servicos-table th {
+    font-weight: 600;
+    color: var(--cor-texto-secundario);
+}
+
+/* ✨ ALTERAÇÃO AQUI: Estilo para os inputs no modo de edição */
+.servicos-table input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 0.95rem;
+}
+
+/* ✨ ALTERAÇÃO AQUI: Novos estilos para padronizar os botões */
+.actions-cell {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.btn-editar, .btn-excluir, .btn-salvar, .btn-cancelar {
+    padding: 0.6rem 0; /* Ajustado o padding */
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: 90px; /* Largura fixa para todos */
+    text-align: center;
+    transition: var(--transicao-rapida);
+}
+
+.btn-editar:hover, .btn-excluir:hover, .btn-salvar:hover, .btn-cancelar:hover {
+    filter: brightness(1.15); /* Efeito de brilho sutil no hover */
+}
+
+/* Cores específicas de cada botão */
+.btn-editar   { background-color: var(--cor-aviso); }
+.btn-excluir  { background-color: var(--cor-alerta); }
+.btn-salvar   { background-color: var(--cor-sucesso); }
+.btn-cancelar { background-color: var(--cor-neutra); }

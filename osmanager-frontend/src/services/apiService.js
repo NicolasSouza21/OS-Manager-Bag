@@ -53,7 +53,6 @@ export const listarServicosPorEquipamento = (equipamentoId) => api.get(`/equipam
 export const associarServico = (equipamentoId, servicoId) => api.post(`/equipamentos/${equipamentoId}/servicos/${servicoId}`);
 export const desassociarServico = (equipamentoId, servicoId) => api.delete(`/equipamentos/${equipamentoId}/servicos/${servicoId}`);
 
-// ✨ ALTERAÇÃO AQUI: Funções para SETORES e LOCAIS adicionadas/atualizadas
 /** SETORES */
 export const getSetores = () => api.get('/setores');
 export const createSetor = (setorData) => api.post('/setores', setorData);
@@ -76,6 +75,8 @@ export const deletarPlano = (planoId) => api.delete(`/planos-preventiva/${planoI
 /** TIPOS DE SERVIÇO */
 export const getTiposServico = () => api.get('/tipos-servico');
 export const createTipoServico = (servicoData) => api.post('/tipos-servico', servicoData);
+// ✨ ALTERAÇÃO AQUI: Nova função para fazer a chamada PUT de atualização.
+export const updateTipoServico = (id, servicoData) => api.put(`/tipos-servico/${id}`, servicoData);
 export const deleteTipoServico = (id) => api.delete(`/tipos-servico/${id}`);
 
 /** FREQUÊNCIAS */

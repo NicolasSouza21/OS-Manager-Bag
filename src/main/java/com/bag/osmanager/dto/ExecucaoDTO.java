@@ -1,7 +1,7 @@
 package com.bag.osmanager.dto;
 
-import com.bag.osmanager.model.enums.StatusOrdemServico; // ✅ IMPORT ADICIONADO
-import jakarta.validation.constraints.NotNull; // ✅ IMPORT ADICIONADO
+import com.bag.osmanager.model.enums.StatusOrdemServico;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,8 +9,6 @@ import java.util.List;
 
 @Data
 public class ExecucaoDTO {
-    // O mecanicoId não é mais necessário aqui, pois pegamos do usuário logado
-    // private Long mecanicoId; 
     
     private String acaoRealizada;
     private LocalDateTime inicio;
@@ -19,7 +17,10 @@ public class ExecucaoDTO {
     private Boolean trocaPecas;
     private List<PecaSubstituidaDTO> pecasSubstituidas;
 
-    // ✅ NOVO CAMPO PARA O STATUS FINAL
+    // ✨ ALTERAÇÃO AQUI: Novos campos para as justificativas
+    private String motivoMaquinaParada;
+    private String motivoTrocaPeca;
+
     @NotNull(message = "O status final da OS é obrigatório.")
     private StatusOrdemServico statusFinal; 
 }

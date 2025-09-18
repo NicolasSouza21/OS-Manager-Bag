@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map; // 2. ✅ Importe o Map
 import java.util.Set;
-
+ 
 @RestController
 @RequestMapping("/api/equipamentos")
 @RequiredArgsConstructor

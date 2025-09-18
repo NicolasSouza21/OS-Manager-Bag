@@ -35,13 +35,13 @@ public class OrdemServicoService {
     private final TipoServicoRepository tipoServicoRepository;
     private final FrequenciaRepository frequenciaRepository;
 
+    // ... (método criarOS e outros permanecem inalterados)
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         OrdemServico os = new OrdemServico();
         BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoIds", "frequenciaId");
 
         os.setDataSolicitacao(LocalDateTime.now());
-        os.setStatus(StatusOrdemServico.ABERTA);
         os.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
 
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
@@ -56,13 +56,16 @@ public class OrdemServicoService {
 
         long proximoNumero = osRepository.findMaxNumeroSequencial().orElse(0L) + 1;
         os.setNumeroSequencial(proximoNumero);
-        
         os.setCodigoOs(String.valueOf(proximoNumero));
 
         if (dto.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
             if (dto.getTipoServicoIds() == null || dto.getTipoServicoIds().isEmpty() || dto.getFrequenciaId() == null || dto.getDataInicioPreventiva() == null) {
                 throw new IllegalArgumentException("Para OS Preventiva, ao menos um serviço, a frequência e a data de início são obrigatórios.");
             }
+            
+            os.setStatus(StatusOrdemServico.PENDENTE);
+            os.setSolicitante("SISTEMA (AUTO)");
+            os.setTurno(Turno.PRIMEIRO);
             
             List<TipoServico> tiposServicoList = tipoServicoRepository.findAllById(dto.getTipoServicoIds());
             if (tiposServicoList.size() != dto.getTipoServicoIds().size()) {
@@ -79,9 +82,17 @@ public class OrdemServicoService {
                 .collect(Collectors.joining(", "));
             os.setDescricaoProblema(descricao);
             
-            os.setDataInicioPreventiva(dto.getDataInicioPreventiva());
+            os.setDataInicioPreventiva(dto.getDataInicioPreventiva().atStartOfDay());
 
         } else { // CORRETIVA
+            os.setStatus(StatusOrdemServico.ABERTA);
+            
+            if (dto.getPrioridade() == null) {
+                   throw new IllegalArgumentException("Para OS Corretiva, a prioridade é obrigatória.");
+            }
+            os.setSolicitante(dto.getSolicitante());
+            os.setTurno(dto.getTurno());
+
             switch (dto.getPrioridade()) {
                 case ALTA: os.setDataLimite(LocalDateTime.now().with(LocalTime.MAX)); break;
                 case MEDIA: os.setDataLimite(LocalDateTime.now().plusDays(4)); break;
@@ -98,6 +109,10 @@ public class OrdemServicoService {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
 
+        if (os.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
+            throw new IllegalStateException("Ação não permitida: Preventivas não possuem etapa de ciência.");
+        }
+
         if (os.getStatus() != StatusOrdemServico.ABERTA) {
             throw new IllegalStateException("Ação não permitida: a OS não está com o status 'ABERTA'.");
         }
@@ -111,7 +126,7 @@ public class OrdemServicoService {
 
         os.setMecanicoCiencia(funcionario);
         os.setDataCiencia(LocalDateTime.now());
-        os.setStatus(StatusOrdemServico.CIENTE);
+        os.setStatus(StatusOrdemServico.PENDENTE);
 
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
@@ -122,15 +137,15 @@ public class OrdemServicoService {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
 
-        if (os.getStatus() != StatusOrdemServico.CIENTE) {
-            throw new IllegalStateException("Ação não permitida: a OS precisa estar com o status 'CIENTE' para iniciar a execução.");
+        if (os.getStatus() != StatusOrdemServico.PENDENTE) {
+            throw new IllegalStateException("Ação não permitida: a OS precisa estar com o status 'PENDENTE' para iniciar a execução.");
         }
 
         os.setStatus(StatusOrdemServico.EM_EXECUCAO);
         OrdemServico osAtualizada = osRepository.save(os);
         return converteParaDTO(osAtualizada);
     }
-
+    
     @Transactional
     public OrdemServicoDTO registrarExecucao(Long osId, Long executanteId, ExecucaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
@@ -150,6 +165,10 @@ public class OrdemServicoService {
         os.setInicio(dto.getInicio());
         os.setTermino(dto.getTermino());
         os.setMaquinaParada(dto.getMaquinaParada());
+
+        // ✨ ALTERAÇÃO AQUI: Salva os novos campos de motivo na entidade
+        os.setMotivoMaquinaParada(dto.getMotivoMaquinaParada());
+        os.setMotivoTrocaPeca(dto.getMotivoTrocaPeca());
 
         if (os.getTipoManutencao() == TipoManutencao.PREVENTIVA && dto.getStatusFinal() == StatusOrdemServico.CONCLUIDA) {
             os.setStatus(StatusOrdemServico.AGUARDANDO_VERIFICACAO);
@@ -177,6 +196,7 @@ public class OrdemServicoService {
         return converteParaDTO(osAtualizada);
     }
 
+    // ... (o restante da classe continua inalterado)
     @Transactional
     public OrdemServicoDTO verificarOS(Long osId, Long verificadorId, VerificacaoDTO dto) {
         OrdemServico osConcluida = osRepository.findById(osId)
@@ -206,7 +226,6 @@ public class OrdemServicoService {
             osConcluida.setStatusVerificacao(StatusVerificacao.REPROVADO);
         }
 
-        // ✅ CORREÇÃO AQUI: A variável a ser salva é 'osConcluida', não 'os'.
         OrdemServico osAtualizada = osRepository.save(osConcluida);
         return converteParaDTO(osAtualizada);
     }
@@ -282,7 +301,7 @@ public class OrdemServicoService {
         proximaOS.setPrioridade(Prioridade.MEDIA);
         proximaOS.setDataSolicitacao(LocalDateTime.now());
         proximaOS.setDataInicioPreventiva(proximaDataHora);
-        proximaOS.setStatus(StatusOrdemServico.ABERTA);
+        proximaOS.setStatus(StatusOrdemServico.PENDENTE);
         proximaOS.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
         
         long proximoNumero = osRepository.findMaxNumeroSequencial().orElse(0L) + 1;

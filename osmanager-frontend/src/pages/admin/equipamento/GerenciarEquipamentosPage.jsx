@@ -7,8 +7,7 @@ import {
 } from '../../../services/apiService';
 import './GerenciarEquipamentosPage.css';
 
-const FREQUENCIA_OPTIONS = ['UNICA', 'DIARIO', 'BIDIARIO', 'SEMANAL', 'QUINZENAL', 'MENSAL', 'BIMESTRAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'];
-
+// ... (O componente ModalAssociarServicos permanece o mesmo, não precisa de alterações)
 const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdate }) => {
     const [servicosAssociados, setServicosAssociados] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -70,16 +69,16 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
     );
 };
 
+
 function GerenciarEquipamentosPage() {
     const [equipamentos, setEquipamentos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editandoId, setEditandoId] = useState(null);
     
-    // ✨ ALTERAÇÃO AQUI: O estado para edição foi ajustado. O campo 'tag' agora representa o 'Número do Ativo'.
-    const [formEdicao, setFormEdicao] = useState({ tag: '', nome: '', descricao: '' });
+    // ✨ ALTERAÇÃO AQUI: A descrição foi removida do estado de edição
+    const [formEdicao, setFormEdicao] = useState({ tag: '', nome: '' });
 
-    // ✨ ALTERAÇÃO AQUI: O estado para um novo equipamento agora reflete os campos simplificados.
-    const [novoEquipamento, setNovoEquipamento] = useState({ nome: '', descricao: '', tag: '' });
+    const [novoEquipamento, setNovoEquipamento] = useState({ nome: '', tag: '' });
 
     const [tiposServico, setTiposServico] = useState([]);
     const [selectedEquip, setSelectedEquip] = useState(null);
@@ -161,19 +160,17 @@ function GerenciarEquipamentosPage() {
     const handleNovoEquipamentoSubmit = (e) => {
         e.preventDefault();
         limparMensagem();
-
-        // ✅ CORREÇÃO: Prepara o objeto para a API. O campo 'tag' representa o Número do Ativo.
+        
         const dadosParaApi = {
             nome: novoEquipamento.nome,
-            descricao: novoEquipamento.descricao,
-            tag: novoEquipamento.tag // O campo 'tag' é enviado, mesmo que vazio.
+            tag: novoEquipamento.tag,
+            descricao: " "
         };
 
         createEquipamento(dadosParaApi)
             .then(() => {
                 exibeMensagemTemporaria('Equipamento criado com sucesso!');
-                // ✅ CORREÇÃO: Limpa o formulário para o estado inicial correto.
-                setNovoEquipamento({ nome: '', descricao: '', tag: '' });
+                setNovoEquipamento({ nome: '', tag: '' });
                 carregarEquipamentos();
             })
             .catch(error => {
@@ -203,7 +200,8 @@ function GerenciarEquipamentosPage() {
     const handleEditarClick = (equip) => {
         limparMensagem();
         setEditandoId(equip.id);
-        setFormEdicao({ tag: equip.tag, nome: equip.nome, descricao: equip.descricao || '' });
+        // ✨ ALTERAÇÃO AQUI: A descrição foi removida do formulário de edição
+        setFormEdicao({ tag: equip.tag, nome: equip.nome });
     };
 
     const handleEdicaoChange = (e) => {
@@ -213,7 +211,14 @@ function GerenciarEquipamentosPage() {
 
     const handleSalvarEdicao = (id) => {
         limparMensagem();
-        updateEquipamento(id, formEdicao)
+        // ✨ ALTERAÇÃO AQUI: Incluímos a descrição antiga para não apagar o que já existe no banco.
+        const equipamentoOriginal = equipamentos.find(e => e.id === id);
+        const dadosParaApi = {
+            ...formEdicao,
+            descricao: equipamentoOriginal?.descricao || ' '
+        };
+
+        updateEquipamento(id, dadosParaApi)
             .then(() => {
                 exibeMensagemTemporaria('Equipamento atualizado com sucesso!');
                 setEditandoId(null);
@@ -260,10 +265,8 @@ function GerenciarEquipamentosPage() {
             {mensagem.texto && <div className={`mensagem ${mensagem.tipo}`}>{mensagem.texto}</div>}
             <div className="form-card">
                 <h2>Cadastrar Novo Equipamento</h2>
-                {/* ✨ ALTERAÇÃO AQUI: Formulário de cadastro simplificado */}
                 <form onSubmit={handleNovoEquipamentoSubmit} className="form-novo-equipamento">
                     <input type="text" name="nome" value={novoEquipamento.nome} onChange={handleNovoEquipamentoChange} placeholder="Nome do Equipamento" required />
-                    <input type="text" name="descricao" value={novoEquipamento.descricao} onChange={handleNovoEquipamentoChange} placeholder="Descrição" required />
                     <input type="text" name="tag" value={novoEquipamento.tag} onChange={handleNovoEquipamentoChange} placeholder="Número do Ativo (Opcional)" />
                     <button type="submit" className="btn-principal">Adicionar</button>
                 </form>
@@ -273,10 +276,9 @@ function GerenciarEquipamentosPage() {
                 <table className="equipamentos-table">
                     <thead>
                         <tr>
-                            {/* ✨ ALTERAÇÃO AQUI: A coluna "TAG" agora é "Nº do Ativo" */}
                             <th>Nº do Ativo</th>
                             <th>Nome</th>
-                            <th>Descrição</th>
+                            {/* ✨ ALTERAÇÃO AQUI: Coluna de descrição REMOVIDA da tabela */}
                             <th style={{ textAlign: 'right' }}>Ações</th>
                         </tr>
                     </thead>
@@ -285,10 +287,9 @@ function GerenciarEquipamentosPage() {
                              <tr key={equip.id} onClick={() => handleSelectEquipamento(equip)} className={selectedEquip?.id === equip.id ? 'selected-row' : ''}>
                                 {editandoId === equip.id ? (
                                     <>
-                                        {/* ✨ ALTERAÇÃO AQUI: Campo de edição para o Nº do Ativo (antigo TAG) */}
                                         <td><input type="text" name="tag" value={formEdicao.tag} onChange={handleEdicaoChange} onClick={e => e.stopPropagation()} placeholder="Nº do Ativo (Opcional)" /></td>
                                         <td><input type="text" name="nome" value={formEdicao.nome} onChange={handleEdicaoChange} onClick={e => e.stopPropagation()} required /></td>
-                                        <td><input type="text" name="descricao" value={formEdicao.descricao} onChange={handleEdicaoChange} onClick={e => e.stopPropagation()} required/></td>
+                                        {/* ✨ ALTERAÇÃO AQUI: Input de descrição REMOVIDO do modo de edição */}
                                         <td onClick={e => e.stopPropagation()} style={{ textAlign: 'right' }}>
                                             <button onClick={() => handleSalvarEdicao(equip.id)} className="btn-salvar">Salvar</button>
                                             <button onClick={() => setEditandoId(null)} className="btn-cancelar">Cancelar</button>
@@ -296,10 +297,9 @@ function GerenciarEquipamentosPage() {
                                     </>
                                 ) : (
                                     <>
-                                        {/* O campo `equip.tag` continua vindo do backend, mas agora representa o Nº do Ativo */}
                                         <td>{equip.tag}</td>
                                         <td>{equip.nome}</td>
-                                        <td>{equip.descricao}</td>
+                                        {/* ✨ ALTERAÇÃO AQUI: Coluna de descrição REMOVIDA da visualização */}
                                         <td onClick={e => e.stopPropagation()} style={{ textAlign: 'right' }}>
                                             <button onClick={() => handleOpenServicosModal(equip)} className="btn-servicos">Serviços</button>
                                             <button onClick={() => handleEditarClick(equip)} className="btn-editar">Editar</button>
