@@ -45,8 +45,8 @@ public class OsmanagerApplication {
             } else {
                 System.out.println("Usuário admin já existe. Nenhuma ação necessária.");
             }
-
+ 
           
         };
     }
-}
+}  
