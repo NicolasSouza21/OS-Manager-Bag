@@ -265,7 +265,7 @@ function CriarOsPage() {
                                     </select>
                                 </div>
                                 <div className="input-group">
-                                    <label htmlFor="dataInicioPreventiva">INÍCIO PROGRAMADO:</label>
+                                    <label htmlFor="dataInicioPreventiva">DATA PROGRAMADA:</label>
                                     <input type="date" id="dataInicioPreventiva" name="dataInicioPreventiva" value={formData.dataInicioPreventiva} onChange={handleInputChange} required />
                                 </div>
                             </div>

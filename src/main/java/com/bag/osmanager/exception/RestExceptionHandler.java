@@ -1,3 +1,4 @@
+// Local do arquivo: src/main/java/com/bag/osmanager/exception/RestExceptionHandler.java
 package com.bag.osmanager.exception;
 
 import com.bag.osmanager.dto.ErrorResponseDTO;
@@ -27,11 +28,6 @@ public class RestExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    // --- ✅ NOVO MÉTODO ADICIONADO ---
-    /**
-     * Captura a DataIntegrityException e cria uma resposta de erro HTTP 409 (Conflict)
-     * com um corpo JSON detalhado, garantindo que a mensagem customizada seja enviada.
-     */
     @ExceptionHandler(DataIntegrityException.class)
     public ResponseEntity<ErrorResponseDTO> handleDataIntegrityException(
             DataIntegrityException ex, HttpServletRequest request) {
@@ -39,11 +35,31 @@ public class RestExceptionHandler {
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
-                "Conflito de Dados", // Título genérico para o tipo de erro
-                ex.getMessage(),      // A nossa mensagem: "Não é possível excluir..."
+                "Conflito de Dados",
+                ex.getMessage(),
                 request.getRequestURI()
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    // ✨ ALTERAÇÃO AQUI: Novo método para capturar erros de validação e lógica de negócio.
+    /**
+     * Captura exceções de argumento ilegal ou estado ilegal, que usamos para validações
+     * de negócio no service. Retorna uma resposta HTTP 400 (Bad Request).
+     */
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<ErrorResponseDTO> handleIllegalArgumentAndStateException(
+            RuntimeException ex, HttpServletRequest request) {
+        
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Requisição Inválida", // Título genérico para este tipo de erro
+                ex.getMessage(),      // A mensagem específica: "Prioridade é obrigatória..."
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

@@ -1,3 +1,4 @@
+// Local do arquivo: src/main/java/com/bag/osmanager/controller/OrdemServicoController.java
 package com.bag.osmanager.controller;
 
 import com.bag.osmanager.dto.*;
@@ -12,14 +13,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat; // ✨ IMPORT ADICIONADO
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate; // ✨ IMPORT ADICIONADO
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/ordens-servico")
@@ -43,14 +44,12 @@ public class OrdemServicoController {
             @RequestParam(required = false) Long localId,
             @RequestParam(required = false) Long mecanicoId,
             @RequestParam(required = false) StatusVerificacao statusVerificacao,
-            // ✨ ALTERAÇÃO: Adicionados os parâmetros de data.
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
             @PageableDefault(size = 10, sort = "dataSolicitacao", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<OrdemServicoDTO> pagina = osService.buscarComFiltros(
             keyword, status, tipoManutencao, equipamentoId, localId, mecanicoId, statusVerificacao,
-            // ✨ ALTERAÇÃO: Passando os novos parâmetros para o service.
             dataInicio, dataFim,
             pageable
         );
@@ -69,8 +68,10 @@ public class OrdemServicoController {
         return ResponseEntity.ok(osService.registrarCiencia(id, funcionarioId));
     }
 
+    // ✨ ALTERAÇÃO AQUI: Método corrigido para chamar o service com apenas um parâmetro.
     @PutMapping("/{id}/iniciar-execucao")
     public ResponseEntity<OrdemServicoDTO> iniciarExecucao(@PathVariable Long id) {
+        // A lógica de pegar o usuário não é mais necessária aqui, pois o service foi simplificado.
         return ResponseEntity.ok(osService.iniciarExecucao(id));
     }
 
