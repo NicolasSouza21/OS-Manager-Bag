@@ -17,10 +17,10 @@ public class Local {
     @Column(nullable = false)
     private String nome;
 
-    // ✨ ALTERAÇÃO AQUI: O campo 'setor' agora é uma relação com a entidade Setor.
-    // Um local pertence a um setor.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "setor_id", nullable = false)
     @JsonBackReference
+    // ✅ CORREÇÃO AQUI: Exclui o campo 'setor' do método toString() para quebrar o loop.
+    @ToString.Exclude 
     private Setor setor;
 }

@@ -4,7 +4,7 @@ import com.bag.osmanager.model.enums.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set; // ✨ ALTERAÇÃO AQUI: Import adicionado
+import java.util.Set;
 
 @Data
 public class OrdemServicoDTO {
@@ -19,6 +19,9 @@ public class OrdemServicoDTO {
     // Detalhes da OS
     private Long equipamentoId;
     private Long localId;
+    // ✨ ALTERAÇÃO AQUI: Campos para os nomes do local e setor adicionados
+    private String localNome;
+    private String setorNome;
     private Prioridade prioridade;
     private Turno turno;
     private TipoManutencao tipoManutencao;
@@ -53,11 +56,6 @@ public class OrdemServicoDTO {
     // Dados da Preventiva
     private LocalDateTime dataInicioPreventiva;
     
-    // ✨ ALTERAÇÃO AQUI: Os campos antigos de serviço único foram removidos.
-    // private Long tipoServicoId;
-    // private String tipoServicoNome;
-
-    // ✨ ALTERAÇÃO AQUI: Novo campo para a lista de serviços.
     private Set<TipoServicoDTO> tiposServico;
     
     private FrequenciaDTO frequencia;

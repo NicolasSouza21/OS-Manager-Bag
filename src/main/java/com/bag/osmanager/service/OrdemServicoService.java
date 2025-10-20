@@ -38,33 +38,51 @@ public class OrdemServicoService {
 
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
-        OrdemServico os = new OrdemServico();
-        BeanUtils.copyProperties(dto, os, "equipamentoId", "localId", "tipoServicoIds", "frequenciaId");
+        
+        // Validações Manuais
+        if (dto.getEquipamentoId() == null) {
+            throw new IllegalArgumentException("O ID do equipamento é obrigatório.");
+        }
+        if (dto.getTipoManutencao() == null) {
+            throw new IllegalArgumentException("O tipo de manutenção é obrigatório.");
+        }
 
+        // ✅ CORREÇÃO DEFINITIVA AQUI: Mapeamento 100% manual para garantir que nada se perca.
+        OrdemServico os = new OrdemServico();
+        os.setSolicitante(dto.getSolicitante());
+        os.setTipoManutencao(dto.getTipoManutencao());
+        os.setDescricaoProblema(dto.getDescricaoProblema());
+        os.setTurno(dto.getTurno()); // Adicionado para garantir que o turno seja salvo
+
+        // Dados padrão
         os.setDataSolicitacao(LocalDateTime.now());
         os.setStatus(StatusOrdemServico.ABERTA);
         os.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
 
+        // Associa o Equipamento
         Equipamento equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento com ID " + dto.getEquipamentoId() + " não encontrado!"));
         os.setEquipamento(equipamento);
 
+        // Associa o Local (se existir)
         if (dto.getLocalId() != null && dto.getLocalId() > 0) {
             Local local = localRepository.findById(dto.getLocalId())
                     .orElseThrow(() -> new ResourceNotFoundException("Local com ID " + dto.getLocalId() + " não encontrado!"));
             os.setLocal(local);
         }
 
+        // Gera número sequencial
         long proximoNumero = osRepository.findMaxNumeroSequencial().orElse(0L) + 1;
         os.setNumeroSequencial(proximoNumero);
-        
         os.setCodigoOs(String.valueOf(proximoNumero));
 
+        // Lógica para Preventiva ou Corretiva
         if (dto.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
-            // ✅ CORREÇÃO AQUI: Esta é a validação manual que substitui a anotação no DTO.
             if (dto.getTipoServicoIds() == null || dto.getTipoServicoIds().isEmpty() || dto.getFrequenciaId() == null || dto.getDataInicioPreventiva() == null) {
                 throw new IllegalArgumentException("Para OS Preventiva, ao menos um serviço, a frequência e a data de início são obrigatórios.");
             }
+            
+            os.setPrioridade(Prioridade.MEDIA); // Define prioridade padrão para preventiva
             
             List<TipoServico> tiposServicoList = tipoServicoRepository.findAllById(dto.getTipoServicoIds());
             if (tiposServicoList.size() != dto.getTipoServicoIds().size()) {
@@ -81,22 +99,27 @@ public class OrdemServicoService {
                 .collect(Collectors.joining(", "));
             os.setDescricaoProblema(descricao);
             
-            os.setDataInicioPreventiva(dto.getDataInicioPreventiva());
+            os.setDataInicioPreventiva(dto.getDataInicioPreventiva().atStartOfDay());
 
         } else { // CORRETIVA
             if (dto.getPrioridade() == null) {
                 throw new IllegalArgumentException("Para OS Corretiva, a prioridade é obrigatória.");
             }
+            os.setPrioridade(dto.getPrioridade());
             switch (dto.getPrioridade()) {
                 case ALTA: os.setDataLimite(LocalDateTime.now().with(LocalTime.MAX)); break;
                 case MEDIA: os.setDataLimite(LocalDateTime.now().plusDays(4)); break;
                 case BAIXA: os.setDataLimite(LocalDateTime.now().plusDays(7)); break;
             }
         }
+        
+        System.out.println("### DEBUG: Objeto OrdemServico ANTES de salvar: " + os.toString());
 
         OrdemServico osSalva = osRepository.save(os);
         return converteParaDTO(osSalva);
     }
+    
+    // ... O restante do arquivo continua exatamente igual ...
 
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
@@ -298,7 +321,7 @@ public class OrdemServicoService {
     
     private OrdemServicoDTO converteParaDTO(OrdemServico os) {
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto, "frequencia", "tiposServico");
+        BeanUtils.copyProperties(os, dto, "frequencia", "tiposServico", "local");
 
         dto.setCodigoOs(os.getCodigoOs());
 
@@ -323,6 +346,10 @@ public class OrdemServicoService {
         }
         if (os.getLocal() != null) {
             dto.setLocalId(os.getLocal().getId());
+            dto.setLocalNome(os.getLocal().getNome());
+            if (os.getLocal().getSetor() != null) {
+                dto.setSetorNome(os.getLocal().getSetor().getNome());
+            }
         }
         if (os.getPecasSubstituidas() != null) {
             dto.setPecasSubstituidas(os.getPecasSubstituidas().stream().map(peca -> {

@@ -116,7 +116,6 @@
           margin-top: 10px;
       }
 
-      /* ✨ ALTERAÇÃO AQUI: Estilo para a nova célula de descrição do problema */
       .problem-desc-cell {
           padding: 8px 5px;
           min-height: 40px;
@@ -140,7 +139,6 @@
           margin: 5px 0 0 0;
       }
 
-      /* ✨ ALTERAÇÃO AQUI: Novos estilos para o checklist formatado */
       .checklist-impressao {
         padding: 0 5px;
       }
@@ -168,16 +166,21 @@
           border-top: 2px solid black;
           border-left: none;
           border-right: none;
+          /* ✅ CORREÇÃO AQUI: Adiciona para garantir que as células não quebrem a linha */
+          white-space: nowrap;
       }
 
       .footer-cell-left {
           text-align: left;
+          width: 50%; /* Garante que ocupe a metade esquerda */
       }
       .footer-cell-center {
           text-align: center;
+          width: 20%; /* Ocupa um espaço menor no centro */
       }
       .footer-cell-right {
           text-align: right;
+          width: 30%; /* Garante que ocupe a parte direita */
       }
   
       strong {

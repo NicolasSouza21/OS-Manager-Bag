@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 
+// ✨ ALTERAÇÃO AQUI: A função 'getLocais' foi removida, pois não é mais necessária.
 import {
     getOsById,
     getEquipamentos,
-    getLocais,
     deleteOrdemServico,
     verificarOS,
 } from '../services/apiService';
@@ -18,7 +18,8 @@ const formatFrequencia = (frequencia) => {
     return `${frequencia.nome} (a cada ${frequencia.intervalo} ${unidade})`;
 };
 
-const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
+// ✨ ALTERAÇÃO AQUI: O componente de impressão foi simplificado. Ele não recebe mais a prop 'local'.
+const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
     if (!os) return null;
 
     const formatDateTime = (dateTimeString) => {
@@ -84,7 +85,6 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
                 <thead>
                     <tr>
                         <th className="header-logo-cell"><strong>BagCleaner</strong></th>
-                        {/* ✨ ALTERAÇÃO AQUI: Descrição removida do título principal */}
                         <th className="header-title-cell">
                             Ordem de Serviço de Manutenção
                         </th>
@@ -103,27 +103,36 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
                                         <td><strong>Equipamento:</strong> {equipamento?.nome || 'N/A'}</td>
                                         <td><strong>Tipo de OS:</strong> {capitalize(os.tipoManutencao) || 'Não especificado'}</td>
                                     </tr>
+                                    {/* ✨ CORREÇÃO AQUI: Renderiza os dados de local e setor diretamente do objeto 'os' */}
+                                    {os.localNome && (
+                                        <tr>
+                                            <td><strong>Local:</strong> {os.localNome}</td>
+                                            <td><strong>Setor:</strong> {os.setorNome}</td>
+                                        </tr>
+                                    )}
                                     {os.tipoManutencao === 'PREVENTIVA' && (
                                         <tr>
                                             <td colSpan="2"><strong>Frequência:</strong> {os.frequencia?.nome || 'N/A'}</td>
                                         </tr>
                                     )}
-                                    <tr>
-                                        <td><strong>Local:</strong> {local?.nome || 'N/A'}</td>
-                                        <td><strong>Setor:</strong> {local?.setorNome || 'N/A'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Solicitante:</strong> {os.solicitante || 'N/A'}</td>
-                                        <td><strong>Data:</strong> {dataSolicitacao.date} <strong>Horas:</strong> {dataSolicitacao.time}</td>
-                                    </tr>
+                                    {os.tipoManutencao === 'PREVENTIVA' ? (
+                                        <tr>
+                                            <td colSpan="2"><strong>Data Programada:</strong> {dataSolicitacao.date}</td>
+                                        </tr>
+                                    ) : (
+                                        <tr>
+                                            <td><strong>Solicitante:</strong> {os.solicitante || 'N/A'}</td>
+                                            <td><strong>Data:</strong> {dataSolicitacao.date} <strong>Horas:</strong> {dataSolicitacao.time}</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </td>
                     </tr>
+                    {/* ... O resto do componente de impressão permanece igual ... */}
                     <tr className="section-header">
                         <td colSpan="3">Preenchimento da Manutenção</td>
                     </tr>
-                    {/* ✨ ALTERAÇÃO AQUI: Nova linha criada exclusivamente para a descrição do problema */}
                     <tr>
                         <td colSpan="3" className="problem-desc-cell">
                            <strong>Descrição do Problema/Serviço:</strong> {os.descricaoProblema || 'N/A'}
@@ -195,14 +204,12 @@ const PrintableOs = React.forwardRef(({ os, equipamento, local }, ref) => {
     );
 });
 
-
 function VisualizarOsPage() {
-    // ... O resto do componente não precisa de alterações ...
     const { id } = useParams();
     const navigate = useNavigate();
     const [ordemServico, setOrdemServico] = useState(null);
     const [equipamento, setEquipamento] = useState(null);
-    const [local, setLocal] = useState(null);
+    // ✨ ALTERAÇÃO AQUI: O estado 'local' foi removido.
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
@@ -218,15 +225,19 @@ function VisualizarOsPage() {
             if (!id) return;
             try {
                 setLoading(true);
+                // Busca a OS (que agora já vem com localNome e setorNome)
                 const osRes = await getOsById(id);
                 const osData = osRes.data;
                 setOrdemServico(osData);
-                const [equipsRes, locaisRes] = await Promise.all([getEquipamentos(), getLocais()]);
+
+                // Busca a lista de equipamentos apenas para pegar o nome
+                const equipsRes = await getEquipamentos();
                 setEquipamento(equipsRes.data.find(e => e.id === osData.equipamentoId) || null);
-                setLocal(locaisRes.data.find(l => l.id === osData.localId) || null);
+                
                 setError(null);
             } catch (err) {
                 setError('Falha ao carregar os detalhes da Ordem de Serviço.');
+                console.error("Erro detalhado:", err);
             } finally {
                 setLoading(false);
             }
@@ -255,7 +266,8 @@ function VisualizarOsPage() {
         <div>
             {!loading && ordemServico && (
                 <div className="printable-area-wrapper">
-                    <PrintableOs ref={componentRef} os={ordemServico} equipamento={equipamento} local={local} />
+                    {/* ✨ ALTERAÇÃO AQUI: Não passamos mais a prop 'local' */}
+                    <PrintableOs ref={componentRef} os={ordemServico} equipamento={equipamento} />
                 </div>
             )}
             <div className="view-os-page">
@@ -276,7 +288,10 @@ function VisualizarOsPage() {
                             <div className="input-group"><label>Solicitante</label><input type="text" value={ordemServico.solicitante || '—'} disabled /></div>
                             <div className="input-group"><label>Data da Solicitação</label><input type="text" value={formatDateTime(ordemServico.dataSolicitacao)} disabled /></div>
                             <div className="input-group"><label>Equipamento</label><input type="text" value={equipamento?.nome || '—'} disabled /></div>
-                            <div className="input-group"><label>Local</label><input type="text" value={local?.nome || '—'} disabled /></div>
+                            
+                            {/* ✅ CORREÇÃO FINAL AQUI: Os campos agora usam os dados direto do objeto 'ordemServico' */}
+                            <div className="input-group"><label>Local</label><input type="text" value={ordemServico.localNome || '—'} disabled /></div>
+                            <div className="input-group"><label>Setor</label><input type="text" value={ordemServico.setorNome || '—'} disabled /></div>
                         </div>
                         <div className="input-group full-width" style={{marginTop: '1rem'}}><label>Descrição do Problema/Serviço</label><textarea value={ordemServico.descricaoProblema || 'Nenhuma'} rows="3" disabled></textarea></div>
                     </section>
