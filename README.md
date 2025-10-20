@@ -65,14 +65,37 @@ O **OS Manager** é uma solução web completa projetada para modernizar e otimi
 -   **LIDER / MECANICO**: Execução de Ordens de Serviço.
 -   **SOLICITANTE**: Apenas criação e acompanhamento de suas próprias OS.
 
-## 4. Guia de Uso: Ciclo de Vida de uma OS
+## 4. Visão Geral das Telas (Janelas)
+
+O sistema é composto pelas seguintes telas principais:
+
+### Telas Gerais
+
+-   **Login (`/login`)**: Página inicial para autenticação de usuários.
+-   **Dashboard (`/dashboard`)**: Tela principal do sistema. Exibe uma lista de todas as Ordens de Serviço, permitindo filtros avançados por status, data, equipamento, e mais. É daqui que os técnicos iniciam suas ações.
+-   **Criar Ordem de Serviço (`/criar-os`)**: Formulário unificado para a criação de OS Corretivas e Preventivas. Os campos se adaptam dinamicamente ao tipo de manutenção selecionado.
+-   **Visualizar Ordem de Serviço (`/os/:id`)**: Exibe todos os detalhes de uma OS específica, incluindo seu histórico completo. Também permite a impressão do documento.
+-   **Calendário (`/calendario`)**: Apresenta uma visão mensal de todas as OS agendadas e previstas, com cores indicando o status e tipo, facilitando o planejamento.
+
+### Telas Administrativas
+
+-   **Gerenciar Funcionários (`/admin/funcionarios`)**: Menu de entrada para a gestão de usuários.
+    -   **Listar Funcionários (`/admin/funcionarios/listar`)**: Tabela com todos os usuários cadastrados, permitindo edição "inline" de informações e exclusão.
+    -   **Cadastrar Funcionário (`/admin/funcionarios/cadastrar`)**: Formulário para adicionar novos usuários ao sistema e atribuir seus cargos (permissões).
+-   **Gerenciar Equipamentos (Menu) (`/admin/equipamentos`)**: Menu central para toda a gestão relacionada a ativos e configurações de manutenção.
+    -   **Gerenciar Equipamentos (`/admin/equipamentos/gerenciar`)**: Tela para cadastrar, editar, excluir e associar serviços a cada equipamento.
+    -   **Gerenciar Serviços (`/admin/equipamentos/servicos`)**: Permite criar e gerenciar um catálogo de todos os serviços de manutenção disponíveis (ex: "Limpeza de filtro", "Troca de óleo").
+    -   **Gerenciar Frequências (`/admin/frequencias/gerenciar`)**: Tela para definir as periodicidades das manutenções preventivas (ex: Semanal, Mensal, Anual).
+    -   **Gerenciar Setores e Locais (`/admin/locais/gerenciar`)**: Interface unificada para cadastrar e gerenciar os setores da fábrica e os locais específicos dentro de cada setor.
+
+## 5. Guia de Uso: Ciclo de Vida de uma OS
 
 | Status                  | Cor no Dashboard       | Significado                                         | Próxima Ação          |
 |-------------------------|------------------------|-----------------------------------------------------|------------------------|
 | **ABERTA** | Verde                  | Novo chamado aguardando técnico                     | ✅ Dar Ciência         |
 | **PENDENTE** | Azul                   | Técnico assumiu e está ciente da OS                 | ▶️ Iniciar Execução   |
 | **EM EXECUÇÃO** | Amarelo                | Técnico está executando o serviço                   | 🛠️ Finalizar Execução |
-| **AGUARDANDO VERIFICAÇÃO** | Laranja             | (Preventiva) Aguardando verificação de encarregado  | 🔍 Verificar OS        |
+| **AGUARDANDO VERIFICAÇÃO**| Laranja                | (Preventiva) Aguardando verificação de encarregado  | 🔍 Verificar OS        |
 | **CONCLUÍDA** | Cinza                  | Serviço finalizado com sucesso                      | —                      |
 | **CANCELADA** | Vermelho               | Serviço cancelado                                   | —                      |
 
@@ -86,7 +109,7 @@ O **OS Manager** é uma solução web completa projetada para modernizar e otimi
 5. **Verificação** (apenas para Preventivas): Um ENCARREGADO aprova (status `CONCLUÍDA`) ou reprova (status volta para `EM EXECUÇÃO`).
 6. **Agendamento Automático**: Ao concluir uma OS Preventiva, o sistema automaticamente cria a próxima OS com base na frequência definida.
 
-## 5. Guia de Instalação e Configuração
+## 6. Guia de Instalação e Configuração
 
 ### Pré-requisitos
 - Java JDK 17+
@@ -128,7 +151,7 @@ O **OS Manager** é uma solução web completa projetada para modernizar e otimi
 
 > 🔁 Verifique se o proxy no arquivo `vite.config.js` está apontando para o endereço correto do seu backend (ex: `http://localhost:8080`).
 
-## 📷 Visuais do Sistema
+## 7. Visuais do Sistema
 
 ### 🛠️ Criar uma Ordem de Serviço
 ![Criar OS](assets/criar-os.png)
@@ -139,6 +162,6 @@ O **OS Manager** é uma solução web completa projetada para modernizar e otimi
 ### 📌 Barra de Navegação do Sistema
 ![Navbar OS](assets/NavBar-OS.png)
 
-## 📌 Licença
+## 8. Licença
 
 Este projeto é de código fechado e restrito ao uso interno da equipe de desenvolvimento da empresa. Para mais informações, entre em contato com o administrador do sistema.
