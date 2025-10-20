@@ -36,6 +36,9 @@ export const registrarCiencia = (osId) => api.put(`/ordens-servico/${osId}/cienc
 export const iniciarExecucao = (osId) => api.put(`/ordens-servico/${osId}/iniciar-execucao`);
 export const registrarExecucao = (osId, dadosExecucao) => api.put(`/ordens-servico/${osId}/execucao`, dadosExecucao);
 export const verificarOS = (osId, dadosVerificacao) => api.post(`/ordens-servico/${osId}/verificar`, dadosVerificacao);
+// ✨ ALTERAÇÃO AQUI: Nova função para buscar o histórico
+export const getHistoricoPorEquipamento = (equipamentoId) => api.get(`/ordens-servico/historico/equipamento/${equipamentoId}`);
+
 
 /** FUNCIONÁRIOS */
 export const getAllFuncionarios = () => api.get('/funcionarios');
@@ -67,6 +70,7 @@ export const deleteLocal = (id) => api.delete(`/locais/${id}`);
 
 
 /** PLANOS DE MANUTENÇÃO PREVENTIVA */
+export const getProgramacaoManutencao = (equipamentoId) => api.get(`/planos-preventiva/programacao/${equipamentoId}`);
 export const getPlanosPorEquipamento = (equipamentoId) => api.get(`/planos-preventiva/equipamento/${equipamentoId}`);
 export const adicionarPlano = (planoData) => api.post('/planos-preventiva', planoData);
 export const atualizarPlano = (planoId, planoData) => api.put(`/planos-preventiva/${planoId}`, planoData);
@@ -75,7 +79,6 @@ export const deletarPlano = (planoId) => api.delete(`/planos-preventiva/${planoI
 /** TIPOS DE SERVIÇO */
 export const getTiposServico = () => api.get('/tipos-servico');
 export const createTipoServico = (servicoData) => api.post('/tipos-servico', servicoData);
-// ✨ ALTERAÇÃO AQUI: Nova função para fazer a chamada PUT de atualização.
 export const updateTipoServico = (id, servicoData) => api.put(`/tipos-servico/${id}`, servicoData);
 export const deleteTipoServico = (id) => api.delete(`/tipos-servico/${id}`);
 

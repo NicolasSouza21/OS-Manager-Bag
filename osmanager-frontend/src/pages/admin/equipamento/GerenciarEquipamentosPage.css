@@ -66,7 +66,7 @@ body {
 /* --- Formulários --- */
 .form-novo-equipamento {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.5rem;
   align-items: flex-end;
 }
@@ -91,7 +91,6 @@ body {
 .equipamentos-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
 .equipamentos-table th {
@@ -102,45 +101,31 @@ body {
   border-bottom: 2px solid var(--cor-borda);
 }
 
-.equipamentos-table th:nth-child(1) { width: 20%; }
-.equipamentos-table th:nth-child(2) { width: 25%; }
-.equipamentos-table th:nth-child(3) { width: auto; }
-.equipamentos-table th:nth-child(4) { width: 250px; text-align: right; } /* ✨ ALTERAÇÃO AQUI: Largura ajustada */
-
 .equipamentos-table tbody tr {
   border-bottom: 1px solid var(--cor-borda);
   transition: var(--transicao-rapida);
 }
 
-.equipamentos-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.equipamentos-table tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-.equipamentos-table td {
-  padding: 1.25rem 1.5rem;
-  vertical-align: middle;
-}
-
-.equipamentos-table tbody tr.selected-row {
-  background-color: #eaf5ff;
-  box-shadow: inset 4px 0 0 var(--cor-primaria);
-}
-
 /* --- Célula de Ações e Botões --- */
 .equipamentos-table td:last-child {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
+    width: 220px;
 }
 
-.btn-principal, .btn-servicos, .btn-editar, .btn-excluir, .btn-salvar, .btn-cancelar {
+.actions-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.actions-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* 3 colunas iguais */
+    gap: 8px;
+}
+
+.btn-principal, .btn-plano, .btn-servicos, .btn-editar, .btn-excluir, .btn-salvar, .btn-cancelar {
   padding: 10px 15px;
-  min-width: 100px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -148,33 +133,23 @@ body {
   font-size: 0.95rem;
   transition: var(--transicao-rapida);
   color: var(--fundo-card);
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin: 0;
+  text-align: center;
 }
 
-/* ✨ ALTERAÇÃO AQUI: Nova seção para estilizar o modo de edição */
-/* --- Tabela em Modo de Edição --- */
-.equipamentos-table td input {
-    width: 100%;
-    padding: 10px 15px; /* Mesmo padding vertical dos botões para alinhar altura */
-    font-size: 0.95rem;  /* Mesma fonte dos botões */
-    border: 1px solid var(--cor-borda);
-    border-radius: 6px;
-    box-sizing: border-box; /* Garante que padding/border não alterem a largura final */
-    line-height: 1.5; /* Garante consistência de altura de linha */
-}
-.equipamentos-table td input:focus {
-    border-color: var(--cor-primaria);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 90, 156, 0.2);
+.actions-group .btn-servicos,
+.actions-group .btn-editar,
+.actions-group .btn-excluir {
+    flex: 1;
 }
 
-
+/* --- Botões --- */
 .btn-principal { background-color: var(--cor-primaria); }
 .btn-principal:hover { background-color: var(--cor-primaria-hover); }
+.btn-plano { background-color: var(--cor-primaria); width: 100%; }
+.btn-plano:hover { background-color: var(--cor-primaria-hover); }
 .btn-servicos { background-color: var(--cor-sucesso); }
 .btn-servicos:hover { background-color: var(--cor-sucesso-hover); }
 .btn-editar { background-color: var(--cor-aviso); color: var(--fundo-card); }
@@ -186,5 +161,245 @@ body {
 .btn-cancelar { background-color: var(--cor-secundaria); }
 .btn-cancelar:hover { filter: brightness(1.2); }
 
-/* --- Modal, Mensagens e outros --- */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background-color:rgba(10,20,30,.7);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(5px)}.modal-content{background:var(--fundo-card);padding:0;border-radius:var(--raio-borda);width:90%;max-width:550px;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;flex-direction:column}.modal-content h2{font-size:1.3rem;padding:1.5rem 2rem;margin:0;color:var(--cor-primaria);border-bottom:1px solid var(--cor-borda)}.modal-content p{padding:0 2rem;color:var(--cor-texto-secundario)}.lista-servicos-modal{max-height:350px;overflow-y:auto;padding:.5rem 2rem;margin:1rem 0}.servico-item-modal label{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;border-radius:6px;transition:var(--transicao-rapida)}.servico-item-modal label:hover{background-color:#eaf5ff}.servico-item-modal input[type=checkbox]{width:18px;height:18px;cursor:pointer}.btn-fechar-modal{align-self:flex-end;margin:1.5rem 2rem;padding:10px 25px;background-color:var(--cor-secundaria);color:#fff;border:none;border-radius:6px;font-weight:700;transition:var(--transicao-rapida)}.btn-fechar-modal:hover{filter:brightness(1.15)}.mensagem{padding:1rem;margin-bottom:1rem;border-radius:var(--raio-borda);font-weight:500;color:var(--fundo-card);text-align:center}.mensagem.sucesso{background-color:var(--cor-sucesso)}.mensagem.erro{background-color:var(--cor-alerta)}.planos-row td{background-color:#fafafa;box-shadow:inset 0 4px 8px -2px rgba(0,0,0,.05)}.planos-preventiva-content{padding:1.5rem}
+/* Mensagens de feedback */
+.mensagem {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--raio-borda);
+  font-weight: 500;
+  color: var(--fundo-card);
+  text-align: center;
+}
+.mensagem.sucesso { background-color: var(--cor-sucesso); }
+.mensagem.erro { background-color: var(--cor-alerta); }
+
+/* ============================================== */
+/* ESTILOS DO MODAL DE PLANO E HISTÓRICO      */
+/* ============================================== */
+
+/* Fundo escuro atrás do modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+/* O card branco do modal */
+.modal-content.programacao-modal {
+    background: var(--fundo-card); /* Usando sua variável */
+    border-radius: var(--raio-borda); /* Usando sua variável */
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 900px; 
+    max-height: 90vh; 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+}
+
+/* Cabeçalho do modal (com o título e o botão fechar) */
+.modal-header {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    padding: 1rem 1.5rem; 
+    background-color: var(--cor-primaria); /* <-- APLIQUEI SUA VARIÁVEL */
+    color: white;
+    border-top-left-radius: var(--raio-borda); /* Usando sua variável */
+    border-top-right-radius: var(--raio-borda); /* Usando sua variável */
+    flex-shrink: 0; 
+    border-bottom: none; /* Garantindo que não haja borda inferior */
+}
+
+.modal-content.programacao-modal .modal-header h2 {
+    margin: 0 !important; /* Força a remoção de margens (corrige o layout quebrado) */
+    padding: 0 !important; /* Força a remoção do padding */
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white !important; /* Força a cor do texto para branco */
+    background: none !important; /* Força a remoção do fundo branco (corrige o "esquisito") */
+    border: none !important; /* Força a remoção da borda */
+}
+
+.modal-header .btn-fechar-modal {
+    background: transparent; /* Fundo transparente */
+    color: white; /* Texto branco */
+    border: 2px solid white; /* Borda branca */
+    border-radius: 5px;
+    padding: 0.4rem 1rem; /* Padding ajustado para a borda */
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.modal-header .btn-fechar-modal:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Leve brilho ao passar o mouse */
+    color: white;
+}
+
+/* Corpo do modal (onde fica o conteúdo e tabelas) */
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto; 
+    flex-grow: 1; /* Permite que o body preencha o espaço restante e scroll */
+}
+
+.modal-body h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--cor-texto-principal); /* Usando sua variável */
+    font-size: 1.5rem;
+}
+
+.modal-body h4 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #444;
+    border-bottom: 2px solid var(--cor-primaria); /* Usando sua variável */
+    padding-bottom: 0.5rem;
+}
+
+.mensagem-vazia {
+    font-style: italic;
+    color: var(--cor-texto-secundario); /* Usando sua variável */
+    margin-top: 1rem;
+}
+
+
+/* ============================================== */
+/* ESTILOS DA TABELA "EXCEL"                    */
+/* ============================================== */
+
+/* Container geral da tabela (para borda e overflow) */
+.tabela-container {
+    border: 1px solid var(--cor-borda); /* Usando sua variável */
+    border-radius: var(--raio-borda); /* Usando sua variável */
+    overflow: hidden; 
+}
+
+/* Container específico da tabela de HISTÓRICO (com scroll) */
+.historico-table-container {
+    border: 1px solid var(--cor-borda); /* Usando sua variável */
+    border-radius: var(--raio-borda); /* Usando sua variável */
+    overflow: hidden; 
+    max-height: 400px; /* Altura máxima da tabela, como na sua imagem */
+    overflow-y: auto;  /* Adiciona a barra de rolagem vertical */
+    position: relative;
+}
+
+/* Estilo base da tabela */
+.programacao-table {
+    width: 100%;
+    border-collapse: collapse; /* Tira espaço entre células */
+    font-size: 0.9rem;
+    color: var(--cor-texto-principal); /* Usando sua variável */
+}
+
+/* Células de Cabeçalho (TH) e Células de Dados (TD) */
+.programacao-table th,
+.programacao-table td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--cor-borda); /* Usando sua variável */
+    vertical-align: middle;
+}
+
+/* Estilo do Cabeçalho da Tabela (Fixo no scroll) */
+.programacao-table thead th {
+    background-color: #f4f6f8; 
+    font-weight: 600;
+    color: var(--cor-texto-secundario); /* Usando sua variável */
+    position: sticky; /* Efeito "Excel" de cabeçalho fixo */
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Sombra leve para destacar do conteúdo */
+}
+
+/* Linhas do corpo da tabela */
+.programacao-table tbody tr {
+    transition: background-color 0.15s;
+}
+
+/* Efeito "Zebra" (linhas alternadas) */
+.programacao-table tbody tr:nth-child(even) {
+    background-color: #fdfdfd;
+}
+
+/* Efeito de "hover" ao passar o mouse */
+.programacao-table tbody tr:hover {
+    background-color: #f0f7ff; /* Cor azul bem clara ao passar o mouse */
+}
+
+/* Estilo para a coluna "Serviço/Problema" não quebrar linha */
+.programacao-table td[title] {
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================== */
+/* ESTILOS DOS BADGES DE STATUS                 */
+/* ============================================== */
+
+.status-badge {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 10rem; /* Deixa bem redondo */
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.status-badge.status-aberta {
+    background-color: var(--cor-alerta); /* Usando sua variável */
+}
+
+.status-badge.status-concluida {
+    background-color: var(--cor-sucesso); /* Usando sua variável */
+}
+
+.status-badge.status-andamento {
+    background-color: var(--cor-aviso); /* Usando sua variável */
+}
+
+.status-badge.status-default {
+    background-color: var(--cor-secundaria); /* Usando sua variável */
+}
+
+
+/* ============================================== */
+/* ESTILIZAÇÃO DA BARRA DE ROLAGEM              */
+/* ============================================== */
+
+.historico-table-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.historico-table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.historico-table-container::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.historico-table-container::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}

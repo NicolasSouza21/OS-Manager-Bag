@@ -1,14 +1,17 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Fragment } from 'react';
 import {
     getEquipamentos, createEquipamento, updateEquipamento, deleteEquipamento,
     getTiposServico,
-    getPlanosPorEquipamento, adicionarPlano, deletarPlano,
+    getProgramacaoManutencao,
+    // ✨ ALTERAÇÃO AQUI: Importa a nova função de histórico
+    getHistoricoPorEquipamento,
     listarServicosPorEquipamento, associarServico, desassociarServico
 } from '../../../services/apiService';
 import './GerenciarEquipamentosPage.css';
 
-// ... (O componente ModalAssociarServicos permanece o mesmo, não precisa de alterações)
+// O componente ModalAssociarServicos permanece o mesmo, não precisa de alterações
 const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdate }) => {
+    // ... (código original do ModalAssociarServicos sem alterações) ...
     const [servicosAssociados, setServicosAssociados] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -70,35 +73,162 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
 };
 
 
+// ✨ ALTERAÇÃO AQUI: Novo componente para o Modal de Programação e Histórico
+const ProgramacaoModal = ({ equipamento, onClose }) => {
+    const [programacao, setProgramacao] = useState([]);
+    const [historico, setHistorico] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (equipamento?.id) {
+            setLoading(true);
+            setError('');
+            Promise.all([
+                getProgramacaoManutencao(equipamento.id),
+                getHistoricoPorEquipamento(equipamento.id)
+            ])
+            .then(([programacaoRes, historicoRes]) => {
+                setProgramacao(programacaoRes.data);
+                // Ordena o histórico pelo Nº OS, do mais recente para o mais antigo
+                const historicoOrdenado = historicoRes.data.sort((a, b) => 
+                    (b.codigoOs || 0) - (a.codigoOs || 0)
+                );
+                setHistorico(historicoOrdenado);
+            })
+            .catch(() => {
+                setError('Falha ao carregar os dados de manutenção do equipamento.');
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+        }
+    }, [equipamento]);
+
+    const formatarData = (data) => {
+        if (!data) return 'N/A';
+        // Ajusta para garantir que a data seja interpretada como UTC
+        const date = new Date(data);
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
+    }
+    
+    // ✨ NOVO: Função para criar os badges de status
+    const getStatusBadge = (status) => {
+        let className = 'status-badge ';
+        switch (status?.toUpperCase()) {
+            case 'ABERTA':
+                className += 'status-aberta';
+                break;
+            case 'CONCLUIDA':
+            case 'CONCLUÍDA':
+                className += 'status-concluida';
+                break;
+            case 'EM ANDAMENTO':
+                className += 'status-andamento';
+                break;
+            default:
+                className += 'status-default';
+        }
+        return <span className={className}>{status || 'N/A'}</span>;
+    };
+
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content programacao-modal" onClick={e => e.stopPropagation()}>
+                <header className="modal-header">
+                    <h2>Plano de Manutenção e Histórico</h2>
+                    <button onClick={onClose} className="btn-fechar-modal">Fechar</button>
+                </header>
+                <div className="modal-body">
+                    <h3>{equipamento.nome}</h3>
+                    
+                    <h4>Plano de Manutenção Preventiva</h4>
+                    {loading ? <p>Carregando plano...</p> : programacao.length > 0 ? (
+                        // ✨ NOVO: Adicionado container para a tabela
+                        <div className="tabela-container">
+                            <table className="programacao-table">
+                                <thead>
+                                    <tr>
+                                        <th>Serviço</th>
+                                        <th>Frequência</th>
+                                        <th>Último Manutentor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {programacao.map((item, index) => (
+                                        <tr key={`prog-${index}`}>
+                                            <td>{item.servico}</td>
+                                            <td>{item.frequencia}</td>
+                                            <td>{item.ultimoManutentor || 'N/A'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : <p className="mensagem-vazia">Nenhum plano de manutenção preventiva cadastrado para este equipamento.</p>}
+                    
+                    <h4 style={{marginTop: '2rem'}}>Histórico de Ordens de Serviço</h4>
+                    {loading ? <p>Carregando histórico...</p> : historico.length > 0 ? (
+                        <div className="historico-table-container">
+                            <table className="programacao-table historico-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nº OS</th>
+                                        <th>Data</th>
+                                        <th>Tipo</th>
+                                        <th>Serviço/Problema</th>
+                                        <th>Executor</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {historico.map(os => (
+                                        <tr key={`hist-${os.id}`}>
+                                            <td>{os.codigoOs}</td>
+                                            <td>{formatarData(os.dataSolicitacao)}</td>
+                                            <td>{os.tipoManutencao}</td>
+                                            {/* ✨ NOVO: Adicionado title para ver texto completo no hover */}
+                                            <td title={os.descricaoProblema}>{os.descricaoProblema}</td>
+                                            <td>{os.executadoPorNome || 'N/A'}</td>
+                                            {/* ✨ ALTERADO: Usando o badge de status */}
+                                            <td>{getStatusBadge(os.status)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : <p className="mensagem-vazia">Nenhum histórico de manutenção encontrado.</p>}
+                     {error && <p className="mensagem-erro">{error}</p>}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ... (Restante do arquivo GerenciarEquipamentosPage.js sem alterações) ...
 function GerenciarEquipamentosPage() {
     const [equipamentos, setEquipamentos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editandoId, setEditandoId] = useState(null);
-    
-    // ✨ ALTERAÇÃO AQUI: A descrição foi removida do estado de edição
-    const [formEdicao, setFormEdicao] = useState({ tag: '', nome: '' });
-
-    const [novoEquipamento, setNovoEquipamento] = useState({ nome: '', tag: '' });
+    const [formEdicao, setFormEdicao] = useState({ tag: '', nome: '', descricao: '' });
+    const [novoEquipamento, setNovoEquipamento] = useState({ nome: '', descricao: '', tag: '' });
 
     const [tiposServico, setTiposServico] = useState([]);
-    const [selectedEquip, setSelectedEquip] = useState(null);
-    const [planos, setPlanos] = useState([]);
-    const [loadingPlanos, setLoadingPlanos] = useState(false);
-    const [novoPlano, setNovoPlano] = useState({ tipoServicoId: '', frequencia: 'MENSAL', toleranciaDias: 0 });
-
+    
     const [mensagem, setMensagem] = useState({ tipo: '', texto: '' });
     const [isModalServicosOpen, setIsModalServicosOpen] = useState(false);
     const [equipamentoParaModal, setEquipamentoParaModal] = useState(null);
+
+    const [isProgramacaoModalOpen, setIsProgramacaoModalOpen] = useState(false);
+    const [equipamentoParaProgramacao, setEquipamentoParaProgramacao] = useState(null);
 
     const carregarEquipamentos = useCallback(() => {
         setLoading(true);
         getEquipamentos()
             .then(response => {
-                const equipamentosComServicos = response.data.map(eq => ({
-                    ...eq,
-                    servicosDisponiveis: eq.servicosDisponiveis || []
-                }));
-                setEquipamentos(equipamentosComServicos);
+                setEquipamentos(response.data);
             })
             .catch(error => {
                 console.error("Erro ao carregar equipamentos:", error);
@@ -117,32 +247,10 @@ function GerenciarEquipamentosPage() {
         carregarEquipamentos();
         carregarTiposServico();
     }, [carregarEquipamentos, carregarTiposServico]);
-    
-    const carregarPlanosEServicos = useCallback((equipamentoId) => {
-        setLoadingPlanos(true);
-        Promise.all([
-            getPlanosPorEquipamento(equipamentoId),
-            listarServicosPorEquipamento(equipamentoId)
-        ]).then(([planosResp, servicosResp]) => {
-            setPlanos(planosResp.data);
-            setEquipamentos(prev => prev.map(eq =>
-                eq.id === equipamentoId
-                    ? { ...eq, servicosDisponiveis: servicosResp.data }
-                    : eq
-            ));
-        }).catch(err => {
-            console.error("Erro ao carregar planos ou serviços:", err);
-            setMensagem({ tipo: 'erro', texto: 'Falha ao carregar detalhes do equipamento.' });
-        }).finally(() => {
-            setLoadingPlanos(false);
-        });
-    }, []);
 
     const exibeMensagemTemporaria = (texto, tipo = 'sucesso') => {
         setMensagem({ tipo, texto });
-        if (tipo === 'sucesso') {
-            setTimeout(() => setMensagem({ tipo: '', texto: '' }), 4000);
-        }
+        setTimeout(() => setMensagem({ tipo: '', texto: '' }), 4000);
     };
 
     const limparMensagem = () => {
@@ -160,39 +268,29 @@ function GerenciarEquipamentosPage() {
     const handleNovoEquipamentoSubmit = (e) => {
         e.preventDefault();
         limparMensagem();
-        
-        const dadosParaApi = {
-            nome: novoEquipamento.nome,
-            tag: novoEquipamento.tag,
-            descricao: " "
-        };
-
-        createEquipamento(dadosParaApi)
+        createEquipamento(novoEquipamento)
             .then(() => {
                 exibeMensagemTemporaria('Equipamento criado com sucesso!');
-                setNovoEquipamento({ nome: '', tag: '' });
+                setNovoEquipamento({ nome: '', descricao: '', tag: '' });
                 carregarEquipamentos();
             })
             .catch(error => {
-                console.error("Erro ao criar equipamento:", error.response);
-                const msg = error.response?.data?.message || 'Erro ao criar equipamento. Verifique os dados.';
+                const msg = error.response?.data?.message || 'Erro ao criar equipamento.';
                 exibeMensagemTemporaria(msg, 'erro');
             });
     };
 
     const handleExcluir = (id) => {
         limparMensagem();
-        if (window.confirm('Tem certeza que deseja excluir este equipamento? Esta ação não pode ser desfeita.')) {
+        if (window.confirm('Tem certeza que deseja excluir este equipamento?')) {
             deleteEquipamento(id)
                 .then(() => {
                     exibeMensagemTemporaria('Equipamento excluído com sucesso!');
                     carregarEquipamentos();
-                    setSelectedEquip(null);
                 })
                 .catch(error => {
-                    console.error("LOG DE ERRO DO AXIOS:", error.response);
-                    const mensagemErro = error.response?.data?.message || 'Ocorreu uma falha ao tentar excluir.';
-                    exibeMensagemTemporaria(mensagemErro, 'erro');
+                    const msg = error.response?.data?.message || 'Falha ao excluir.';
+                    exibeMensagemTemporaria(msg, 'erro');
                 });
         }
     };
@@ -200,8 +298,7 @@ function GerenciarEquipamentosPage() {
     const handleEditarClick = (equip) => {
         limparMensagem();
         setEditandoId(equip.id);
-        // ✨ ALTERAÇÃO AQUI: A descrição foi removida do formulário de edição
-        setFormEdicao({ tag: equip.tag, nome: equip.nome });
+        setFormEdicao({ tag: equip.tag, nome: equip.nome, descricao: equip.descricao || '' });
     };
 
     const handleEdicaoChange = (e) => {
@@ -211,36 +308,16 @@ function GerenciarEquipamentosPage() {
 
     const handleSalvarEdicao = (id) => {
         limparMensagem();
-        // ✨ ALTERAÇÃO AQUI: Incluímos a descrição antiga para não apagar o que já existe no banco.
-        const equipamentoOriginal = equipamentos.find(e => e.id === id);
-        const dadosParaApi = {
-            ...formEdicao,
-            descricao: equipamentoOriginal?.descricao || ' '
-        };
-
-        updateEquipamento(id, dadosParaApi)
+        updateEquipamento(id, formEdicao)
             .then(() => {
                 exibeMensagemTemporaria('Equipamento atualizado com sucesso!');
                 setEditandoId(null);
                 carregarEquipamentos();
             })
             .catch(error => {
-                console.error("Erro ao atualizar equipamento:", error.response);
-                const msg = error.response?.data?.message || 'Erro ao atualizar equipamento.';
+                const msg = error.response?.data?.message || 'Erro ao atualizar.';
                 exibeMensagemTemporaria(msg, 'erro');
             });
-    };
-
-    const handleSelectEquipamento = (equip) => {
-        if (editandoId === equip.id) return; 
-        limparMensagem();
-        if (selectedEquip?.id === equip.id) {
-            setSelectedEquip(null);
-            setPlanos([]);
-        } else {
-            setSelectedEquip(equip);
-            carregarPlanosEServicos(equip.id);
-        }
     };
 
     const handleOpenServicosModal = (equipamento) => {
@@ -251,10 +328,18 @@ function GerenciarEquipamentosPage() {
 
     const handleCloseServicosModal = () => {
         setIsModalServicosOpen(false);
-        if (equipamentoParaModal && selectedEquip && equipamentoParaModal.id === selectedEquip.id) {
-            carregarPlanosEServicos(selectedEquip.id);
-        }
         setEquipamentoParaModal(null);
+    };
+
+    const handleOpenProgramacaoModal = (equipamento) => {
+        limparMensagem();
+        setEquipamentoParaProgramacao(equipamento);
+        setIsProgramacaoModalOpen(true);
+    };
+
+    const handleCloseProgramacaoModal = () => {
+        setIsProgramacaoModalOpen(false);
+        setEquipamentoParaProgramacao(null);
     };
 
     if (loading) return <div className="loading-message">Carregando equipamentos...</div>;
@@ -267,6 +352,7 @@ function GerenciarEquipamentosPage() {
                 <h2>Cadastrar Novo Equipamento</h2>
                 <form onSubmit={handleNovoEquipamentoSubmit} className="form-novo-equipamento">
                     <input type="text" name="nome" value={novoEquipamento.nome} onChange={handleNovoEquipamentoChange} placeholder="Nome do Equipamento" required />
+                    <input type="text" name="descricao" value={novoEquipamento.descricao} onChange={handleNovoEquipamentoChange} placeholder="Descrição" required />
                     <input type="text" name="tag" value={novoEquipamento.tag} onChange={handleNovoEquipamentoChange} placeholder="Número do Ativo (Opcional)" />
                     <button type="submit" className="btn-principal">Adicionar</button>
                 </form>
@@ -278,32 +364,39 @@ function GerenciarEquipamentosPage() {
                         <tr>
                             <th>Nº do Ativo</th>
                             <th>Nome</th>
-                            {/* ✨ ALTERAÇÃO AQUI: Coluna de descrição REMOVIDA da tabela */}
+                            <th>Descrição</th>
                             <th style={{ textAlign: 'right' }}>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {equipamentos.map(equip => (
-                             <tr key={equip.id} onClick={() => handleSelectEquipamento(equip)} className={selectedEquip?.id === equip.id ? 'selected-row' : ''}>
+                             <tr key={equip.id}>
                                 {editandoId === equip.id ? (
                                     <>
-                                        <td><input type="text" name="tag" value={formEdicao.tag} onChange={handleEdicaoChange} onClick={e => e.stopPropagation()} placeholder="Nº do Ativo (Opcional)" /></td>
-                                        <td><input type="text" name="nome" value={formEdicao.nome} onChange={handleEdicaoChange} onClick={e => e.stopPropagation()} required /></td>
-                                        {/* ✨ ALTERAÇÃO AQUI: Input de descrição REMOVIDO do modo de edição */}
-                                        <td onClick={e => e.stopPropagation()} style={{ textAlign: 'right' }}>
-                                            <button onClick={() => handleSalvarEdicao(equip.id)} className="btn-salvar">Salvar</button>
-                                            <button onClick={() => setEditandoId(null)} className="btn-cancelar">Cancelar</button>
+                                        <td><input type="text" name="tag" value={formEdicao.tag} onChange={handleEdicaoChange} /></td>
+                                        <td><input type="text" name="nome" value={formEdicao.nome} onChange={handleEdicaoChange} required /></td>
+                                        <td><input type="text" name="descricao" value={formEdicao.descricao} onChange={handleEdicaoChange} required/></td>
+                                        <td>
+                                            <div className="actions-group">
+                                                <button onClick={() => handleSalvarEdicao(equip.id)} className="btn-salvar">Salvar</button>
+                                                <button onClick={() => setEditandoId(null)} className="btn-cancelar">Cancelar</button>
+                                            </div>
                                         </td>
                                     </>
                                 ) : (
                                     <>
                                         <td>{equip.tag}</td>
                                         <td>{equip.nome}</td>
-                                        {/* ✨ ALTERAÇÃO AQUI: Coluna de descrição REMOVIDA da visualização */}
-                                        <td onClick={e => e.stopPropagation()} style={{ textAlign: 'right' }}>
-                                            <button onClick={() => handleOpenServicosModal(equip)} className="btn-servicos">Serviços</button>
-                                            <button onClick={() => handleEditarClick(equip)} className="btn-editar">Editar</button>
-                                            <button onClick={() => handleExcluir(equip.id)} className="btn-excluir">Excluir</button>
+                                        <td>{equip.descricao}</td>
+                                        <td>
+                                            <div className="actions-container">
+                                                <button onClick={() => handleOpenProgramacaoModal(equip)} className="btn-plano">Plano</button>
+                                                <div className="actions-group">
+                                                    <button onClick={() => handleOpenServicosModal(equip)} className="btn-servicos">Serviços</button>
+                                                    <button onClick={() => handleEditarClick(equip)} className="btn-editar">Editar</button>
+                                                    <button onClick={() => handleExcluir(equip.id)} className="btn-excluir">Excluir</button>
+                                                </div>
+                                            </div>
                                         </td>
                                     </>
                                 )}
@@ -317,7 +410,13 @@ function GerenciarEquipamentosPage() {
                     equipamento={equipamentoParaModal}
                     catalogoServicos={tiposServico}
                     onClose={handleCloseServicosModal}
-                    onUpdate={() => carregarPlanosEServicos(equipamentoParaModal.id)}
+                    onUpdate={() => {}}
+                />
+            )}
+            {isProgramacaoModalOpen && equipamentoParaProgramacao && (
+                <ProgramacaoModal
+                    equipamento={equipamentoParaProgramacao}
+                    onClose={handleCloseProgramacaoModal}
                 />
             )}
         </div>

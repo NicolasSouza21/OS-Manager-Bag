@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.bag.osmanager.dto.ProgramacaoManutencaoDTO; // ✨ ALTERAÇÃO AQUI
 
 @RestController
 @RequestMapping("/api/planos-preventiva")
@@ -15,6 +16,13 @@ import java.util.List;
 public class PlanoPreventivaController {
 
     private final PlanoPreventivaService planoPreventivaService;
+
+    // ✨ ALTERAÇÃO AQUI: Novo endpoint para a programação de manutenção
+    @GetMapping("/programacao/{equipamentoId}")
+    public ResponseEntity<List<ProgramacaoManutencaoDTO>> getProgramacaoManutencao(@PathVariable Long equipamentoId) {
+        List<ProgramacaoManutencaoDTO> programacao = planoPreventivaService.getProgramacaoManutencao(equipamentoId);
+        return ResponseEntity.ok(programacao);
+    }
 
     // Adiciona um novo plano de manutenção
     @PostMapping

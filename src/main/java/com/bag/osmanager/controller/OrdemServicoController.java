@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List; // ✨ ALTERAÇÃO AQUI
 
 @RestController
 @RequestMapping("/api/ordens-servico")
@@ -28,6 +29,13 @@ import java.time.LocalDate;
 public class OrdemServicoController {
 
     private final OrdemServicoService osService;
+
+    // ✨ ALTERAÇÃO AQUI: Novo endpoint para buscar o histórico do equipamento
+    @GetMapping("/historico/equipamento/{equipamentoId}")
+    public ResponseEntity<List<OrdemServicoDTO>> getHistoricoPorEquipamento(@PathVariable Long equipamentoId) {
+        List<OrdemServicoDTO> historico = osService.getHistoricoPorEquipamento(equipamentoId);
+        return ResponseEntity.ok(historico);
+    }
 
     @PostMapping
     public ResponseEntity<OrdemServicoDTO> criarOS(@RequestBody @Valid CriarOrdemServicoDTO dto) {
@@ -68,10 +76,8 @@ public class OrdemServicoController {
         return ResponseEntity.ok(osService.registrarCiencia(id, funcionarioId));
     }
 
-    // ✨ ALTERAÇÃO AQUI: Método corrigido para chamar o service com apenas um parâmetro.
     @PutMapping("/{id}/iniciar-execucao")
     public ResponseEntity<OrdemServicoDTO> iniciarExecucao(@PathVariable Long id) {
-        // A lógica de pegar o usuário não é mais necessária aqui, pois o service foi simplificado.
         return ResponseEntity.ok(osService.iniciarExecucao(id));
     }
 
