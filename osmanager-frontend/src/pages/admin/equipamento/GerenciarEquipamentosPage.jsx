@@ -2,27 +2,33 @@ import React, { useEffect, useState, useCallback, Fragment } from 'react';
 import {
     getEquipamentos, createEquipamento, updateEquipamento, deleteEquipamento,
     getTiposServico,
-    getProgramacaoManutencao,
-    // ✨ ALTERAÇÃO AQUI: Importa a nova função de histórico
     getHistoricoPorEquipamento,
     listarServicosPorEquipamento, associarServico, desassociarServico
 } from '../../../services/apiService';
+import HistoricoModal from './HistoricoModal';
+import ProgramacaoModal from './ProgramacaoModal';
 import './GerenciarEquipamentosPage.css';
 
-// O componente ModalAssociarServicos permanece o mesmo, não precisa de alterações
+// ModalAssociarServicos
 const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdate }) => {
-    // ... (código original do ModalAssociarServicos sem alterações) ...
     const [servicosAssociados, setServicosAssociados] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (equipamento?.id) {
+            setLoading(true); // Reinicia o loading ao mudar o equipamento
             listarServicosPorEquipamento(equipamento.id)
-                .then(resp => setServicosAssociados(resp.data))
-                .catch(err => console.error("Erro ao listar serviços associados:", err))
+                .then(resp => setServicosAssociados(resp.data || [])) // Garante que seja um array
+                .catch(err => {
+                    console.error("Erro ao listar serviços associados:", err);
+                    setServicosAssociados([]); // Define como array vazio em caso de erro
+                })
                 .finally(() => setLoading(false));
+        } else {
+            setServicosAssociados([]); // Limpa se não houver equipamento
+            setLoading(false);
         }
-    }, [equipamento.id]);
+    }, [equipamento?.id]); // Dependência ajustada para reexecutar se o ID mudar
 
     const isAssociado = (servicoId) => servicosAssociados.some(s => s.id === servicoId);
 
@@ -32,197 +38,104 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
             ? desassociarServico(equipamento.id, servico.id)
             : associarServico(equipamento.id, servico.id);
 
-        apiCall.then(() => {
-            setServicosAssociados(prev =>
-                jaAssociado
-                    ? prev.filter(s => s.id !== servico.id)
-                    : [...prev, servico]
-            );
-            if (onUpdate) onUpdate();
-        }).catch(err => {
-            console.error("Erro ao atualizar associação:", err);
-            alert("Falha ao atualizar associação do serviço.");
-        });
-    };
+        // Otimismo UI: Atualiza o estado local imediatamente
+        setServicosAssociados(prev =>
+            jaAssociado
+                ? prev.filter(s => s.id !== servico.id)
+                : [...prev, servico] // Adiciona o serviço completo temporariamente
+        );
 
-    if (loading) return <div className="modal-overlay"><div className="modal-content"><p>Carregando serviços...</p></div></div>;
-
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-                <h2>Serviços para {equipamento.nome}</h2>
-                <p>Marque os serviços que se aplicam a este equipamento.</p>
-                <div className="lista-servicos-modal">
-                    {catalogoServicos.map(servico => (
-                        <div key={servico.id} className="servico-item-modal">
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={isAssociado(servico.id)}
-                                    onChange={() => handleToggleAssociacao(servico)}
-                                />
-                                {servico.nome}
-                            </label>
-                        </div>
-                    ))}
-                </div>
-                <button onClick={onClose} className="btn-fechar-modal">Fechar</button>
-            </div>
-        </div>
-    );
-};
-
-
-// ✨ ALTERAÇÃO AQUI: Novo componente para o Modal de Programação e Histórico
-const ProgramacaoModal = ({ equipamento, onClose }) => {
-    const [programacao, setProgramacao] = useState([]);
-    const [historico, setHistorico] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        if (equipamento?.id) {
-            setLoading(true);
-            setError('');
-            Promise.all([
-                getProgramacaoManutencao(equipamento.id),
-                getHistoricoPorEquipamento(equipamento.id)
-            ])
-            .then(([programacaoRes, historicoRes]) => {
-                setProgramacao(programacaoRes.data);
-                // Ordena o histórico pelo Nº OS, do mais recente para o mais antigo
-                const historicoOrdenado = historicoRes.data.sort((a, b) => 
-                    (b.codigoOs || 0) - (a.codigoOs || 0)
+        apiCall
+            .then(() => {
+                // Sucesso: A UI já está atualizada
+                if (onUpdate) onUpdate();
+            })
+            .catch(err => {
+                // Erro: Reverte a mudança na UI e mostra alerta
+                console.error("Erro ao atualizar associação:", err);
+                alert("Falha ao atualizar associação do serviço.");
+                setServicosAssociados(prev => // Reverte
+                    jaAssociado
+                        ? [...prev, servico] // Readiciona se a remoção falhou
+                        : prev.filter(s => s.id !== servico.id) // Remove se a adição falhou
                 );
-                setHistorico(historicoOrdenado);
-            })
-            .catch(() => {
-                setError('Falha ao carregar os dados de manutenção do equipamento.');
-            })
-            .finally(() => {
-                setLoading(false);
             });
-        }
-    }, [equipamento]);
-
-    const formatarData = (data) => {
-        if (!data) return 'N/A';
-        // Ajusta para garantir que a data seja interpretada como UTC
-        const date = new Date(data);
-        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
-    }
-    
-    // ✨ NOVO: Função para criar os badges de status
-    const getStatusBadge = (status) => {
-        let className = 'status-badge ';
-        switch (status?.toUpperCase()) {
-            case 'ABERTA':
-                className += 'status-aberta';
-                break;
-            case 'CONCLUIDA':
-            case 'CONCLUÍDA':
-                className += 'status-concluida';
-                break;
-            case 'EM ANDAMENTO':
-                className += 'status-andamento';
-                break;
-            default:
-                className += 'status-default';
-        }
-        return <span className={className}>{status || 'N/A'}</span>;
     };
 
+    // Usa um container de loading mais simples dentro do modal
+    if (loading) {
+        return (
+            <div className="modal-overlay" onClick={onClose}>
+                <div className="modal-content" onClick={e => e.stopPropagation()}>
+                    {/* Reutiliza o header padrão */}
+                    <header className="modal-header">
+                        <h2>Serviços para {equipamento?.nome || '...'}</h2>
+                        <button onClick={onClose} className="btn-fechar-modal">&times;</button>
+                    </header>
+                    <div className="modal-body" style={{ textAlign: 'center', padding: '3rem' }}>
+                        <p>Carregando serviços...</p>
+                    </div>
+                </div>
+            </div>
+        );
+     }
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content programacao-modal" onClick={e => e.stopPropagation()}>
+             {/* ✨ ALTERAÇÃO AQUI: Adiciona 'associar-servicos-modal' para estilos específicos se necessário */}
+            <div className="modal-content associar-servicos-modal" onClick={e => e.stopPropagation()}>
+                 {/* ✨ ALTERAÇÃO AQUI: Reutiliza a classe modal-header */}
                 <header className="modal-header">
-                    <h2>Plano de Manutenção e Histórico</h2>
-                    <button onClick={onClose} className="btn-fechar-modal">Fechar</button>
+                    <h2>Serviços para {equipamento.nome}</h2>
+                     {/* ✨ ALTERAÇÃO AQUI: Reutiliza a classe btn-fechar-modal */}
+                    <button onClick={onClose} className="btn-fechar-modal">&times;</button>
                 </header>
+                 {/* ✨ ALTERAÇÃO AQUI: Reutiliza a classe modal-body */}
                 <div className="modal-body">
-                    <h3>{equipamento.nome}</h3>
-                    
-                    <h4>Plano de Manutenção Preventiva</h4>
-                    {loading ? <p>Carregando plano...</p> : programacao.length > 0 ? (
-                        // ✨ NOVO: Adicionado container para a tabela
-                        <div className="tabela-container">
-                            <table className="programacao-table">
-                                <thead>
-                                    <tr>
-                                        <th>Serviço</th>
-                                        <th>Frequência</th>
-                                        <th>Último Manutentor</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {programacao.map((item, index) => (
-                                        <tr key={`prog-${index}`}>
-                                            <td>{item.servico}</td>
-                                            <td>{item.frequencia}</td>
-                                            <td>{item.ultimoManutentor || 'N/A'}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : <p className="mensagem-vazia">Nenhum plano de manutenção preventiva cadastrado para este equipamento.</p>}
-                    
-                    <h4 style={{marginTop: '2rem'}}>Histórico de Ordens de Serviço</h4>
-                    {loading ? <p>Carregando histórico...</p> : historico.length > 0 ? (
-                        <div className="historico-table-container">
-                            <table className="programacao-table historico-table">
-                                <thead>
-                                    <tr>
-                                        <th>Nº OS</th>
-                                        <th>Data</th>
-                                        <th>Tipo</th>
-                                        <th>Serviço/Problema</th>
-                                        <th>Executor</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {historico.map(os => (
-                                        <tr key={`hist-${os.id}`}>
-                                            <td>{os.codigoOs}</td>
-                                            <td>{formatarData(os.dataSolicitacao)}</td>
-                                            <td>{os.tipoManutencao}</td>
-                                            {/* ✨ NOVO: Adicionado title para ver texto completo no hover */}
-                                            <td title={os.descricaoProblema}>{os.descricaoProblema}</td>
-                                            <td>{os.executadoPorNome || 'N/A'}</td>
-                                            {/* ✨ ALTERADO: Usando o badge de status */}
-                                            <td>{getStatusBadge(os.status)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : <p className="mensagem-vazia">Nenhum histórico de manutenção encontrado.</p>}
-                     {error && <p className="mensagem-erro">{error}</p>}
+                    <p>Marque os serviços que se aplicam a este equipamento.</p>
+                    <div className="lista-servicos-modal">
+                        {/* Garante que catalogoServicos seja um array antes de mapear */}
+                        {Array.isArray(catalogoServicos) && catalogoServicos.map(servico => (
+                            <div key={servico.id} className="servico-item-modal">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={isAssociado(servico.id)}
+                                        onChange={() => handleToggleAssociacao(servico)}
+                                    />
+                                    {servico.nome}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
                 </div>
+                 {/* ✨ ALTERAÇÃO AQUI: Adiciona o modal-footer envolvendo o botão */}
+                <footer className="modal-footer">
+                    <button onClick={onClose} className="btn-fechar-modal">Fechar</button>
+                </footer>
             </div>
         </div>
     );
 };
 
-// ... (Restante do arquivo GerenciarEquipamentosPage.js sem alterações) ...
+
+// Componente principal da página
 function GerenciarEquipamentosPage() {
+   // ... (Restante do código sem alterações) ...
     const [equipamentos, setEquipamentos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editandoId, setEditandoId] = useState(null);
     const [formEdicao, setFormEdicao] = useState({ tag: '', nome: '', descricao: '' });
-    const [novoEquipamento, setNovoEquipamento] = useState({ nome: '', descricao: '', tag: '' });
+    const [novoEquipamento, setNovoEquipamento] = useState({ nome: '', tag: '' });
 
     const [tiposServico, setTiposServico] = useState([]);
-    
     const [mensagem, setMensagem] = useState({ tipo: '', texto: '' });
     const [isModalServicosOpen, setIsModalServicosOpen] = useState(false);
     const [equipamentoParaModal, setEquipamentoParaModal] = useState(null);
-
     const [isProgramacaoModalOpen, setIsProgramacaoModalOpen] = useState(false);
     const [equipamentoParaProgramacao, setEquipamentoParaProgramacao] = useState(null);
+    const [isHistoricoModalOpen, setIsHistoricoModalOpen] = useState(false);
+    const [equipamentoParaHistorico, setEquipamentoParaHistorico] = useState(null);
 
     const carregarEquipamentos = useCallback(() => {
         setLoading(true);
@@ -258,7 +171,8 @@ function GerenciarEquipamentosPage() {
             setMensagem({ tipo: '', texto: '' });
         }
     };
-    
+
+
     const handleNovoEquipamentoChange = (e) => {
         limparMensagem();
         const { name, value } = e.target;
@@ -268,10 +182,12 @@ function GerenciarEquipamentosPage() {
     const handleNovoEquipamentoSubmit = (e) => {
         e.preventDefault();
         limparMensagem();
-        createEquipamento(novoEquipamento)
+        const dadosParaApi = { ...novoEquipamento, descricao: '' };
+
+        createEquipamento(dadosParaApi)
             .then(() => {
                 exibeMensagemTemporaria('Equipamento criado com sucesso!');
-                setNovoEquipamento({ nome: '', descricao: '', tag: '' });
+                setNovoEquipamento({ nome: '', tag: '' });
                 carregarEquipamentos();
             })
             .catch(error => {
@@ -298,7 +214,7 @@ function GerenciarEquipamentosPage() {
     const handleEditarClick = (equip) => {
         limparMensagem();
         setEditandoId(equip.id);
-        setFormEdicao({ tag: equip.tag, nome: equip.nome, descricao: equip.descricao || '' });
+        setFormEdicao({ tag: equip.tag || '', nome: equip.nome, descricao: equip.descricao || '' });
     };
 
     const handleEdicaoChange = (e) => {
@@ -319,6 +235,7 @@ function GerenciarEquipamentosPage() {
                 exibeMensagemTemporaria(msg, 'erro');
             });
     };
+
 
     const handleOpenServicosModal = (equipamento) => {
         limparMensagem();
@@ -342,6 +259,18 @@ function GerenciarEquipamentosPage() {
         setEquipamentoParaProgramacao(null);
     };
 
+    const handleOpenHistoricoModal = (equipamento) => {
+        limparMensagem();
+        setEquipamentoParaHistorico(equipamento);
+        setIsHistoricoModalOpen(true);
+    };
+
+    const handleCloseHistoricoModal = () => {
+        setIsHistoricoModalOpen(false);
+        setEquipamentoParaHistorico(null);
+    };
+
+
     if (loading) return <div className="loading-message">Carregando equipamentos...</div>;
 
     return (
@@ -352,7 +281,6 @@ function GerenciarEquipamentosPage() {
                 <h2>Cadastrar Novo Equipamento</h2>
                 <form onSubmit={handleNovoEquipamentoSubmit} className="form-novo-equipamento">
                     <input type="text" name="nome" value={novoEquipamento.nome} onChange={handleNovoEquipamentoChange} placeholder="Nome do Equipamento" required />
-                    <input type="text" name="descricao" value={novoEquipamento.descricao} onChange={handleNovoEquipamentoChange} placeholder="Descrição" required />
                     <input type="text" name="tag" value={novoEquipamento.tag} onChange={handleNovoEquipamentoChange} placeholder="Número do Ativo (Opcional)" />
                     <button type="submit" className="btn-principal">Adicionar</button>
                 </form>
@@ -385,12 +313,15 @@ function GerenciarEquipamentosPage() {
                                     </>
                                 ) : (
                                     <>
-                                        <td>{equip.tag}</td>
+                                        <td>{equip.tag || '-'}</td>
                                         <td>{equip.nome}</td>
                                         <td>{equip.descricao}</td>
                                         <td>
                                             <div className="actions-container">
-                                                <button onClick={() => handleOpenProgramacaoModal(equip)} className="btn-plano">Plano</button>
+                                                <div className="actions-group-vertical">
+                                                    <button onClick={() => handleOpenProgramacaoModal(equip)} className="btn-plano">Plano</button>
+                                                    <button onClick={() => handleOpenHistoricoModal(equip)} className="btn-historico">Histórico</button>
+                                                </div>
                                                 <div className="actions-group">
                                                     <button onClick={() => handleOpenServicosModal(equip)} className="btn-servicos">Serviços</button>
                                                     <button onClick={() => handleEditarClick(equip)} className="btn-editar">Editar</button>
@@ -405,6 +336,7 @@ function GerenciarEquipamentosPage() {
                     </tbody>
                 </table>
             </div>
+            {/* Renderização dos Modais */}
             {isModalServicosOpen && equipamentoParaModal && (
                 <ModalAssociarServicos
                     equipamento={equipamentoParaModal}
@@ -417,6 +349,12 @@ function GerenciarEquipamentosPage() {
                 <ProgramacaoModal
                     equipamento={equipamentoParaProgramacao}
                     onClose={handleCloseProgramacaoModal}
+                />
+            )}
+            {isHistoricoModalOpen && equipamentoParaHistorico && (
+                <HistoricoModal
+                    equipamento={equipamentoParaHistorico}
+                    onClose={handleCloseHistoricoModal}
                 />
             )}
         </div>

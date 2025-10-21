@@ -17,12 +17,13 @@
   --cor-aviso: #f4a261;
   --cor-aviso-hover: #e38d4a;
   --cor-secundaria: #6c757d;
-  
+
   --fundo-pagina: #f4f7f6;
   --fundo-card: #ffffff;
   --cor-texto-principal: #343a40;
   --cor-texto-secundario: #6c757d;
   --cor-borda: #dee2e6;
+  --fundo-header-modal: #f8f9fa; /* Cinza bem claro */
 
   --sombra-card: 0 4px 15px rgba(0, 0, 0, 0.07);
   --raio-borda: 8px;
@@ -109,6 +110,7 @@ body {
 /* --- Célula de Ações e Botões --- */
 .equipamentos-table td:last-child {
     width: 220px;
+    text-align: right;
 }
 
 .actions-container {
@@ -116,15 +118,24 @@ body {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
+    width: 100%;
+}
+
+.actions-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
 }
 
 .actions-group {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr; /* 3 colunas iguais */
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 8px;
 }
 
-.btn-principal, .btn-plano, .btn-servicos, .btn-editar, .btn-excluir, .btn-salvar, .btn-cancelar {
+.btn-principal, .btn-plano, .btn-servicos, .btn-editar, .btn-excluir, .btn-salvar, .btn-cancelar,
+.btn-historico {
   padding: 10px 15px;
   border: none;
   border-radius: 6px;
@@ -137,6 +148,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .actions-group .btn-servicos,
@@ -145,11 +157,20 @@ body {
     flex: 1;
 }
 
-/* --- Botões --- */
+/* --- Cores e Hover dos Botões --- */
 .btn-principal { background-color: var(--cor-primaria); }
 .btn-principal:hover { background-color: var(--cor-primaria-hover); }
 .btn-plano { background-color: var(--cor-primaria); width: 100%; }
 .btn-plano:hover { background-color: var(--cor-primaria-hover); }
+
+.btn-historico {
+    background-color: var(--cor-secundaria);
+    width: 100%;
+}
+.btn-historico:hover {
+    background-color: #5a6268;
+}
+
 .btn-servicos { background-color: var(--cor-sucesso); }
 .btn-servicos:hover { background-color: var(--cor-sucesso-hover); }
 .btn-editar { background-color: var(--cor-aviso); color: var(--fundo-card); }
@@ -174,232 +195,248 @@ body {
 .mensagem.erro { background-color: var(--cor-alerta); }
 
 /* ============================================== */
-/* ESTILOS DO MODAL DE PLANO E HISTÓRICO      */
+/* ESTILOS DO MODAL (compartilhados)              */
 /* ============================================== */
 
-/* Fundo escuro atrás do modal */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
     padding: 1rem;
+    backdrop-filter: blur(2px);
 }
 
-/* O card branco do modal */
-.modal-content.programacao-modal {
-    background: var(--fundo-card); /* Usando sua variável */
-    border-radius: var(--raio-borda); /* Usando sua variável */
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+.modal-content {
+    background: var(--fundo-card);
+    border-radius: var(--raio-borda);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     width: 90%;
-    max-width: 900px; 
-    max-height: 90vh; 
     display: flex;
     flex-direction: column;
-    overflow: hidden; 
+    overflow: hidden; /* Importante para conter o header/footer arredondados */
+    border: 1px solid var(--cor-borda);
 }
 
-/* Cabeçalho do modal (com o título e o botão fechar) */
+.modal-content.programacao-modal {
+    max-width: 900px;
+    max-height: 90vh;
+}
+
+/* Header clean do modal */
 .modal-header {
     display: flex;
-    justify-content: space-between; 
+    justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem; 
-    background-color: var(--cor-primaria); /* <-- APLIQUEI SUA VARIÁVEL */
-    color: white;
-    border-top-left-radius: var(--raio-borda); /* Usando sua variável */
-    border-top-right-radius: var(--raio-borda); /* Usando sua variável */
-    flex-shrink: 0; 
-    border-bottom: none; /* Garantindo que não haja borda inferior */
+    padding: 0.8rem 1.75rem;
+    background-color: var(--fundo-header-modal);
+    color: var(--cor-texto-principal);
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--cor-borda);
 }
 
-.modal-content.programacao-modal .modal-header h2 {
-    margin: 0 !important; /* Força a remoção de margens (corrige o layout quebrado) */
-    padding: 0 !important; /* Força a remoção do padding */
-    font-size: 1.25rem;
+.modal-content .modal-header h2 {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 1.2rem;
     font-weight: 600;
-    color: white !important; /* Força a cor do texto para branco */
-    background: none !important; /* Força a remoção do fundo branco (corrige o "esquisito") */
-    border: none !important; /* Força a remoção da borda */
+    color: var(--cor-texto-principal) !important;
+    background: none !important;
+    border: none !important;
 }
 
 .modal-header .btn-fechar-modal {
-    background: transparent; /* Fundo transparente */
-    color: white; /* Texto branco */
-    border: 2px solid white; /* Borda branca */
-    border-radius: 5px;
-    padding: 0.4rem 1rem; /* Padding ajustado para a borda */
+    background: transparent;
+    color: var(--cor-texto-secundario);
+    border: none;
+    border-radius: 50%;
+    padding: 0.5rem;
+    line-height: 1;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    font-size: 1.1rem;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-header .btn-fechar-modal:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* Leve brilho ao passar o mouse */
-    color: white;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--cor-texto-principal);
 }
 
-/* Corpo do modal (onde fica o conteúdo e tabelas) */
+/* Corpo do modal */
 .modal-body {
-    padding: 1.5rem;
-    overflow-y: auto; 
-    flex-grow: 1; /* Permite que o body preencha o espaço restante e scroll */
+    padding: 1.5rem 1.75rem;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* Ajuste específico para o body do modal de serviços */
+.modal-content:not(.programacao-modal) .modal-body {
+    padding-bottom: 0.5rem;
 }
 
 .modal-body h3 {
     margin-top: 0;
     margin-bottom: 1.5rem;
-    color: var(--cor-texto-principal); /* Usando sua variável */
-    font-size: 1.5rem;
+    color: var(--cor-texto-principal);
+    font-size: 1.6rem;
+    font-weight: 600;
 }
 
+.modal-content:not(.programacao-modal) p {
+    color: var(--cor-texto-secundario);
+    margin-top: -1rem;
+    margin-bottom: 1.5rem;
+}
+
+
 .modal-body h4 {
-    margin-top: 2rem;
+    margin-top: 1rem;
     margin-bottom: 1rem;
-    color: #444;
-    border-bottom: 2px solid var(--cor-primaria); /* Usando sua variável */
-    padding-bottom: 0.5rem;
+    color: var(--cor-primaria);
+    border-bottom: 1px solid var(--cor-borda);
+    padding-bottom: 0.6rem;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
 .mensagem-vazia {
     font-style: italic;
-    color: var(--cor-texto-secundario); /* Usando sua variável */
+    color: var(--cor-texto-secundario);
     margin-top: 1rem;
-}
-
-
-/* ============================================== */
-/* ESTILOS DA TABELA "EXCEL"                    */
-/* ============================================== */
-
-/* Container geral da tabela (para borda e overflow) */
-.tabela-container {
-    border: 1px solid var(--cor-borda); /* Usando sua variável */
-    border-radius: var(--raio-borda); /* Usando sua variável */
-    overflow: hidden; 
-}
-
-/* Container específico da tabela de HISTÓRICO (com scroll) */
-.historico-table-container {
-    border: 1px solid var(--cor-borda); /* Usando sua variável */
-    border-radius: var(--raio-borda); /* Usando sua variável */
-    overflow: hidden; 
-    max-height: 400px; /* Altura máxima da tabela, como na sua imagem */
-    overflow-y: auto;  /* Adiciona a barra de rolagem vertical */
-    position: relative;
-}
-
-/* Estilo base da tabela */
-.programacao-table {
-    width: 100%;
-    border-collapse: collapse; /* Tira espaço entre células */
-    font-size: 0.9rem;
-    color: var(--cor-texto-principal); /* Usando sua variável */
-}
-
-/* Células de Cabeçalho (TH) e Células de Dados (TD) */
-.programacao-table th,
-.programacao-table td {
-    padding: 0.8rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--cor-borda); /* Usando sua variável */
-    vertical-align: middle;
-}
-
-/* Estilo do Cabeçalho da Tabela (Fixo no scroll) */
-.programacao-table thead th {
-    background-color: #f4f6f8; 
-    font-weight: 600;
-    color: var(--cor-texto-secundario); /* Usando sua variável */
-    position: sticky; /* Efeito "Excel" de cabeçalho fixo */
-    top: 0;
-    z-index: 10;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Sombra leve para destacar do conteúdo */
-}
-
-/* Linhas do corpo da tabela */
-.programacao-table tbody tr {
-    transition: background-color 0.15s;
-}
-
-/* Efeito "Zebra" (linhas alternadas) */
-.programacao-table tbody tr:nth-child(even) {
-    background-color: #fdfdfd;
-}
-
-/* Efeito de "hover" ao passar o mouse */
-.programacao-table tbody tr:hover {
-    background-color: #f0f7ff; /* Cor azul bem clara ao passar o mouse */
-}
-
-/* Estilo para a coluna "Serviço/Problema" não quebrar linha */
-.programacao-table td[title] {
-    max-width: 250px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* ============================================== */
-/* ESTILOS DOS BADGES DE STATUS                 */
-/* ============================================== */
-
-.status-badge {
-    display: inline-block;
-    padding: 0.3rem 0.6rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    line-height: 1;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: var(--raio-borda);
     text-align: center;
-    white-space: nowrap;
-    vertical-align: baseline;
-    border-radius: 10rem; /* Deixa bem redondo */
-    color: #fff;
-    text-transform: uppercase;
 }
 
-.status-badge.status-aberta {
-    background-color: var(--cor-alerta); /* Usando sua variável */
+/* ... (Estilos Tabela Excel, Badges, Scrollbar - sem alterações) ... */
+.tabela-container,
+.historico-table-container {
+    border: 1px solid var(--cor-borda); border-radius: var(--raio-borda); overflow: hidden; margin-top: 1rem;
 }
-
-.status-badge.status-concluida {
-    background-color: var(--cor-sucesso); /* Usando sua variável */
-}
-
-.status-badge.status-andamento {
-    background-color: var(--cor-aviso); /* Usando sua variável */
-}
-
-.status-badge.status-default {
-    background-color: var(--cor-secundaria); /* Usando sua variável */
-}
+.historico-table-container { max-height: 400px; overflow-y: auto; position: relative; }
+.programacao-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; color: var(--cor-texto-principal); }
+.programacao-table th, .programacao-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--cor-borda); vertical-align: middle; }
+.programacao-table thead th { background-color: #f4f6f8; font-weight: 600; color: var(--cor-texto-secundario); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.programacao-table tbody tr { transition: background-color 0.15s; }
+.programacao-table tbody tr:nth-child(even) { background-color: #fdfdfd; }
+.programacao-table tbody tr:hover { background-color: #f0f7ff; }
+.programacao-table td[title] { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status-badge { display: inline-block; padding: 0.3rem 0.7rem; font-size: 0.75rem; font-weight: 600; line-height: 1; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: var(--raio-borda); color: #fff; }
+.status-badge.status-previsto { background-color: #a2d2ff; color: #003566; border: 1px dashed #6a9fca; }
+.status-badge.status-aberta { background-color: var(--cor-alerta); }
+.status-badge.status-pendente { background-color: #0d6efd; }
+.status-badge.status-andamento, .status-badge.status-em_execucao { background-color: var(--cor-aviso); }
+.status-badge.status-verificacao, .status-badge.status-aguardando_verificacao { background-color: #fd7e14; }
+.status-badge.status-concluida { background-color: var(--cor-sucesso); }
+.status-badge.status-cancelada { background-color: #dc3545; }
+.status-badge.status-default { background-color: var(--cor-secundaria); }
+.historico-table-container::-webkit-scrollbar { width: 8px; }
+.historico-table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+.historico-table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+.historico-table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
 
 /* ============================================== */
-/* ESTILIZAÇÃO DA BARRA DE ROLAGEM              */
+/* ESTILOS MODAL ASSOCIAR SERVIÇOS (REFINADO)     */
 /* ============================================== */
-
-.historico-table-container::-webkit-scrollbar {
-    width: 10px;
+.modal-content:not(.programacao-modal) {
+    max-width: 650px;
 }
 
-.historico-table-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
+/* ✨✨ ALTERAÇÕES AQUI: Lista e Itens de Serviço Refinados ✨✨ */
+.lista-servicos-modal {
+    display: grid;
+    /* ✨ ALTERAÇÃO AQUI: Ajusta colunas e gap */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Reduzido minmax */
+    gap: 0.75rem; /* Reduzido gap */
+    padding: 0.5rem 0 1.5rem 0;
+    max-height: calc(80vh - 200px);
+    overflow-y: auto;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
 }
 
-.historico-table-container::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
+.servico-item-modal {
+    background: white;
+    /* ✨ ALTERAÇÃO AQUI: Padding ajustado */
+    padding: 0.9rem 1.1rem;
+    border-radius: 6px; /* Bordas um pouco menos arredondadas */
+    border: 1px solid var(--cor-borda);
+    transition: var(--transicao-rapida);
+    /* ✨ ALTERAÇÃO AQUI: Sombra removida para visual mais flat */
+    /* box-shadow: 0 1px 3px rgba(0,0,0,0.04); */
+}
+.servico-item-modal:hover {
+    border-color: #a5d8ff; /* Azul claro no hover da borda */
+    background-color: #f8fcff; /* Fundo azul bem sutil no hover */
 }
 
-.historico-table-container::-webkit-scrollbar-thumb:hover {
-    background: #aaa;
+.servico-item-modal label {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--cor-texto-principal);
 }
+
+.servico-item-modal input[type="checkbox"] {
+    width: 1.2em; /* Reduzido ligeiramente */
+    height: 1.2em;
+    cursor: pointer;
+    accent-color: var(--cor-primaria);
+}
+
+/* ✨✨ ALTERAÇÕES AQUI: Rodapé e Botão Fechar ✨✨ */
+.modal-footer {
+    padding: 1rem 1.75rem;
+    background-color: var(--fundo-header-modal);
+    border-top: 1px solid var(--cor-borda);
+    display: flex;
+    justify-content: flex-end;
+    border-bottom-left-radius: var(--raio-borda); /* Garante cantos arredondados */
+    border-bottom-right-radius: var(--raio-borda);
+}
+
+.modal-footer .btn-fechar-modal {
+    padding: 0.6rem 1.5rem;
+    border: 1px solid var(--cor-secundaria);
+    border-radius: 6px;
+    background-color: white;
+    color: var(--cor-secundaria);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transicao-rapida);
+    font-size: 0.95rem;
+    margin-top: 0;
+    align-self: unset;
+}
+
+.modal-footer .btn-fechar-modal:hover {
+    background-color: var(--cor-secundaria);
+    color: white;
+}
+/* ✨✨ FIM DAS ALTERAÇÕES NO MODAL DE SERVIÇOS ✨✨ */
+
+
+/* ... (Restante do CSS: Filtros, etc., permanece igual) ... */
+.filtros-programacao-modal { display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 1rem 0; margin-bottom: 1rem; border-bottom: 1px solid var(--cor-borda); }
+.filtro-item { display: flex; flex-direction: column; gap: 0.3rem; }
+.filtro-item label { font-size: 0.85rem; font-weight: 500; color: var(--cor-texto-secundario); }
+.filtro-item input[type="date"], .filtro-item input[type="text"] { padding: 0.6rem 0.8rem; border: 1px solid var(--cor-borda); border-radius: 6px; font-size: 0.95rem; min-width: 150px; }
+.btn-limpar-filtros { align-self: flex-end; padding: 0.6rem 1rem; border: 1px solid var(--cor-secundaria); background-color: transparent; color: var(--cor-secundaria); border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.btn-limpar-filtros:hover { background-color: var(--cor-secundaria); color: white; }
