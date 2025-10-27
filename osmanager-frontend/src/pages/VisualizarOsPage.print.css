@@ -1,172 +1,189 @@
-@media print {
-    /* 1. Esconde a parte da página que não deve ser impressa (o formulário de visualização) */
-    .view-os-page {
-        display: none !important;
-    }
+/* ✨ ALTERAÇÃO AQUI: Remove cabeçalho e rodapé padrão da impressão do navegador */
+@page {
+    size: auto;
+    margin: 20mm; /* Define uma margem padrão para o conteúdo na página */
+  }
+  
+  /* Regras aplicadas APENAS na hora de imprimir */
+  @media print {
+  
+      /* 1. Esconde a página da web que o usuário vê */
+      .view-os-page {
+          display: none !important;
+      }
+  
+      /* 2. Mostra a área de impressão que estava escondida (pelo CSS principal) */
+      .printable-area-wrapper {
+          display: block !important;
+          position: static; /* Garante que ele ocupe a página toda ao imprimir */
+      }
+  
+      /* 3. Estilos base do documento impresso para ficar limpo no papel */
+      body, html {
+          margin: 0;
+          padding: 0;
+          background-color: #fff;
+          font-family: Arial, sans-serif;
+          font-size: 10pt;
+          color: #000;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+      }
+  
+      /* 4. Tabela principal que forma a moldura da OS */
+      .print-main-table {
+          width: 100%;
+          border-collapse: collapse;
+          border: 2px solid black;
+      }
+  
+      /* Bordas para todas as células da tabela principal */
+      .print-main-table th, .print-main-table td {
+          border: 1px solid black;
+          padding: 5px;
+          vertical-align: top;
+      }
+  
+      /* --- Células do Cabeçalho --- */
+      .header-logo-cell {
+          width: 20%;
+          font-size: 14pt;
+          text-align: center;
+          vertical-align: middle;
+          border-right: 2px solid black;
+      }
+  
+      .header-title-cell {
+          width: 60%;
+          font-size: 14pt;
+          text-align: center;
+          vertical-align: middle;
+      }
+  
+      .header-os-number-cell {
+          width: 20%;
+          text-align: center;
+          vertical-align: middle;
+          border-left: 2px solid black;
+      }
+      .header-os-number-cell div:first-child {
+          border-bottom: 1px solid black;
+          padding-bottom: 4px;
+          margin-bottom: 4px;
+      }
+  
+      /* --- Tabelas internas (sem bordas, apenas para layout) --- */
+      .info-table, .content-table {
+          width: 100%;
+          border-collapse: collapse;
+      }
+      .info-table td, .content-table td {
+          border: none;
+          padding: 4px;
+      }
+      .info-table td {
+          height: 25px; /* Altura mínima para as linhas de informação */
+      }
+  
+      /* Remove o padding da célula que contém uma tabela interna */
+      .no-padding {
+          padding: 0 !important;
+      }
+  
+      /* --- Título de Seção (cinza e com bordas grossas) --- */
+      .section-header td {
+          background-color: #E0E0E0 !important;
+          text-align: center;
+          font-weight: bold;
+          border-top: 2px solid black;
+          border-bottom: 2px solid black;
+      }
+  
+      /* --- Células de Conteúdo Específico --- */
+      .desc-cell {
+        vertical-align: top; /* Garante alinhamento superior */
+      }
+      .desc-cell p { 
+        margin: 5px 0 0 0; 
+      }
+      
+      .status-cell {
+          width: 30%;
+          padding-left: 10px;
+      }
+      .status-cell span {
+          display: block;
+          margin-top: 10px;
+      }
 
-    /* 2. Garante que a área de impressão, que está escondida na tela, seja visível ao imprimir */
-    .printable-area {
-        display: block !important;
-    }
+      .problem-desc-cell {
+          padding: 8px 5px;
+          min-height: 40px;
+      }
+  
+      .obs-cell {
+          height: 80px; /* Espaço para observação */
+          border-top: 1px solid black;
+      }
+       .obs-cell p { margin: 5px 0 0 0; }
+  
+      .pecas-check-cell {
+          border-left: 1px solid black;
+      }
+  
+      .pecas-cell {
+          min-height: 40px;
+      }
+      .pecas-cell p {
+          min-height: 20px;
+          margin: 5px 0 0 0;
+      }
 
-    /* O restante dos seus estilos de formatação para a tabela permanecem os mesmos */
-    @page {
-        size: auto;
-        margin: 20mm;
-    }
-    
-    body, html {
-        background-color: #fff !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
- 
-    .print-main-table {
-        width: 100%;
-        border-collapse: collapse;
-        border: 2px solid black;
-    }
- 
-    .print-main-table th, .print-main-table td {
-        border: 1px solid black;
-        padding: 5px;
-        vertical-align: top;
-    }
- 
-    .header-logo-cell {
-        width: 20%;
-        font-size: 14pt;
-        text-align: center;
-        vertical-align: middle;
-        border-right: 2px solid black;
-    }
- 
-    .header-title-cell {
-        width: 60%;
-        font-size: 14pt;
-        text-align: center;
-        vertical-align: middle;
-    }
- 
-    .header-os-number-cell {
-        width: 20%;
-        text-align: center;
-        vertical-align: middle;
-        border-left: 2px solid black;
-    }
-    .header-os-number-cell div:first-child {
-        border-bottom: 1px solid black;
-        padding-bottom: 4px;
-        margin-bottom: 4px;
-    }
- 
-    .info-table, .content-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .info-table td, .content-table td {
-        border: none;
-        padding: 4px;
-    }
-    .info-table td {
-        height: 25px;
-    }
- 
-    .no-padding {
-        padding: 0 !important;
-    }
- 
-    .section-header td {
-        background-color: #E0E0E0 !important;
-        text-align: center;
-        font-weight: bold;
-        border-top: 2px solid black;
-        border-bottom: 2px solid black;
-    }
- 
-    .desc-cell {
-      vertical-align: top;
-    }
-    .desc-cell p { 
-      margin: 5px 0 0 0; 
-    }
-    
-    .status-cell {
-        width: 30%;
-        padding-left: 10px;
-    }
-    .status-cell span {
-        display: block;
-        margin-top: 10px;
-    }
+      .checklist-impressao {
+        padding: 0 5px;
+      }
+      
+      .checklist-item-impressao {
+        display: flex; /* Alinha os itens na horizontal */
+        justify-content: space-between; /* Separa o nome das opções */
+        padding: 3px 0;
+      }
 
-    .problem-desc-cell {
-        padding: 8px 5px;
-        min-height: 40px;
-    }
- 
-    .obs-cell {
-        height: 80px;
-        border-top: 1px solid black;
-    }
-     .obs-cell p { margin: 5px 0 0 0; }
- 
-    .pecas-check-cell {
-        border-left: 1px solid black;
-    }
- 
-    .pecas-cell {
-        min-height: 40px;
-    }
-    .pecas-cell p {
-        min-height: 20px;
-        margin: 5px 0 0 0;
-    }
+      .checklist-nome-impressao {
+        margin-right: auto; /* Empurra as opções para a direita */
+      }
+      
+      .checklist-status-impressao {
+        white-space: nowrap; /* Impede que "( ) Realizado" quebre a linha */
+        padding-left: 15px; /* Espaçamento entre as opções */
+      }
+  
+      /* --- Rodapé --- */
+      .footer-row td {
+          font-size: 8pt;
+          font-weight: bold;
+          padding: 2px 5px;
+          border-top: 2px solid black;
+          border-left: none;
+          border-right: none;
+          /* ✅ CORREÇÃO AQUI: Adiciona para garantir que as células não quebrem a linha */
+          white-space: nowrap;
+      }
 
-    .checklist-impressao {
-      padding: 0 5px;
-    }
-    
-    .checklist-item-impressao {
-      display: flex;
-      justify-content: space-between;
-      padding: 3px 0;
-    }
-
-    .checklist-nome-impressao {
-      margin-right: auto;
-    }
-    
-    .checklist-status-impressao {
-      white-space: nowrap;
-      padding-left: 15px;
-    }
- 
-    /* --- Rodapé --- */
-    .footer-row td {
-        font-size: 8pt;
-        font-weight: bold;
-        padding: 2px 5px;
-        border-top: 2px solid black;
-        border-left: none;
-        border-right: none;
-        white-space: nowrap;
-    }
-
-    .footer-cell-left {
-        text-align: left;
-        width: 50%;
-    }
-    .footer-cell-center {
-        text-align: center;
-        width: 20%;
-    }
-    .footer-cell-right {
-        text-align: right;
-        width: 30%;
-    }
- 
-    strong {
-        font-weight: bold;
-    }
-}
+      .footer-cell-left {
+          text-align: left;
+          width: 50%; /* Garante que ocupe a metade esquerda */
+      }
+      .footer-cell-center {
+          text-align: center;
+          width: 20%; /* Ocupa um espaço menor no centro */
+      }
+      .footer-cell-right {
+          text-align: right;
+          width: 30%; /* Garante que ocupe a parte direita */
+      }
+  
+      strong {
+          font-weight: bold;
+      }
+  }

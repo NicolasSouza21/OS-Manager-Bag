@@ -8,8 +8,7 @@ import {
 import HistoricoModal from './HistoricoModal';
 import ProgramacaoModal from './ProgramacaoModal';
 import './GerenciarEquipamentosPage.css';
-// ✨ ALTERAÇÃO AQUI: Importa o novo CSS de impressão
-import './GerenciarEquipamentosPage.print.css';
+
 
 
 // ModalAssociarServicos

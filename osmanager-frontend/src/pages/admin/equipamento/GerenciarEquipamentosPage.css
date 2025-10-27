@@ -17,7 +17,7 @@
   --cor-aviso: #f4a261;
   --cor-aviso-hover: #e38d4a;
   --cor-secundaria: #6c757d;
-  
+
   --fundo-pagina: #f4f7f6;
   --fundo-card: #ffffff;
   --cor-texto-principal: #343a40;
@@ -66,19 +66,34 @@ body {
 /* --- Formulários --- */
 .form-novo-equipamento {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  /* ✨ CORREÇÃO AQUI: Ajusta colunas para input, input, botão */
+  grid-template-columns: 1fr 1fr auto; /* Duas colunas flexíveis, uma automática pro botão */
+  gap: 1rem; /* Reduzido o gap */
   align-items: flex-end;
+}
+
+.form-novo-equipamento > div { /* Aplica ao div que envolve label+input */
+    display: flex;
+    flex-direction: column;
+}
+
+.form-novo-equipamento label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--cor-texto-secundario);
+    font-size: 0.875rem;
+    text-align: left;
 }
 
 .form-novo-equipamento input {
   width: 100%;
-  padding: 12px 15px;
+  padding: 10px 12px; /* Padding ajustado */
   font-size: 1rem;
   border: 1px solid var(--cor-borda);
   border-radius: 6px;
   background-color: #fcfcfc;
   transition: var(--transicao-rapida);
+  box-sizing: border-box;
 }
 
 .form-novo-equipamento input:focus {
@@ -87,81 +102,117 @@ body {
   box-shadow: 0 0 0 3px rgba(0, 90, 156, 0.2);
 }
 
+.form-novo-equipamento button.btn-principal {
+    padding: 10px 20px; /* Padding ajustado para o botão */
+    height: calc(20px + 1rem + 2px); /* Altura baseada no padding + font-size + borda */
+    white-space: nowrap; /* Impede que "Adicionar" quebre linha */
+}
+
+
 /* --- Tabela de Equipamentos --- */
 .equipamentos-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.equipamentos-table th {
-  padding: 1rem 1.5rem;
+.equipamentos-table th,
+.equipamentos-table td {
+  padding: 0.8rem 1rem; /* Padding ligeiramente reduzido */
   text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.equipamentos-table th {
   font-weight: 600;
   color: var(--cor-texto-secundario);
-  border-bottom: 2px solid var(--cor-borda);
+  border-bottom-width: 2px;
 }
 
 .equipamentos-table tbody tr {
-  border-bottom: 1px solid var(--cor-borda);
   transition: var(--transicao-rapida);
+}
+
+.equipamentos-table tbody tr:hover {
+  background-color: #f8f9fa;
 }
 
 /* --- Célula de Ações e Botões --- */
 .equipamentos-table td:last-child {
-    width: 220px;
+    /* ✨ CORREÇÃO AQUI: Define largura automática e alinhamento */
+    width: auto; /* Deixa a largura se ajustar ao conteúdo */
+    min-width: 280px; /* Aumenta um pouco o mínimo para caber 3 botões lado a lado */
+    text-align: right; /* Alinha o container flex à direita */
+    vertical-align: middle; /* Centraliza verticalmente */
 }
 
+/* ✨ CORREÇÃO AQUI: Container principal dos botões */
 .actions-container {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+    display: inline-flex; /* Torna o container inline para respeitar text-align: right */
+    flex-direction: column; /* Empilha os grupos */
+    gap: 6px; /* Espaço entre as linhas de botões */
+    align-items: stretch; /* Faz os grupos ocuparem a largura disponível */
 }
 
+/* ✨ CORREÇÃO AQUI: Grupo superior (Plano, Histórico) */
+.actions-group-vertical {
+    display: flex; /* Alinha os botões lado a lado */
+    gap: 6px; /* Espaço entre Plano e Histórico */
+}
+/* Faz Plano e Histórico terem a mesma largura */
+.actions-group-vertical > button {
+    flex: 1; /* Divide o espaço igualmente */
+}
+
+/* ✨ CORREÇÃO AQUI: Grupo inferior (Serviços, Editar, Excluir) */
 .actions-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr; /* 3 colunas iguais */
-    gap: 8px;
+    display: flex; /* Alinha os botões lado a lado */
+    gap: 6px; /* Espaço entre Serviços, Editar, Excluir */
+}
+/* Faz Serviços, Editar, Excluir terem a mesma largura */
+.actions-group > button {
+     flex: 1; /* Divide o espaço igualmente */
 }
 
-.btn-principal, .btn-plano, .btn-servicos, .btn-editar, .btn-excluir, .btn-salvar, .btn-cancelar {
-  padding: 10px 15px;
+
+/* Estilo base unificado para todos os botões de ação */
+.btn-principal, /* Incluído para consistência */
+.btn-plano, .btn-historico, .btn-servicos, .btn-editar, .btn-excluir, .btn-salvar, .btn-cancelar {
+  padding: 8px 10px; /* Padding ajustado */
   border: none;
-  border-radius: 6px;
+  border-radius: 5px; /* Raio ligeiramente menor */
   cursor: pointer;
-  font-weight: bold;
-  font-size: 0.95rem;
+  font-weight: 500;
+  font-size: 0.85rem; /* Tamanho ligeiramente menor */
   transition: var(--transicao-rapida);
   color: var(--fundo-card);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+  white-space: nowrap;
+  box-sizing: border-box; /* Garante que padding não afete a largura */
 }
 
-.actions-group .btn-servicos,
-.actions-group .btn-editar,
-.actions-group .btn-excluir {
-    flex: 1;
-}
-
-/* --- Botões --- */
-.btn-principal { background-color: var(--cor-primaria); }
-.btn-principal:hover { background-color: var(--cor-primaria-hover); }
-.btn-plano { background-color: var(--cor-primaria); width: 100%; }
+/* --- Cores e Hovers dos Botões --- */
+.btn-principal { background-color: var(--cor-primaria); } /* Adicionado */
+.btn-principal:hover { background-color: var(--cor-primaria-hover); } /* Adicionado */
+.btn-plano { background-color: var(--cor-primaria); }
 .btn-plano:hover { background-color: var(--cor-primaria-hover); }
+.btn-historico { background-color: #5bc0de; }
+.btn-historico:hover { background-color: #31b0d5; }
 .btn-servicos { background-color: var(--cor-sucesso); }
 .btn-servicos:hover { background-color: var(--cor-sucesso-hover); }
-.btn-editar { background-color: var(--cor-aviso); color: var(--fundo-card); }
+.btn-editar { background-color: var(--cor-aviso); }
 .btn-editar:hover { background-color: var(--cor-aviso-hover); }
 .btn-excluir { background-color: var(--cor-alerta); }
 .btn-excluir:hover { background-color: var(--cor-alerta-hover); }
 .btn-salvar { background-color: var(--cor-sucesso); }
 .btn-salvar:hover { background-color: var(--cor-sucesso-hover); }
 .btn-cancelar { background-color: var(--cor-secundaria); }
-.btn-cancelar:hover { filter: brightness(1.2); }
+.btn-cancelar:hover { background-color: #5a6268; }
 
-/* Mensagens de feedback */
+/* Mensagens de feedback (sem alterações) */
 .mensagem {
   padding: 1rem;
   margin-bottom: 1rem;
@@ -176,192 +227,133 @@ body {
 /* ============================================== */
 /* ESTILOS DO MODAL DE PLANO E HISTÓRICO      */
 /* ============================================== */
-
+/* ... (Estilos do modal permanecem os mesmos) ... */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 1rem;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6); display: flex; align-items: center;
+    justify-content: center; z-index: 1000; padding: 1rem;
 }
-
 .modal-content.programacao-modal {
-    background: var(--fundo-card);
-    border-radius: var(--raio-borda);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-    width: 90%;
-    max-width: 900px; 
-    max-height: 90vh; 
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; 
+    background: var(--fundo-card); border-radius: var(--raio-borda);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2); width: 90%; max-width: 900px;
+    max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;
 }
-
 .modal-header {
-    display: flex;
-    justify-content: space-between; 
-    align-items: center;
-    padding: 1rem 1.5rem; 
-    background-color: var(--fundo-pagina);
-    color: var(--cor-texto-principal);
-    flex-shrink: 0; 
-    border-bottom: 1px solid var(--cor-borda);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.5rem; background-color: var(--fundo-pagina);
+    color: var(--cor-texto-principal); flex-shrink: 0; border-bottom: 1px solid var(--cor-borda);
 }
-
 .modal-header h2 {
-    margin: 0 !important;
-    padding: 0 !important;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--cor-texto-principal) !important;
-    background: none !important;
-    border: none !important;
+    margin: 0 !important; padding: 0 !important; font-size: 1.25rem; font-weight: 600;
+    color: var(--cor-texto-principal) !important; background: none !important; border: none !important;
 }
-
-.modal-header .btn-fechar-modal,
-.modal-header .btn-imprimir-modal {
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.9rem;
+.modal-header .btn-fechar-modal, .modal-header .btn-imprimir-modal {
+    padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; font-size: 0.9rem;
 }
-
 .modal-header .btn-fechar-modal {
-    background-color: #f8f9fa;
-    color: var(--cor-texto-secundario);
-    border: 1px solid var(--cor-borda);
+    background-color: #f8f9fa; color: var(--cor-texto-secundario); border: 1px solid var(--cor-borda);
 }
-
-.modal-header .btn-fechar-modal:hover {
-    background-color: #e9ecef;
-}
-
+.modal-header .btn-fechar-modal:hover { background-color: #e9ecef; }
 .modal-header .btn-imprimir-modal {
-    background-color: var(--cor-primaria);
-    color: white;
-    border: 1px solid var(--cor-primaria);
-    margin-right: 0.5rem;
+    background-color: var(--cor-primaria); color: white; border: 1px solid var(--cor-primaria); margin-right: 0.5rem;
 }
-
-.modal-header .btn-imprimir-modal:hover {
-    background-color: var(--cor-primaria-hover);
-}
-
-
-.modal-body {
-    padding: 1.5rem;
-    overflow-y: auto; 
-    flex-grow: 1;
-}
-
-.modal-body h3 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    color: var(--cor-texto-principal);
-    font-size: 1.5rem;
-}
-
-.modal-body h4 {
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    color: #444;
-    border-bottom: 2px solid var(--cor-primaria);
-    padding-bottom: 0.5rem;
-}
-
-.mensagem-vazia {
-    font-style: italic;
-    color: var(--cor-texto-secundario);
-    margin-top: 1rem;
-}
-
-.tabela-container,
-.historico-table-container {
-    border: 1px solid var(--cor-borda);
-    border-radius: var(--raio-borda);
-    overflow: hidden; 
-}
-
-.historico-table-container {
-    max-height: 400px;
-    overflow-y: auto;
-    position: relative;
-}
-
-.programacao-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-    color: var(--cor-texto-principal);
-}
-
-.programacao-table th,
-.programacao-table td {
-    padding: 0.8rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--cor-borda);
-    vertical-align: middle;
-}
-
-.programacao-table thead th {
-    background-color: #f4f6f8; 
-    font-weight: 600;
-    color: var(--cor-texto-secundario);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-.programacao-table tbody tr {
-    transition: background-color 0.15s;
-}
-
-.programacao-table tbody tr:nth-child(even) {
-    background-color: #fdfdfd;
-}
-
-.programacao-table tbody tr.clickable-row:hover {
-    background-color: #eaf5ff;
-    cursor: pointer;
-}
-
-
-.programacao-table td[title] {
-    max-width: 250px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.status-badge {
-    display: inline-block;
-    padding: 0.3rem 0.6rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    line-height: 1;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: baseline;
-    border-radius: 10rem;
-    color: #fff;
-    text-transform: uppercase;
-}
-
+.modal-header .btn-imprimir-modal:hover { background-color: var(--cor-primaria-hover); }
+.modal-body { padding: 1.5rem; overflow-y: auto; flex-grow: 1; }
+.modal-body h3 { margin-top: 0; margin-bottom: 1.5rem; color: var(--cor-texto-principal); font-size: 1.5rem; }
+.modal-body h4 { margin-top: 2rem; margin-bottom: 1rem; color: #444; border-bottom: 2px solid var(--cor-primaria); padding-bottom: 0.5rem; }
+.mensagem-vazia { font-style: italic; color: var(--cor-texto-secundario); margin-top: 1rem; }
+.tabela-container, .historico-table-container { border: 1px solid var(--cor-borda); border-radius: var(--raio-borda); overflow: hidden; }
+.historico-table-container { max-height: 400px; overflow-y: auto; position: relative; }
+.programacao-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; color: var(--cor-texto-principal); }
+.programacao-table th, .programacao-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--cor-borda); vertical-align: middle; }
+.programacao-table thead th { background-color: #f4f6f8; font-weight: 600; color: var(--cor-texto-secundario); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.programacao-table tbody tr { transition: background-color 0.15s; }
+.programacao-table tbody tr:nth-child(even) { background-color: #fdfdfd; }
+.programacao-table tbody tr.clickable-row:hover { background-color: #eaf5ff; cursor: pointer; }
+.programacao-table td[title] { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status-badge { display: inline-block; padding: 0.3rem 0.6rem; font-size: 0.8rem; font-weight: 700; line-height: 1; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: 10rem; color: #fff; text-transform: uppercase; }
 .status-badge.status-aberta { background-color: var(--cor-alerta); }
 .status-badge.status-concluida { background-color: var(--cor-sucesso); }
 .status-badge.status-andamento { background-color: var(--cor-aviso); }
 .status-badge.status-default { background-color: var(--cor-secundaria); }
-
 .historico-table-container::-webkit-scrollbar { width: 10px; }
 .historico-table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
 .historico-table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 .historico-table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+/* ============================================== */
+/* ESTILOS PARA IMPRESSÃO DO MODAL HISTÓRICO      */
+/* ============================================== */
+/* ... (Regras @media print permanecem as mesmas) ... */
+@media print {
+    /* Esconde a página principal (a tela do gerenciador de equipamentos) */
+    .gerenciar-equipamentos-container {
+        display: none !important;
+    }
+
+    /* Mostra APENAS o conteúdo de impressão do modal de histórico */
+    .printable-container, .printable-container * {
+        visibility: visible;
+    }
+    .printable-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    /* Estilos da tabela de impressão */
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt;
+        page-break-inside: auto;
+    }
+    .print-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    .print-table th, .print-table td {
+        border: 1px solid #ccc;
+        padding: 6px;
+        text-align: left;
+    }
+
+    .print-table thead, .print-table tfoot {
+        display: table-row-group;
+    }
+    .print-table tfoot {
+        display: table-footer-group;
+    }
+
+    /* Estilização do cabeçalho da página (dentro da tabela) */
+    .printable-header {
+        text-align: center;
+        border: none !important;
+    }
+    .printable-header h2, .printable-header h3 {
+        margin: 0;
+        padding: 5px;
+    }
+
+    .printable-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: none !important;
+        border-top: 1px solid #000 !important;
+        font-size: 8pt;
+        font-family: Arial, sans-serif;
+        padding: 5px 0;
+        width: 100%;
+    }
+
+    .printable-footer span {
+        white-space: nowrap;
+    }
+
+    .printable-footer span:nth-child(1) { text-align: left; flex: 1; }
+    .printable-footer span:nth-child(2) { text-align: center; flex: 1; }
+    .printable-footer span:nth-child(3) { text-align: right; flex: 1; }
+}
