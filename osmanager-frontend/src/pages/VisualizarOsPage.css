@@ -172,7 +172,7 @@
 }
 
 /* Estilo unificado para botões de Voltar e Excluir */
-.button-back, .button-delete {
+.button-back, .button-delete, .button-print {
   padding: 0.7rem 1.5rem;
   border-radius: 6px;
   font-size: 1rem;
@@ -197,6 +197,16 @@
 .button-delete:hover {
   background-color: #c82333;
 }
+
+/* ✅ CORREÇÃO: Adicionado estilo para o botão de imprimir */
+.button-print {
+    background-color: var(--cor-primaria);
+    color: white;
+}
+.button-print:hover {
+    background-color: var(--cor-primaria-hover);
+}
+
 
 /* Mensagens de Carregamento/Erro */
 .loading-details, .error-details, .no-data-details {
@@ -235,10 +245,7 @@
   cursor: pointer;
 }
 
-/* ✨ ADIÇÃO AQUI: Esconde a área de impressão fora da tela */
-.printable-area-wrapper {
-  position: absolute;
-  top: -9999px;
-  left: -9999px;
-  z-index: -1; /* Garante que não interfira com cliques */
+/* ✅ CORREÇÃO AQUI: Esconde a área de impressão da tela, usando a classe correta */
+.printable-area {
+  display: none;
 }

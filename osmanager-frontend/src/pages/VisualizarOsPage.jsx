@@ -194,8 +194,8 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                         </td>
                     </tr>
                     <tr className="footer-row">
-                        <td className="footer-cell-left">FO.169 - {tituloFooter}</td>
-                        <td className="footer-cell-center">REV.00</td>
+                        <td className="footer-cell-left">FO.012 - {tituloFooter}</td>
+                        <td className="footer-cell-center">REV.01</td>
                         <td className="footer-cell-right">DATA: {dataImpressao}</td>
                     </tr>
                 </tbody>
@@ -264,12 +264,13 @@ function VisualizarOsPage() {
 
     return (
         <div>
-            {!loading && ordemServico && (
-                <div className="printable-area-wrapper">
-                    {/* ✨ ALTERAÇÃO AQUI: Não passamos mais a prop 'local' */}
+            {/* ✅ CORREÇÃO AQUI: A área de impressão agora é um div simples e não um wrapper */}
+            <div className="printable-area">
+                {/* ✨ ALTERAÇÃO AQUI: Renderiza o componente de impressão apenas quando os dados estiverem prontos */}
+                {!loading && ordemServico && (
                     <PrintableOs ref={componentRef} os={ordemServico} equipamento={equipamento} />
-                </div>
-            )}
+                )}
+            </div>
             <div className="view-os-page">
                 <div className="view-os-form">
                     <header className="form-header-main">

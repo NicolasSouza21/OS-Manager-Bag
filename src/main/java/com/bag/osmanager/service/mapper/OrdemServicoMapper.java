@@ -48,14 +48,16 @@ public class OrdemServicoMapper {
         if (os.getEquipamento() != null) {
             dto.setEquipamentoId(os.getEquipamento().getId());
         }
+
+        // ✅ CORREÇÃO AQUI: Linhas descomentadas e ajustadas
         if (os.getLocal() != null) {
             dto.setLocalId(os.getLocal().getId());
-            // Verificações adicionais para evitar NullPointerException
-            // dto.setLocalNome(os.getLocal().getNome());
-            // if (os.getLocal().getSetor() != null) {
-            //     dto.setSetorNome(os.getLocal().getSetor().getNome());
-            // }
+            dto.setLocalNome(os.getLocal().getNome()); // Adiciona o nome do Local
+            if (os.getLocal().getSetor() != null) {
+                dto.setSetorNome(os.getLocal().getSetor().getNome()); // Adiciona o nome do Setor
+            }
         }
+        
         if (os.getPecasSubstituidas() != null) {
             dto.setPecasSubstituidas(os.getPecasSubstituidas().stream().map(peca -> {
                 PecaSubstituidaDTO pecaDTO = new PecaSubstituidaDTO();

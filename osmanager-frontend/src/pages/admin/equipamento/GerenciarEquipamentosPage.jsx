@@ -8,6 +8,9 @@ import {
 import HistoricoModal from './HistoricoModal';
 import ProgramacaoModal from './ProgramacaoModal';
 import './GerenciarEquipamentosPage.css';
+// ✨ ALTERAÇÃO AQUI: Importa o novo CSS de impressão
+import './GerenciarEquipamentosPage.print.css';
+
 
 // ModalAssociarServicos
 const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdate }) => {
@@ -78,19 +81,19 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
                 </div>
             </div>
         );
-     }
+    }
 
     return (
         <div className="modal-overlay" onClick={onClose}>
              {/* ✨ ALTERAÇÃO AQUI: Adiciona 'associar-servicos-modal' para estilos específicos se necessário */}
             <div className="modal-content associar-servicos-modal" onClick={e => e.stopPropagation()}>
-                 {/* ✨ ALTERAÇÃO AQUI: Reutiliza a classe modal-header */}
+                {/* ✨ ALTERAÇÃO AQUI: Reutiliza a classe modal-header */}
                 <header className="modal-header">
                     <h2>Serviços para {equipamento.nome}</h2>
-                     {/* ✨ ALTERAÇÃO AQUI: Reutiliza a classe btn-fechar-modal */}
+                    {/* ✨ ALTERAÇÃO AQUI: Reutiliza a classe btn-fechar-modal */}
                     <button onClick={onClose} className="btn-fechar-modal">&times;</button>
                 </header>
-                 {/* ✨ ALTERAÇÃO AQUI: Reutiliza a classe modal-body */}
+                {/* ✨ ALTERAÇÃO AQUI: Reutiliza a classe modal-body */}
                 <div className="modal-body">
                     <p>Marque os serviços que se aplicam a este equipamento.</p>
                     <div className="lista-servicos-modal">
@@ -109,7 +112,7 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
                         ))}
                     </div>
                 </div>
-                 {/* ✨ ALTERAÇÃO AQUI: Adiciona o modal-footer envolvendo o botão */}
+                {/* ✨ ALTERAÇÃO AQUI: Adiciona o modal-footer envolvendo o botão */}
                 <footer className="modal-footer">
                     <button onClick={onClose} className="btn-fechar-modal">Fechar</button>
                 </footer>
