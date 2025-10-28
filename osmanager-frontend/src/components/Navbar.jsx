@@ -18,9 +18,12 @@ function Navbar() {
     const isAdmin = normalizedRole === 'ADMIN';
     const isLider = normalizedRole === 'LIDER';
     const isEncarregado = normalizedRole === 'ENCARREGADO';
-    
+    // ✨ ALTERAÇÃO AQUI: Adiciona a verificação para Analista de Qualidade
+    const isAnalistaCQ = normalizedRole === 'ANALISTA_CQ';
+
     // Usuários com permissão para acessar áreas de gestão
-    const isGestor = isAdmin || isLider || isEncarregado;
+    // ✨ ALTERAÇÃO AQUI: Inclui isAnalistaCQ na condição
+    const podeGerenciarEquipamentos = isAdmin || isLider || isEncarregado || isAnalistaCQ;
 
     const handleLogout = () => {
         logout();
@@ -43,7 +46,7 @@ function Navbar() {
                         <span>Dashboard</span>
                     </NavLink>
                 </li>
-                
+
                 <li className="nav-item">
                     <NavLink to="/calendario" className="nav-link">
                         <i className="fas fa-calendar-alt"></i>
@@ -68,8 +71,9 @@ function Navbar() {
                     </li>
                 )}
 
-                {/* Link para "Gerenciar Equipamentos" - Apenas para Gestores */}
-                {isGestor && (
+                {/* Link para "Gerenciar Equipamentos" - Agora inclui Analista CQ */}
+                {/* ✨ ALTERAÇÃO AQUI: Usa a nova variável 'podeGerenciarEquipamentos' */}
+                {podeGerenciarEquipamentos && (
                     <li className="nav-item">
                         <NavLink to="/admin/equipamentos" className="nav-link">
                             <i className="fas fa-tools"></i>
@@ -78,7 +82,7 @@ function Navbar() {
                     </li>
                 )}
             </ul>
-            
+
             {/* ✨ NOVO: Área do usuário separada à direita */}
             <div className="navbar-user">
                 <span className="user-greeting">Olá, {userName}!</span>
