@@ -186,7 +186,7 @@
   cursor: not-allowed;
 }
 
-/* ✨ ALTERAÇÃO AQUI: Novos estilos para a seção de checkboxes de serviços */
+/* --- Checkboxes de Serviços (Preventiva) --- */
 .servicos-checkbox-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Colunas responsivas */
@@ -220,7 +220,6 @@
     background-color: #eff6ff;
 }
 
-/* Estilo para o checkbox personalizado */
 .checkbox-label input[type="checkbox"] {
     -webkit-appearance: none;
     appearance: none;
@@ -239,7 +238,6 @@
     transition: all 120ms ease-in-out;
 }
 
-/* O "V" de check que aparece quando marcado */
 .checkbox-label input[type="checkbox"]::before {
     content: "";
     width: 0.8em;
@@ -250,7 +248,6 @@
     clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 
-/* Quando o checkbox é marcado */
 .checkbox-label input[type="checkbox"]:checked {
     border-color: var(--cor-primaria);
     background-color: var(--cor-primaria);
@@ -261,7 +258,6 @@
     box-shadow: inset 1em 1em white; /* Cor do "V" de check */
 }
 
-/* Estilo do texto informativo (quando não há serviços) */
 .info-text {
     padding: 1.5rem;
     text-align: center;
@@ -270,4 +266,36 @@
     color: var(--cor-texto-secundario);
     font-style: italic;
     border: 1px dashed var(--cor-borda);
+}
+
+/* ✨ ALTERAÇÃO AQUI: Novos estilos para os botões de rádio (Sim/Não) */
+.downtime-check-group {
+    /* Garante que ocupe o espaço no form-row */
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+.radio-options {
+    display: flex;
+    flex-direction: row; /* Coloca "Não" e "Sim" lado a lado */
+    gap: 2rem; /* Espaço entre as opções */
+    align-items: center;
+    padding-top: 0.5rem; /* Alinha com os inputs */
+}
+
+.radio-options label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Espaço entre o botão e o texto */
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--cor-texto-input);
+    margin-bottom: 0; /* Remove a margem padrão do label */
+    cursor: pointer;
+}
+
+.radio-options input[type="radio"] {
+    width: 1.25em; /* Tamanho do botão */
+    height: 1.25em;
+    cursor: pointer;
 }

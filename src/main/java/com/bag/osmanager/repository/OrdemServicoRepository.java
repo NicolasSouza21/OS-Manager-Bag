@@ -1,19 +1,21 @@
 package com.bag.osmanager.repository;
 
 import com.bag.osmanager.model.OrdemServico;
-import org.springframework.data.domain.Sort; // ✨ ALTERAÇÃO AQUI
+import com.bag.osmanager.model.enums.StatusOrdemServico; 
+import com.bag.osmanager.model.enums.TipoManutencao; // ✨ ALTERAÇÃO AQUI: Import adicionado
+import org.springframework.data.domain.Sort; 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-import java.util.List; // ✨ ALTERAÇÃO AQUI
+import java.time.LocalDateTime; // ✨ ALTERAÇÃO AQUI: Import adicionado
+import java.util.List; 
 import java.util.Optional;
 
 public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long>, JpaSpecificationExecutor<OrdemServico> {
 
     boolean existsByEquipamentoId(Long equipamentoId);
 
-    // ✨ ALTERAÇÃO AQUI: Novo método para buscar o histórico de um equipamento
     /**
      * Encontra todas as Ordens de Serviço para um determinado equipamento, com ordenação.
      * @param equipamentoId O ID do equipamento a ser buscado.
@@ -29,4 +31,45 @@ public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long
     @Query("SELECT MAX(os.numeroSequencial) FROM OrdemServico os")
     Optional<Long> findMaxNumeroSequencial();
 
+    // --- MÉTODOS PARA RELATÓRIOS ---
+
+    /**
+     * (Gráfico 1: Mecânicos) Busca OSs concluídas COM executor e tempos válidos, dentro do período.
+     */
+    List<OrdemServico> findByStatusAndExecutadoPorIsNotNullAndInicioIsNotNullAndTerminoIsNotNullAndTerminoBetween(
+        StatusOrdemServico status, 
+        LocalDateTime inicioPeriodo, 
+        LocalDateTime fimPeriodo
+    );
+
+    // ✨ ALTERAÇÃO AQUI: Novo método para o Gráfico 2 (Ranking de Corretivas)
+    /**
+     * (Gráfico 2: Ranking Corretivas) Busca OSs Corretivas e Concluídas dentro do período.
+     */
+    List<OrdemServico> findAllByStatusAndTipoManutencaoAndTerminoBetween(
+        StatusOrdemServico status,
+        TipoManutencao tipo,
+        LocalDateTime inicioPeriodo,
+        LocalDateTime fimPeriodo
+    );
+
+    // ✨ ALTERAÇÃO AQUI: Novo método para o Gráfico 3 (Downtime)
+    /**
+     * (Gráfico 3: Downtime) Busca OSs Concluídas onde a máquina ficou PARADA, dentro do período.
+     */
+    List<OrdemServico> findAllByStatusAndMaquinaParadaIsTrueAndTerminoBetween(
+        StatusOrdemServico status,
+        LocalDateTime inicioPeriodo,
+        LocalDateTime fimPeriodo
+    );
+    
+    // ✨ ALTERAÇÃO AQUI: Novo método para o Gráfico 4 (Saúde P/C)
+    /**
+     * (Gráfico 4: Saúde P/C) Busca TODAS as OSs Concluídas dentro do período.
+     */
+    List<OrdemServico> findAllByStatusAndTerminoBetween(
+        StatusOrdemServico status,
+        LocalDateTime inicioPeriodo,
+        LocalDateTime fimPeriodo
+    );
 }

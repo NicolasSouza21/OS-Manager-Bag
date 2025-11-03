@@ -186,4 +186,38 @@
       strong {
           font-weight: bold;
       }
+
+      /* ✨ ====================================================== */
+      /* ✨ ALTERAÇÃO AQUI: Estilos adicionados para motivos e reprovação */
+      /* ✨ ====================================================== */
+
+      /* Estilo para o wrapper de cada item do checklist (para borda) */
+      .checklist-item-impressao-wrapper {
+          border-bottom: 1px dashed #eee; 
+          padding: 2px 0;
+      }
+      .checklist-item-impressao-wrapper:last-child {
+          border-bottom: none;
+      }
+
+      /* Estilo para o motivo do item "Não Realizado" */
+      .checklist-motivo-impressao {
+          font-style: italic;
+          color: #333;
+          padding-left: 20px;
+          display: block;
+          font-size: 8pt;
+      }
+
+      /* Estilos para a linha de REPROVAÇÃO */
+      .reprovado-row td, .reprovado-row-motivo td {
+          background-color: #ffebee !important; /* Fundo vermelho claro */
+          color: #b71c1c !important; /* Texto vermelho escuro */
+          font-weight: bold;
+      }
+      /* Estilo específico para a célula do motivo da reprovação */
+      .reprovado-row-motivo td {
+          font-size: 8pt !important;
+          padding-left: 10px !important;
+      }
   }
