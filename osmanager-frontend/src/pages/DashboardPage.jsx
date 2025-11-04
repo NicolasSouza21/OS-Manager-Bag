@@ -263,10 +263,19 @@ function DashboardPage() {
         }
     };
     
+    // ✨ CORREÇÃO AQUI: Função `renderAcoes` atualizada
     const renderAcoes = (os) => {
         const cargosDeAcao = ['ADMIN', 'LIDER', 'MECANICO'];
         const podeExecutarAcao = cargosDeAcao.some(cargo => userRole.includes(cargo));
-        const isEncarregado = userRole.includes('ENCARREGADO');
+        
+        // ✨ CORREÇÃO AQUI: Lógica de permissão de verificação atualizada
+        // Inclui ADMIN, ENCARREGADO, LIDER, ANALISTA_CQ
+        const podeVerificar = 
+            userRole.includes('ADMIN') || 
+            userRole.includes('ENCARREGADO') || 
+            userRole.includes('LIDER') || 
+            userRole.includes('ANALISTA_CQ');
+        // --- Fim da correção ---
 
         // ✨ Verifica se a OS tem relatórios parciais. 
         const hasAcompanhamentos = os.acompanhamentos && os.acompanhamentos.length > 0;
@@ -292,7 +301,8 @@ function DashboardPage() {
                         </button>
                     )}
                     
-                    {(isEncarregado || userRole.includes('ADMIN')) && os.status === 'AGUARDANDO_VERIFICACAO' && (
+                    {/* ✨ CORREÇÃO AQUI: Usa a nova variável 'podeVerificar' */}
+                    {podeVerificar && os.status === 'AGUARDANDO_VERIFICACAO' && (
                         <button title="Verificar OS" className="action-button-circle verificar-btn" onClick={() => { setSelectedOs(os); setIsVerificacaoModalOpen(true); }}>
                             <FaClipboardCheck />
                         </button>
@@ -337,6 +347,13 @@ function DashboardPage() {
         return dateB.localeCompare(dateA);
     });
 
+    // ✨ CORREÇÃO AQUI: Lógica do botão de filtro rápido
+    const podeVerificarFiltro = 
+        userRole.includes('ADMIN') || 
+        userRole.includes('ENCARREGADO') || 
+        userRole.includes('LIDER') || 
+        userRole.includes('ANALISTA_CQ');
+
     return (
         <div className="dashboard-container">
             <main>
@@ -365,7 +382,9 @@ function DashboardPage() {
                         {equipamentos.map(e => (<option key={e.id} value={e.id}>{e.nome}</option>))}
                     </select>
                     <button className={`filtro-btn-rapido ${filtros.minhasTarefas ? 'ativo' : ''}`} onClick={() => handleToggleFilter('minhasTarefas')}>Minhas Tarefas</button>
-                    {userRole.includes('ENCARREGADO') && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
+                    
+                    {/* ✨ CORREÇÃO AQUI: Usa a nova variável 'podeVerificarFiltro' */}
+                    {podeVerificarFiltro && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
                 </div>
                 <div className="os-list-container">
                     {ordens.length > 0 ? (

@@ -90,8 +90,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/funcionarios/**").hasRole("ADMIN")
 
 
-                // 3. Verificação de OS: Apenas Encarregado e Admin
-                .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar").hasAnyRole("ADMIN", "ENCARREGADO")
+                // ✨ CORREÇÃO AQUI: Adiciona LIDER e ANALISTA_CQ à permissão de verificação
+                // 3. Verificação de OS:
+                .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar")
+                    .hasAnyRole("ADMIN", "ENCARREGADO", "LIDER", "ANALISTA_CQ")
 
                 // 4. Gerenciamento de OS (mantido)
                 .requestMatchers("/api/ordens-servico/aprovar/**", "/api/ordens-servico/finalizar/**").hasAnyRole("ADMIN", "LIDER", "ENCARREGADO")

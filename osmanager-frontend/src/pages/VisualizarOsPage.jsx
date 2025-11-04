@@ -110,7 +110,9 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
     const {
         dataInicioPreventiva, dataSolicitacao, dataExecucao, termino, dataVerificacao,
         status, trocaPecas, codigoOs, tipoManutencao, localNome, setorNome,
-        frequencia, solicitante, descricaoProblema, executadoPorNome, pecasSubstituidas, acaoRealizada,
+        frequencia, solicitante, descricaoProblema, 
+        // ✨ CORREÇÃO AQUI (1/2): 'executadoPorNome' removido e 'executores' adicionado
+        executores, pecasSubstituidas, acaoRealizada,
         prioridade,
         // ✨ NOVO AQUI: Campos de verificação
         verificadoPorNome, statusVerificacao, comentarioVerificacao
@@ -166,6 +168,7 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                                             <td><strong>Frequência:</strong> {frequencia?.nome || 'N/A'}</td>
                                         )}
                                     </tr>
+                                    {/* O código de Local/Setor aqui já estava correto! */}
                                     {localNome && (
                                         <tr>
                                             <td><strong>Local:</strong> {localNome}</td>
@@ -207,7 +210,12 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                             <table className="info-table">
                                 <tbody>
                                     <tr>
-                                        <td colSpan="4"><strong>Executado por:</strong> {executadoPorNome || 'Aguardando execução...'}</td>
+                                        {/* ✨ CORREÇÃO AQUI (2/2): Usa a lista 'executores' */}
+                                        <td colSpan="4"><strong>Executado por:</strong> {
+                                            (executores && executores.length > 0)
+                                                ? executores.map(e => e.nome).join(', ')
+                                                : 'Aguardando execução...'
+                                        }</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Início:</strong> {dataInicioFormatada.date}</td>
@@ -229,6 +237,7 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                                             <strong>Quais?</strong>
                                             <p>
                                                 {pecasSubstituidas && pecasSubstituidas.length > 0
+                                                    // ✨ CORREÇÃO AQUI: Usa 'p.nome' (pois corrigimos o PecaSubstituidaDTO)
                                                     ? pecasSubstituidas.map(p => `${p.quantidade || 0}x ${p.nome || 'peça'}`).join(', ')
                                                     : 'Nenhuma peça substituída.'
                                                 }
@@ -378,6 +387,15 @@ function VisualizarOsPage() {
         return status.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     };
 
+    // ✨ CORREÇÃO AQUI: Nova função helper para formatar a lista de executores
+    const formatExecutores = (executores) => {
+        if (!executores || executores.length === 0) {
+            return 'Pendente';
+        }
+        // Pega o nome de cada executor da lista e junta com ", "
+        return executores.map(e => e.nome).join(', ');
+    };
+
     // Retornos condicionais (sem alterações)
     if (loading) return <div className="loading-details">Carregando...</div>;
     if (error) return <div className="error-details">{error}</div>;
@@ -422,6 +440,7 @@ function VisualizarOsPage() {
                             <div className="input-group"><label>Solicitante</label><input type="text" value={ordemServico.solicitante || ''} disabled /></div>
                             <div className="input-group"><label>Data da Solicitação</label><input type="text" value={formatDateTime(ordemServico.dataSolicitacao)} disabled /></div>
                             <div className="input-group"><label>Equipamento</label><input type="text" value={equipamento?.nome || ''} disabled /></div>
+                            {/* O código de Local/Setor aqui já estava correto! */}
                             <div className="input-group"><label>Local</label><input type="text" value={ordemServico.localNome || ''} disabled /></div>
                             <div className="input-group"><label>Setor</label><input type="text" value={ordemServico.setorNome || ''} disabled /></div>
                         </div>
@@ -430,7 +449,8 @@ function VisualizarOsPage() {
                     <section className="form-section">
                         <header><h2>Execução do Serviço</h2></header>
                         <div className="grid-container">
-                            <div className="input-group"><label>Executado por</label><input type="text" value={ordemServico.executadoPorNome || 'Pendente'} disabled /></div>
+                            {/* ✨ CORREÇÃO AQUI: Usa a nova função 'formatExecutores' */}
+                            <div className="input-group"><label>Executado por</label><input type="text" value={formatExecutores(ordemServico.executores)} disabled /></div>
                             <div className="input-group"><label>Data da Execução</label><input type="text" value={formatDateTime(ordemServico.dataExecucao)} disabled /></div>
                         </div>
                         <div className="input-group full-width" style={{ marginTop: '1rem' }}><label>Ação Realizada</label><textarea value={ordemServico.acaoRealizada || 'Aguardando preenchimento.'} rows="3" disabled></textarea></div>

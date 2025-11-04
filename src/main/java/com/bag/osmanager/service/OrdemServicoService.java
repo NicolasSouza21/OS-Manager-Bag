@@ -41,7 +41,7 @@ public class OrdemServicoService {
     // ✨ ALTERAÇÃO AQUI: Injeta o Mapper para quebrar a dependência circular
     private final OrdemServicoMapper ordemServicoMapper;
 
-    // ... (getHistoricoPorEquipamento e criarOS permanecem inalterados) ...
+    // ... (método getHistoricoPorEquipamento inalterado) ...
     public List<OrdemServicoDTO> getHistoricoPorEquipamento(Long equipamentoId) {
         return historicoService.getHistoricoPorEquipamento(equipamentoId);
     }
@@ -151,9 +151,8 @@ public class OrdemServicoService {
         return ordemServicoMapper.converteParaDTO(osAtualizada);
     }
 
-    // ✨ CORREÇÃO AQUI: Método registrarExecucao ATUALIZADO
+    // ... (registrarExecucao permanece inalterado) ...
     @Transactional
-    // 1. Remove o parâmetro 'executanteId', pois ele agora vem dentro do DTO
     public OrdemServicoDTO registrarExecucao(Long osId, ExecucaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
@@ -162,20 +161,16 @@ public class OrdemServicoService {
             throw new IllegalStateException("Ação não permitida: a OS precisa estar com status 'EM EXECUÇÃO' para ser finalizada.");
         }
         
-        // 2. Valida a nova lista de IDs
         if (dto.getExecutoresIds() == null || dto.getExecutoresIds().isEmpty()) {
             throw new IllegalArgumentException("A lista de executores (executoresIds) não pode estar vazia.");
         }
         
-        // 3. Busca a lista de Funcionario
         List<Funcionario> executoresList = funcionarioRepository.findAllById(dto.getExecutoresIds());
 
-        // 4. Valida se todos os IDs enviados foram encontrados no banco
         if (executoresList.size() != dto.getExecutoresIds().size()) {
             throw new ResourceNotFoundException("Um ou mais IDs de executores não foram encontrados no banco de dados.");
         }
         
-        // 5. Substitui o antigo 'setExecutadoPor' pelo novo 'setExecutores'
         os.setExecutores(new HashSet<>(executoresList));
         
         os.setDataExecucao(LocalDateTime.now());
@@ -184,16 +179,13 @@ public class OrdemServicoService {
         os.setInicio(dto.getInicio()); // Início da execução
         os.setTermino(dto.getTermino()); // Fim da execução
         
-        // ✨ Lógica de Downtime ✨ (inalterada)
         if (os.getMaquinaParada() != null && os.getMaquinaParada()) {
             os.setFimDowntime(dto.getFimDowntime()); 
         }
         
-        // ✨ Lógica de Justificativa de Troca de Peça ✨ (inalterada)
         if (Boolean.TRUE.equals(dto.getTrocaPecas())) {
             os.setMotivoTrocaPeca(dto.getMotivoTrocaPeca());
             
-            // Lógica das peças (inalterada)
             if (dto.getPecasSubstituidas() != null) {
                 if (os.getPecasSubstituidas() == null) {
                     os.setPecasSubstituidas(new ArrayList<>());
@@ -202,7 +194,7 @@ public class OrdemServicoService {
                 }
                 dto.getPecasSubstituidas().forEach(pecaDTO -> {
                     PecaSubstituida peca = new PecaSubstituida();
-                    BeanUtils.copyProperties(pecaDTO, peca); // Agora usa 'nome' (que corrigimos no DTO)
+                    BeanUtils.copyProperties(pecaDTO, peca); 
                     peca.setOrdemServico(os);
                     os.getPecasSubstituidas().add(peca);
                 });
@@ -214,7 +206,6 @@ public class OrdemServicoService {
             }
         }
         
-        // Lógica de Status (inalterada)
         if (os.getTipoManutencao() == TipoManutencao.PREVENTIVA && dto.getStatusFinal() == StatusOrdemServico.CONCLUIDA) {
             os.setStatus(StatusOrdemServico.AGUARDANDO_VERIFICACAO);
             os.setStatusVerificacao(StatusVerificacao.PENDENTE);
@@ -227,22 +218,33 @@ public class OrdemServicoService {
         return ordemServicoMapper.converteParaDTO(osAtualizada);
     }
 
-    // ... (verificarOS, buscarComFiltros, buscarPorId, deletarOrdemServico, agendarProximaPreventiva permanecem inalterados) ...
+    // ✨ ALTERAÇÃO AQUI: Método verificarOS ATUALIZADO
     @Transactional
     public OrdemServicoDTO verificarOS(Long osId, Long verificadorId, VerificacaoDTO dto) {
         OrdemServico osConcluida = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        
         if (osConcluida.getStatus() != StatusOrdemServico.AGUARDANDO_VERIFICACAO) {
             throw new IllegalStateException("A OS não está aguardando verificação.");
         }
+        
         Funcionario verificador = funcionarioRepository.findById(verificadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Funcionário com ID " + verificadorId + " não encontrado!"));
-        if (verificador.getTipoFuncionario() != TipoFuncionario.ENCARREGADO) {
-            throw new IllegalStateException("Ação não permitida. Apenas ENCARREGADOS podem realizar a verificação.");
+        
+        // ✨ CORREÇÃO AQUI: A lógica de permissão foi expandida
+        TipoFuncionario cargo = verificador.getTipoFuncionario();
+        if (cargo != TipoFuncionario.ENCARREGADO && 
+            cargo != TipoFuncionario.LIDER && 
+            cargo != TipoFuncionario.ANALISTA_CQ) {
+            
+            throw new IllegalStateException("Ação não permitida. Apenas Encarregados, Líderes ou Analistas de Qualidade podem realizar a verificação.");
         }
+        // --- Fim da correção ---
+
         osConcluida.setVerificadoPor(verificador);
         osConcluida.setDataVerificacao(LocalDateTime.now());
         osConcluida.setComentarioVerificacao(dto.getComentarioVerificacao());
+        
         if (dto.getAprovado()) {
             osConcluida.setStatus(StatusOrdemServico.CONCLUIDA);
             osConcluida.setStatusVerificacao(StatusVerificacao.APROVADO);
@@ -251,6 +253,7 @@ public class OrdemServicoService {
             osConcluida.setStatus(StatusOrdemServico.EM_EXECUCAO);
             osConcluida.setStatusVerificacao(StatusVerificacao.REPROVADO);
         }
+        
         OrdemServico osAtualizada = osRepository.save(osConcluida);
         return ordemServicoMapper.converteParaDTO(osAtualizada);
     }
