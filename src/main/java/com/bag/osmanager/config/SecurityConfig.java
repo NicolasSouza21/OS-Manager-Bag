@@ -5,7 +5,7 @@ import com.bag.osmanager.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpMethod; // ✨ ALTERAÇÃO AQUI: Importar o HttpMethod
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -79,8 +79,16 @@ public class SecurityConfig {
                 // 1. Rotas Públicas
                 .requestMatchers("/api/auth/**", "/error").permitAll()
 
-                // 2. Gerenciamento de Funcionários: Apenas ADMIN
+                // ✨ ALTERAÇÃO AQUI: Regra 2 foi dividida em 2a e 2b
+                // 2a. Gerenciamento de Funcionários (VISUALIZAÇÃO)
+                // Permite que quem executa OS (Lider, Mecanico, etc) possa VER a lista
+                .requestMatchers(HttpMethod.GET, "/api/funcionarios", "/api/funcionarios/**")
+                    .hasAnyRole("ADMIN", "LIDER", "MECANICO", "ENCARREGADO")
+
+                // 2b. Gerenciamento de Funcionários (MODIFICAÇÃO)
+                // Restringe a CRIAÇÃO(POST), ATUALIZAÇÃO(PUT) e DELEÇÃO(DELETE) apenas para ADMIN
                 .requestMatchers("/api/funcionarios/**").hasRole("ADMIN")
+
 
                 // 3. Verificação de OS: Apenas Encarregado e Admin
                 .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar").hasAnyRole("ADMIN", "ENCARREGADO")
@@ -90,23 +98,21 @@ public class SecurityConfig {
                 .requestMatchers("/api/ordens-servico/cq/**").hasAnyRole("ADMIN", "LIDER", "ENCARREGADO", "ANALISTA_CQ")
 
                 // 5. Gerenciamento de Equipamentos, Locais, Setores, Frequências, Tipos de Serviço e Planos Preventiva
-                // ✨ ALTERAÇÃO AQUI: Permite GET para qualquer autenticado (já estava)
                 .requestMatchers(HttpMethod.GET,
                     "/api/equipamentos/**",
                     "/api/locais/**",
-                    "/api/setores/**", // Adicionado Setores
-                    "/api/frequencias/**", // Adicionado Frequencias
-                    "/api/tipos-servico/**", // Adicionado Tipos de Serviço
-                    "/api/planos-preventiva/**" // Adicionado Planos Preventiva
+                    "/api/setores/**", 
+                    "/api/frequencias/**", 
+                    "/api/tipos-servico/**", 
+                    "/api/planos-preventiva/**"
                  ).authenticated()
-                // ✨ ALTERAÇÃO AQUI: Permite POST/PUT/DELETE para ADMIN, LIDER, ENCARREGADO e ANALISTA_CQ
                 .requestMatchers(
                     "/api/equipamentos/**",
                     "/api/locais/**",
-                    "/api/setores/**", // Adicionado Setores
-                    "/api/frequencias/**", // Adicionado Frequencias
-                    "/api/tipos-servico/**", // Adicionado Tipos de Serviço
-                    "/api/planos-preventiva/**" // Adicionado Planos Preventiva
+                    "/api/setores/**", 
+                    "/api/frequencias/**", 
+                    "/api/tipos-servico/**", 
+                    "/api/planos-preventiva/**"
                 ).hasAnyRole("ADMIN", "LIDER", "ENCARREGADO", "ANALISTA_CQ")
 
                 // 6. Regra final: Qualquer outra requisição precisa de autenticação

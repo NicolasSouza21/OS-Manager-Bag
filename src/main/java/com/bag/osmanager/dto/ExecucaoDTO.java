@@ -6,13 +6,14 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set; // ✨ ALTERAÇÃO AQUI: Import adicionado
 
 @Data
 public class ExecucaoDTO {
     
     private String acaoRealizada;
     private LocalDateTime inicio; // Início da *execução*
-    private LocalDateTime termino; // Fim da *execução*
+    private LocalDateTime termino; // Término da *execução*
     
     // ✨ ALTERAÇÃO AQUI: Novo campo para o fim do downtime
     private LocalDateTime fimDowntime; // Quando a máquina voltou a funcionar
@@ -29,4 +30,8 @@ public class ExecucaoDTO {
 
     @NotNull(message = "O status final da OS é obrigatório.")
     private StatusOrdemServico statusFinal; 
+
+    // ✨ ALTERAÇÃO AQUI: Novo campo para receber a lista de IDs dos executores
+    @NotNull(message = "A lista de executores não pode ser nula.")
+    private Set<Long> executoresIds; 
 }

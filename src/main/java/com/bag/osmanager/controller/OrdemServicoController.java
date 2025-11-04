@@ -17,7 +17,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.Authentication; // Mantemos o import para os outros métodos
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -81,11 +81,17 @@ public class OrdemServicoController {
         return ResponseEntity.ok(osService.iniciarExecucao(id));
     }
 
+    // ✨ ALTERAÇÃO AQUI: Método de execução modificado
     @PutMapping("/{id}/execucao")
-    public ResponseEntity<OrdemServicoDTO> registrarExecucao(@PathVariable Long id, @Valid @RequestBody ExecucaoDTO dto, Authentication authentication) {
-        Funcionario userDetails = (Funcionario) authentication.getPrincipal();
-        Long executanteId = userDetails.getId();
-        return ResponseEntity.ok(osService.registrarExecucao(id, executanteId, dto));
+    // 1. Remove 'Authentication authentication'
+    public ResponseEntity<OrdemServicoDTO> registrarExecucao(@PathVariable Long id, @Valid @RequestBody ExecucaoDTO dto) {
+        
+        // 2. Remove a lógica que pegava o ID do usuário logado
+        // Funcionario userDetails = (Funcionario) authentication.getPrincipal();
+        // Long executanteId = userDetails.getId();
+        
+        // 3. Chama o novo método do serviço, que não precisa mais do executanteId
+        return ResponseEntity.ok(osService.registrarExecucao(id, dto));
     }
 
     @PostMapping("/{id}/verificar")

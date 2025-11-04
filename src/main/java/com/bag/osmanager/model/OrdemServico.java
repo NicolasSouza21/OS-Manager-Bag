@@ -1,7 +1,7 @@
+// Local: src/main/java/com/bag/osmanager/model/OrdemServico.java
 package com.bag.osmanager.model;
 
 import com.bag.osmanager.model.enums.*;
-import com.fasterxml.jackson.annotation.JsonManagedReference; // ✨ ALTERAÇÃO AQUI: Import adicionado
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,12 +9,16 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+// ✨ CORREÇÃO AQUI: Imports que estavam faltando
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.util.ArrayList;
+// --- Fim da Correção ---
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList; // ✨ ALTERAÇÃO AQUI: Import adicionado
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet; 
 
 @Entity
 @Table(
@@ -73,43 +77,34 @@ public class OrdemServico {
     private LocalDateTime inicio; // Início da *execução*
     private LocalDateTime termino; // Término da *execução*
 
-    private Boolean maquinaParada; // Este é o campo antigo, vamos mantê-lo por enquanto
+    private Boolean maquinaParada; 
     private Boolean trocaPecas;
     
-    // ✨ ALTERAÇÃO AQUI: Novos campos para as justificativas
     @Column(columnDefinition = "TEXT")
     private String motivoMaquinaParada;
 
     @Column(columnDefinition = "TEXT")
     private String motivoTrocaPeca;
 
-    // ✨ ALTERAÇÃO AQUI: Novos campos para DOWNTIME
-    @Column(nullable = true) // Será nulo se a máquina não parou
-    private LocalDateTime inicioDowntime; // A hora que a máquina parou (informado na ABERTURA)
+    @Column(nullable = true) 
+    private LocalDateTime inicioDowntime; 
 
-    @Column(nullable = true) // Será nulo até a OS ser fechada
-    private LocalDateTime fimDowntime; // A hora que a máquina voltou (informado na EXECUÇÃO)
-    // --- Fim das novas alterações ---
-
+    @Column(nullable = true) 
+    private LocalDateTime fimDowntime; 
+ 
     @OneToMany(mappedBy = "ordemServico", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PecaSubstituida> pecasSubstituidas;
 
-    // ✨ ALTERAÇÃO AQUI: Adiciona a Relação com os Acompanhamentos (Relatórios Parciais)
-    @OneToMany(
-        mappedBy = "ordemServico", 
-        cascade = CascadeType.ALL, 
-        orphanRemoval = true, 
-        fetch = FetchType.LAZY
+    // Relação ManyToMany com os executores (mecânicos/equipe)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "os_executores", 
+        joinColumns = @JoinColumn(name = "ordem_servico_id"),
+        inverseJoinColumns = @JoinColumn(name = "funcionario_id")
     )
-    @JsonManagedReference // Lado "Pai" da relação, para evitar loops
-    private List<AcompanhamentoOS> acompanhamentos = new ArrayList<>();
-    // --- Fim da nova Relação ---
-
-    @ManyToOne
-    @JoinColumn(name = "executado_por_id")
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    private Funcionario executadoPor;
-    private LocalDateTime dataExecucao;
+    private Set<Funcionario> executores = new HashSet<>();
+    
+    private LocalDateTime dataExecucao; 
 
     @ManyToOne
     @JoinColumn(name = "verificado_por_id")
@@ -151,4 +146,14 @@ public class OrdemServico {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "frequencia_id", nullable = true)
     private Frequencia frequencia;
+    
+    // Campo de acompanhamentos (relatórios parciais)
+    @OneToMany(
+        mappedBy = "ordemServico", 
+        cascade = CascadeType.ALL, 
+        orphanRemoval = true, 
+        fetch = FetchType.LAZY
+    )
+    @JsonManagedReference // Lado "Pai" da relação, para evitar loops
+    private List<AcompanhamentoOS> acompanhamentos = new ArrayList<>();
 }

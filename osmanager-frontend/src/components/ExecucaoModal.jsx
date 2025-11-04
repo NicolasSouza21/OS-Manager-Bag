@@ -1,6 +1,6 @@
-// ✨ ALTERAÇÃO AQUI: Importa a nova função criarAcompanhamento
+// ✨ ALTERAÇÃO AQUI: Importa a nova função criarAcompanhamento e a getAllFuncionarios
 import React, { useState, useEffect } from 'react';
-import { listarServicosPorEquipamento, criarAcompanhamento } from '../services/apiService';
+import { listarServicosPorEquipamento, criarAcompanhamento, getAllFuncionarios } from '../services/apiService';
 import './ExecucaoModal.css';
 
 const toInputDateTimeFormat = (isoString) => {
@@ -11,10 +11,13 @@ const toInputDateTimeFormat = (isoString) => {
     return localDate.toISOString().slice(0, 16);
 };
 
-function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
+// ✨ ALTERAÇÃO AQUI: A props 'onSubmit' foi dividida em 'onFinalizar' e 'onSalvarRelatorio'
+//    Isso já estava no seu código, mas é uma mudança da versão anterior que eu tinha.
+function ExecucaoModal({ isOpen, onClose, onFinalizar, onSalvarRelatorio, os, actionLoading, isReportLoading }) {
     // --- Estados para a FINALIZAÇÃO da OS ---
     const [acaoRealizada, setAcaoRealizada] = useState(os?.acaoRealizada || '');
-    const [pecasSubstituidas, setPecasSubstituidas] = useState(os?.pecasSubstituidas?.length > 0 ? os.pecasSubstituidas : [{ nome: '', quantidade: 1 }]);
+    // ✨ CORREÇÃO AQUI (1/4): Renomeado 'nome' para 'nomePeca' no estado inicial
+    const [pecasSubstituidas, setPecasSubstituidas] = useState(os?.pecasSubstituidas?.length > 0 ? os.pecasSubstituidas : [{ nomePeca: '', quantidade: 1 }]);
     const [inicio, setInicio] = useState(() => toInputDateTimeFormat(os?.inicio || new Date().toISOString()));
     const [termino, setTermino] = useState(toInputDateTimeFormat(os?.termino || ''));
     const [trocaPecas, setTrocaPecas] = useState(os?.trocaPecas ?? null);
@@ -26,12 +29,47 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
     const [loadingServicos, setLoadingServicos] = useState(false);
     const [servicoStatus, setServicoStatus] = useState({});
 
-    // ✨ ALTERAÇÃO AQUI: Novos estados para o Relatório Parcial / Pausa
+    // --- Estados do Relatório Parcial / Pausa ---
     const [relatorioDescricao, setRelatorioDescricao] = useState('');
     const [relatorioMotivoPausa, setRelatorioMotivoPausa] = useState('');
-    // ✨ ALTERAÇÃO AQUI: Novo estado para os minutos da pausa
-    const [relatorioMinutosPausa, setRelatorioMinutosPausa] = useState(''); // Começa como string vazia
-    const [isReportLoading, setIsReportLoading] = useState(false); // Loading para o botão de salvar relatório
+    const [relatorioMinutosPausa, setRelatorioMinutosPausa] = useState(''); 
+    
+    // ✨ ALTERAÇÃO AQUI: Novos estados para a Equipe de Execução
+    const [listaMecanicos, setListaMecanicos] = useState([]);
+    const [loadingMecanicos, setLoadingMecanicos] = useState(true);
+    // Usamos um Set para garantir que os IDs sejam únicos
+    const [selectedExecutores, setSelectedExecutores] = useState(new Set());
+
+
+    // ✨ ALTERAÇÃO AQUI: Novo useEffect para carregar os mecânicos
+    useEffect(() => {
+        if (isOpen) {
+            setLoadingMecanicos(true);
+            
+            // Pega o ID do usuário logado
+            const currentUserId = Number(localStorage.getItem('userId'));
+            // Pré-seleciona o usuário logado
+            setSelectedExecutores(new Set(currentUserId ? [currentUserId] : []));
+
+            getAllFuncionarios()
+                .then(response => {
+                    // Filtra para incluir apenas quem pode executar OS
+                    const rolesPermitidas = ['MECANICO', 'LIDER', 'ADMIN'];
+                    const mecanicosFiltrados = (response.data || []).filter(func => 
+                        rolesPermitidas.includes(func.tipoFuncionario)
+                    );
+                    setListaMecanicos(mecanicosFiltrados);
+                })
+                .catch(err => {
+                    console.error("Erro ao buscar funcionários:", err);
+                    setListaMecanicos([]);
+                })
+                .finally(() => {
+                    setLoadingMecanicos(false);
+                });
+        }
+    }, [isOpen]); // Recarrega toda vez que o modal abre
+
 
     // ... (useEffect para carregar serviços da preventiva, não modificado) ...
     useEffect(() => {
@@ -74,7 +112,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
 
     if (!isOpen) return null;
 
-    // ... (funções handlePecaChange, adicionarPeca, handleStatusChange, handleMotivoChange, não modificadas) ...
+    // ... (funções handlePecaChange, handleStatusChange, handleMotivoChange, não modificadas) ...
     const handlePecaChange = (index, field, value) => {
         const novasPecas = [...pecasSubstituidas];
         novasPecas[index][field] = value;
@@ -82,7 +120,8 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
     };
 
     const adicionarPeca = () => {
-        setPecasSubstituidas([...pecasSubstituidas, { nome: '', quantidade: 1 }]);
+        // ✨ CORREÇÃO AQUI (2/4): Renomeado 'nome' para 'nomePeca' ao adicionar nova peça
+        setPecasSubstituidas([...pecasSubstituidas, { nomePeca: '', quantidade: 1 }]);
     };
 
     const handleStatusChange = (servicoId, newStatus) => {
@@ -99,42 +138,43 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
         }));
     };
 
+    // ✨ ALTERAÇÃO AQUI: Nova função para o checkbox da equipe
+    const handleExecutorToggle = (mecId) => {
+        setSelectedExecutores(prevSet => {
+            const newSet = new Set(prevSet);
+            if (newSet.has(mecId)) {
+                newSet.delete(mecId); // Desmarca
+            } else {
+                newSet.add(mecId); // Marca
+            }
+            return newSet;
+        });
+    };
+
     /**
      * Salva um acompanhamento (relatório parcial ou pausa) sem fechar o modal.
      */
     const handleSalvarRelatorioParcial = async () => {
-        // ✨ ALTERAÇÃO AQUI: Validação atualizada
-        // Permite salvar se qualquer um dos três campos for preenchido
         const minutos = Number(relatorioMinutosPausa) || 0;
         if (!relatorioDescricao.trim() && !relatorioMotivoPausa.trim() && minutos <= 0) {
             alert('Preencha pelo menos um campo para salvar o relatório: "O que foi feito", "Motivo da Pausa" ou "Duração".');
             return;
         }
 
-        setIsReportLoading(true);
-
-        // ✨ ALTERAÇÃO AQUI: Adiciona 'minutosPausa' ao payload
         const dadosRelatorio = {
             descricao: relatorioDescricao,
             motivoPausa: relatorioMotivoPausa,
-            minutosPausa: minutos, // Envia o valor numérico
-            ordemServicoId: os.id, // Vincula o relatório a esta OS
+            minutosPausa: minutos, 
+            ordemServicoId: os.id,
         };
 
-        try {
-            // Chama a nova função da API
-            await criarAcompanhamento(dadosRelatorio);
-            alert('Relatório parcial salvo com sucesso!');
-            // Limpa os campos após salvar
+        // Usa a função onSalvarRelatorio vinda da DashboardPage
+        await onSalvarRelatorio(dadosRelatorio, () => {
+            // Função de callback em caso de sucesso
             setRelatorioDescricao('');
             setRelatorioMotivoPausa('');
-            setRelatorioMinutosPausa(''); // ✨ ALTERAÇÃO AQUI: Limpa os minutos
-        } catch (error) {
-            console.error("Erro ao salvar relatório parcial:", error);
-            alert(error?.response?.data?.message || "Falha ao salvar relatório parcial.");
-        } finally {
-            setIsReportLoading(false);
-        }
+            setRelatorioMinutosPausa('');
+        });
     };
 
 
@@ -179,20 +219,30 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             return;
         }
 
-        // --- (Objeto de dados da finalização - sem alteração) ---
+        // ✨ ALTERAÇÃO AQUI: Nova validação da equipe de execução
+        if (selectedExecutores.size === 0) {
+            alert("Por favor, selecione pelo menos um mecânico na 'Equipe de Execução'.");
+            return;
+        }
+
+
+        // --- (Objeto de dados da finalização - com o novo campo) ---
         const dados = {
             acaoRealizada: acaoFinalFormatada,
             trocaPecas,
-            pecasSubstituidas: trocaPecas ? pecasSubstituidas.filter(p => p.nome.trim()) : [],
+            // ✨ CORREÇÃO AQUI (3/4): Filtra usando 'nomePeca'
+            pecasSubstituidas: trocaPecas ? pecasSubstituidas.filter(p => p.nomePeca && p.nomePeca.trim()) : [],
             inicio,
             termino,
             motivoTrocaPeca: trocaPecas ? motivoTrocaPeca : null,
             statusFinal,
-            fimDowntime: os.maquinaParada ? fimDowntime : null, 
+            fimDowntime: os.maquinaParada ? fimDowntime : null,
+            // ✨ ALTERAÇÃO AQUI: Envia os IDs dos executores como um Array
+            executoresIds: Array.from(selectedExecutores),
         };
         
-        // Esta função 'onSubmit' vem da DashboardPage e é responsável por fechar o modal
-        await onSubmit(dados);
+        // Esta função 'onFinalizar' vem da DashboardPage e é responsável por fechar o modal
+        await onFinalizar(dados);
     };
 
     // ... (renderAcaoRealizada - sem alteração) ...
@@ -234,10 +284,31 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             );
         }
 
-        // ✨ ALTERAÇÃO AQUI: O 'required' foi removido do textarea principal,
-        // já que ele só é obrigatório ao *finalizar* (validação movida para o JS)
         return (
             <textarea rows="4" value={acaoRealizada} onChange={(e) => setAcaoRealizada(e.target.value)} />
+        );
+    };
+
+    // ✨ ALTERAÇÃO AQUI: Novo renderizador para a lista de mecânicos
+    const renderEquipeExecucao = () => {
+        if (loadingMecanicos) return <p>Carregando mecânicos...</p>;
+        if (listaMecanicos.length === 0) return <p>Nenhum mecânico cadastrado.</p>;
+
+        return (
+            <div className="executor-list-container">
+                {listaMecanicos.map(mec => (
+                    <div key={mec.id} className="executor-checkbox-item">
+                        <label>
+                            <input 
+                                type="checkbox"
+                                checked={selectedExecutores.has(mec.id)}
+                                onChange={() => handleExecutorToggle(mec.id)}
+                            />
+                            {mec.nome}
+                        </label>
+                    </div>
+                ))}
+            </div>
         );
     };
 
@@ -254,6 +325,12 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                     <div className="form-group-inline">
                         <div className="form-group"><label>Início da Execução:</label><input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} required /></div>
                         <div className="form-group"><label>Término da Execução (Preencher ao Concluir):</label><input type="datetime-local" value={termino} onChange={(e) => setTermino(e.target.value)} /></div>
+                    </div>
+                    
+                    {/* ✨ ALTERAÇÃO AQUI: Nova seção da Equipe de Execução */}
+                    <div className="form-group">
+                        <label>Equipe de Execução (Selecione quem participou):</label>
+                        {renderEquipeExecucao()}
                     </div>
                     
                     {os.maquinaParada && (
@@ -290,7 +367,8 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                                 <h4>Peças Substituídas</h4>
                                 {pecasSubstituidas.map((peca, index) => (
                                     <div key={index} className="peca-item">
-                                        <input type="text" placeholder="Nome da Peça" value={peca.nome} onChange={(e) => handlePecaChange(index, 'nome', e.target.value)} />
+                                        {/* ✨ CORREÇÃO AQUI (4/4): 'value' e 'onChange' usam 'nomePeca' */}
+                                        <input type="text" placeholder="Nome da Peça" value={peca.nomePeca || ''} onChange={(e) => handlePecaChange(index, 'nomePeca', e.target.value)} />
                                         <input type="number" placeholder="Qtd" value={peca.quantidade} min="1" onChange={(e) => handlePecaChange(index, 'quantidade', parseInt(e.target.value, 10) || 1)} />
                                     </div>
                                 ))}
@@ -299,7 +377,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                         </>
                     )}
                     
-                    {/* ✨ ALTERAÇÃO AQUI: Nova seção para Relatório Parcial */}
+                    {/* ✨ ALTERAÇÃO AQUI: Seção de Relatório Parcial (código mantido) */}
                     <div className="relatorio-parcial-section">
                         <h3>Registrar Acompanhamento (Pausa / Relatório)</h3>
                         <p>Use esta seção para salvar o progresso ou justificar uma pausa sem finalizar a OS.</p>
@@ -314,17 +392,16 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                             />
                         </div>
 
-                        {/* ✨ ALTERAÇÃO AQUI: Motivo e Duração agora estão lado a lado */}
                         <div className="form-group-inline">
                             <div className="form-group" style={{ flex: 3 }}>
                                 <label htmlFor="relatorioMotivoPausa">Motivo da Pausa (Opcional)</label>
                                 <textarea 
                                     id="relatorioMotivoPausa"
-                                    rows="1" // Reduzido para 1 linha, já que está ao lado
+                                    rows="1" 
                                     value={relatorioMotivoPausa} 
                                     onChange={(e) => setRelatorioMotivoPausa(e.target.value)}
                                     placeholder="Ex: Aguardando peça, Fim do turno..."
-                                    style={{minHeight: '40px'}} // Garante altura mínima
+                                    style={{minHeight: '40px'}} 
                                 />
                             </div>
                             <div className="form-group" style={{ flex: 1 }}>
@@ -336,7 +413,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                                     onChange={(e) => setRelatorioMinutosPausa(e.target.value)}
                                     placeholder="Ex: 30"
                                     min="0"
-                                    step="5" // Pulos de 5 min
+                                    step="5" 
                                 />
                             </div>
                         </div>
@@ -345,7 +422,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                             type="button" 
                             onClick={handleSalvarRelatorioParcial} 
                             className="action-button-modal report-btn" 
-                            disabled={isReportLoading || actionLoading} // Desabilita se estiver finalizando a OS ou salvando relatório
+                            disabled={isReportLoading || actionLoading} 
                         >
                             {isReportLoading ? 'Salvando Relatório...' : 'Salvar Relatório (e continuar OS)'}
                         </button>
