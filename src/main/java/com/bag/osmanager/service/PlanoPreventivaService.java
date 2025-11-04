@@ -1,30 +1,32 @@
+// Local: src/main/java/com/bag/osmanager/service/PlanoPreventivaService.java
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.FrequenciaDTO;
 import com.bag.osmanager.dto.PlanoPreventivaDTO;
-import com.bag.osmanager.dto.ProgramacaoManutencaoDTO; // ✨ ALTERAÇÃO AQUI
+import com.bag.osmanager.dto.ProgramacaoManutencaoDTO; 
 import com.bag.osmanager.exception.ResourceNotFoundException;
 import com.bag.osmanager.model.Equipamento;
 import com.bag.osmanager.model.Frequencia;
-import com.bag.osmanager.model.OrdemServico; // ✨ ALTERAÇÃO AQUI
+import com.bag.osmanager.model.Funcionario; // ✨ ALTERAÇÃO AQUI: Import adicionado
+import com.bag.osmanager.model.OrdemServico; 
 import com.bag.osmanager.model.PlanoPreventiva;
 import com.bag.osmanager.model.TipoServico;
-import com.bag.osmanager.model.enums.StatusOrdemServico; // ✨ ALTERAÇÃO AQUI
+import com.bag.osmanager.model.enums.StatusOrdemServico; 
 import com.bag.osmanager.repository.EquipamentoRepository;
 import com.bag.osmanager.repository.FrequenciaRepository;
-import com.bag.osmanager.repository.OrdemServicoRepository; // ✨ ALTERAÇÃO AQUI
+import com.bag.osmanager.repository.OrdemServicoRepository; 
 import com.bag.osmanager.repository.PlanoPreventivaRepository;
 import com.bag.osmanager.repository.TipoServicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.domain.Sort; // ✨ ALTERAÇÃO AQUI
+import org.springframework.data.domain.Sort; 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import java.util.Comparator; // ✨ ALTERAÇÃO AQUI
+import java.util.Comparator; 
 import java.util.List;
-import java.util.Optional; // ✨ ALTERAÇÃO AQUI
+import java.util.Optional; 
 import java.util.stream.Collectors;
 
 @Service
@@ -35,9 +37,8 @@ public class PlanoPreventivaService {
     private final EquipamentoRepository equipamentoRepository;
     private final TipoServicoRepository tipoServicoRepository;
     private final FrequenciaRepository frequenciaRepository;
-    private final OrdemServicoRepository ordemServicoRepository; // ✨ ALTERAÇÃO AQUI: Repositório injetado
+    private final OrdemServicoRepository ordemServicoRepository; 
 
-    // ✨ ALTERAÇÃO AQUI: Novo método para buscar a programação de manutenção
     @Transactional(readOnly = true)
     public List<ProgramacaoManutencaoDTO> getProgramacaoManutencao(Long equipamentoId) {
         List<PlanoPreventiva> planos = planoRepository.findByEquipamentoId(equipamentoId);
@@ -58,8 +59,18 @@ public class PlanoPreventivaService {
                     }, Sort.by(Sort.Direction.DESC, "dataExecucao"))
                     .stream().findFirst();
 
+            // ✨ CORREÇÃO AQUI: A OS agora tem uma LISTA de executores, não um só.
+            // Trocamos 'getExecutadoPor()' por 'getExecutores()'
             String ultimoManutentor = ultimaOsConcluida
-                    .map(os -> os.getExecutadoPor() != null ? os.getExecutadoPor().getNome() : "Não informado")
+                    .map(os -> {
+                        if (os.getExecutores() == null || os.getExecutores().isEmpty()) {
+                            return "Não informado";
+                        }
+                        // Mapeia a lista de funcionários para uma string de nomes separados por vírgula
+                        return os.getExecutores().stream()
+                                .map(Funcionario::getNome)
+                                .collect(Collectors.joining(", "));
+                    })
                     .orElse("Nenhuma execução anterior");
 
             return new ProgramacaoManutencaoDTO(servico, frequencia, ultimoManutentor);

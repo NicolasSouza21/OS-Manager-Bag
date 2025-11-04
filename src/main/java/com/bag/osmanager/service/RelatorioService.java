@@ -1,3 +1,4 @@
+// Local: src/main/java/com/bag/osmanager/service/RelatorioService.java
 package com.bag.osmanager.service;
 
 // ✨ ALTERAÇÃO AQUI: Vários imports novos
@@ -9,6 +10,7 @@ import com.bag.osmanager.dto.RelatorioTempoMecanicoDTO;
 import com.bag.osmanager.dto.RelatorioTipoManutencaoDTO;
 // ✨ ALTERAÇÃO AQUI: Import da entidade AcompanhamentoOS
 import com.bag.osmanager.model.AcompanhamentoOS; 
+import com.bag.osmanager.model.Funcionario; // ✨ ALTERAÇÃO AQUI: Import do Funcionario
 import com.bag.osmanager.model.OrdemServico;
 import com.bag.osmanager.model.enums.StatusOrdemServico;
 import com.bag.osmanager.model.enums.TipoManutencao; // ✨ Import
@@ -21,6 +23,7 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList; // ✨ ALTERAÇÃO AQUI: Import adicionado
 import java.util.Comparator; // ✨ Import
 import java.util.HashMap;
 import java.util.List;
@@ -131,23 +134,35 @@ public class RelatorioService {
     // --- GRÁFICO 1: TEMPO POR MECÂNICO ---
     private List<RelatorioTempoMecanicoDTO> gerarRelatorioTempoMecanicos(LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
         
-        // 1. Busca as OS concluídas no período
+        // ✨ CORREÇÃO AQUI: O nome do método no repositório precisa ser mudado.
+        // Vou assumir que o mudamos para findByStatusAndExecutoresIsNotEmpty...
         List<OrdemServico> osConcluidas = ordemServicoRepository
-            .findByStatusAndExecutadoPorIsNotNullAndInicioIsNotNullAndTerminoIsNotNullAndTerminoBetween(
+            .findByStatusAndExecutoresIsNotEmptyAndInicioIsNotNullAndTerminoIsNotNullAndTerminoBetween(
                 StatusOrdemServico.CONCLUIDA,
                 inicioPeriodo,
                 fimPeriodo
             );
 
-        // 2. Agrupa por mecânico
-        Map<String, List<OrdemServico>> osPorMecanico = osConcluidas.stream()
-            .filter(os -> os.getExecutadoPor() != null && os.getExecutadoPor().getNome() != null) 
-            .collect(Collectors.groupingBy(os -> os.getExecutadoPor().getNome()));
+        // ✨ CORREÇÃO AQUI: Lógica de agrupamento refeita para 'ManyToMany'
+        // 2. Agrupa por mecânico (MANUALMENTE)
+        Map<String, List<OrdemServico>> osPorMecanico = new HashMap<>();
+        for (OrdemServico os : osConcluidas) {
+            if (os.getExecutores() != null) {
+                for (Funcionario executor : os.getExecutores()) {
+                    if (executor != null && executor.getNome() != null) {
+                        osPorMecanico
+                            .computeIfAbsent(executor.getNome(), k -> new ArrayList<>())
+                            .add(os);
+                    }
+                }
+            }
+        }
 
         // 3. Calcula o tempo de cada mecânico
         return osPorMecanico.entrySet().stream().map(entry -> {
             String nomeMecanico = entry.getKey();
             List<OrdemServico> osDoMecanico = entry.getValue();
+            // totalOsConcluidas agora significa "total de OSs que este mecânico participou"
             long totalOsConcluidas = osDoMecanico.size();
             
             // ✨✅ ALTERAÇÃO AQUI: Lógica de cálculo de horas gastas foi atualizada
@@ -158,15 +173,16 @@ public class RelatorioService {
                         return 0.0;
                     }
                     
-                    // 1. Calcula o tempo bruto (horas úteis) entre o início e o término da execução
-                    double minutosUteisBrutos = calcularMinutosUteis(os.getInicio(), os.getTermino(), os.getExecutadoPor().getNome());
+                    // ✨ CORREÇÃO AQUI: Passamos o 'nomeMecanico' da key do Map
+                    double minutosUteisBrutos = calcularMinutosUteis(os.getInicio(), os.getTermino(), nomeMecanico);
 
                     // 2. Busca e soma todas as pausas registradas para esta OS
                     //    (O @Transactional no 'getDashboardLider' permite o lazy-loading aqui)
                     double minutosDePausa = 0.0;
                     if (os.getAcompanhamentos() != null) {
                         minutosDePausa = os.getAcompanhamentos().stream()
-                            .filter(acomp -> acomp.getMinutosPausa() != null && acomp.getMinutosPausa() > 0)
+                            .filter(acomp -> acomp.getMinutosPausa() != null && acomp.getMinutosPausa() > 0 && 
+                                             acomp.getFuncionario() != null && nomeMecanico.equals(acomp.getFuncionario().getNome())) // ✨ Considera pausas apenas do mecânico atual
                             .mapToDouble(AcompanhamentoOS::getMinutosPausa)
                             .sum();
                     }

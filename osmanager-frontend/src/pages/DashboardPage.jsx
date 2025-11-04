@@ -9,7 +9,9 @@ import {
     registrarCiencia, 
     iniciarExecucao,
     registrarExecucao,
-    verificarOS
+    verificarOS,
+    // ✨ ALTERAÇÃO AQUI: Importa a nova função 'criarAcompanhamento'
+    criarAcompanhamento
 } from '../services/apiService';
 import ExecucaoModal from '../components/ExecucaoModal';
 import VerificacaoModal from '../components/VerificacaoModal';
@@ -94,9 +96,11 @@ function DashboardPage() {
     // Estados dos Modais
     const [isExecucaoModalOpen, setIsExecucaoModalOpen] = useState(false);
     const [isVerificacaoModalOpen, setIsVerificacaoModalOpen] = useState(false);
-    // ✨ ALTERAÇÃO AQUI: Novos estados para o modal de Acompanhamento
     const [isAcompanhamentoModalOpen, setIsAcompanhamentoModalOpen] = useState(false);
-    const [osParaAcompanhamento, setOsParaAcompanhamento] = useState(null); // Armazena a OS selecionada para ver o histórico
+    const [osParaAcompanhamento, setOsParaAcompanhamento] = useState(null);
+    
+    // ✨ ALTERAÇÃO AQUI: Novo estado para o loading do relatório parcial
+    const [isReportLoading, setIsReportLoading] = useState(false);
     
     const [filtros, setFiltros] = useState({
         keyword: '', status: '', equipamentoId: '', localId: '',
@@ -133,8 +137,6 @@ function DashboardPage() {
             Object.keys(params).forEach(key => { if (!params[key]) delete params[key]; });
             
             const osRes = await getOrdensServico(params);
-            // DEBUG: Log para verificar se 'acompanhamentos' está vindo da API
-            // console.log("Dados recebidos:", osRes.data.content); 
             setOrdens(osRes.data.content || []);
         } catch (err) {
             console.error("Erro ao carregar Ordens de Serviço:", err);
@@ -205,8 +207,8 @@ function DashboardPage() {
         return date.toLocaleString('pt-BR', options);
     };
 
-    // ... (handleExecucaoSubmit e handleVerificacaoSubmit permanecem os mesmos) ...
-    const handleExecucaoSubmit = async (dadosExecucao) => {
+    // ✨ ALTERAÇÃO AQUI: Renomeado de 'handleExecucaoSubmit' para 'handleFinalizacaoSubmit'
+    const handleFinalizacaoSubmit = async (dadosExecucao) => {
         if (!selectedOs) return;
         setActionLoading(true);
         try {
@@ -221,6 +223,29 @@ function DashboardPage() {
             setActionLoading(false);
         }
     };
+
+    // ✨ ALTERAÇÃO AQUI: Nova função para salvar o relatório parcial
+    const handleSalvarRelatorio = async (dadosRelatorio, onSuccessCallback) => {
+        setIsReportLoading(true);
+        try {
+            // Chama a API para criar o acompanhamento
+            await criarAcompanhamento(dadosRelatorio);
+            alert('Acompanhamento salvo com sucesso!');
+            
+            // Chama o callback para limpar os campos no modal
+            if (onSuccessCallback) {
+                onSuccessCallback();
+            }
+            // Atualiza os dados da dashboard (para mostrar o ícone da prancheta)
+            fetchData(); 
+        } catch (error) {
+            console.error("Erro ao salvar acompanhamento:", error);
+            alert(error?.response?.data?.message || "Falha ao salvar o acompanhamento.");
+        } finally {
+            setIsReportLoading(false);
+        }
+    };
+
 
     const handleVerificacaoSubmit = async (dadosVerificacao) => {
         if (!selectedOs) return;
@@ -238,14 +263,21 @@ function DashboardPage() {
         }
     };
     
-    // ✨ ALTERAÇÃO AQUI: Função `renderAcoes` atualizada
+    // ✨ CORREÇÃO AQUI: Função `renderAcoes` atualizada
     const renderAcoes = (os) => {
         const cargosDeAcao = ['ADMIN', 'LIDER', 'MECANICO'];
         const podeExecutarAcao = cargosDeAcao.some(cargo => userRole.includes(cargo));
-        const isEncarregado = userRole.includes('ENCARREGADO');
+        
+        // ✨ CORREÇÃO AQUI: Lógica de permissão de verificação atualizada
+        // Inclui ADMIN, ENCARREGADO, LIDER, ANALISTA_CQ
+        const podeVerificar = 
+            userRole.includes('ADMIN') || 
+            userRole.includes('ENCARREGADO') || 
+            userRole.includes('LIDER') || 
+            userRole.includes('ANALISTA_CQ');
+        // --- Fim da correção ---
 
         // ✨ Verifica se a OS tem relatórios parciais. 
-        // A API (via OrdemServicoDTO) agora envia a lista 'acompanhamentos'
         const hasAcompanhamentos = os.acompanhamentos && os.acompanhamentos.length > 0;
 
         return (
@@ -269,7 +301,8 @@ function DashboardPage() {
                         </button>
                     )}
                     
-                    {(isEncarregado || userRole.includes('ADMIN')) && os.status === 'AGUARDANDO_VERIFICACAO' && (
+                    {/* ✨ CORREÇÃO AQUI: Usa a nova variável 'podeVerificar' */}
+                    {podeVerificar && os.status === 'AGUARDANDO_VERIFICACAO' && (
                         <button title="Verificar OS" className="action-button-circle verificar-btn" onClick={() => { setSelectedOs(os); setIsVerificacaoModalOpen(true); }}>
                             <FaClipboardCheck />
                         </button>
@@ -277,7 +310,6 @@ function DashboardPage() {
                 </div>
 
                 {/* ✨ ALTERAÇÃO AQUI: Novo botão de Prancheta/Relatórios */}
-                {/* Mostra o ícone se houver acompanhamentos */}
                 {hasAcompanhamentos && (
                     <button 
                         title="Ver Relatórios Parciais" 
@@ -315,6 +347,13 @@ function DashboardPage() {
         return dateB.localeCompare(dateA);
     });
 
+    // ✨ CORREÇÃO AQUI: Lógica do botão de filtro rápido
+    const podeVerificarFiltro = 
+        userRole.includes('ADMIN') || 
+        userRole.includes('ENCARREGADO') || 
+        userRole.includes('LIDER') || 
+        userRole.includes('ANALISTA_CQ');
+
     return (
         <div className="dashboard-container">
             <main>
@@ -343,7 +382,9 @@ function DashboardPage() {
                         {equipamentos.map(e => (<option key={e.id} value={e.id}>{e.nome}</option>))}
                     </select>
                     <button className={`filtro-btn-rapido ${filtros.minhasTarefas ? 'ativo' : ''}`} onClick={() => handleToggleFilter('minhasTarefas')}>Minhas Tarefas</button>
-                    {userRole.includes('ENCARREGADO') && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
+                    
+                    {/* ✨ CORREÇÃO AQUI: Usa a nova variável 'podeVerificarFiltro' */}
+                    {podeVerificarFiltro && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
                 </div>
                 <div className="os-list-container">
                     {ordens.length > 0 ? (
@@ -375,7 +416,8 @@ function DashboardPage() {
                                                     <td>{getEquipamentoNome(os.equipamentoId)}</td>
                                                     <td>{os.solicitante || 'N/A'}</td>
                                                     <td>{os.liderCienciaNome || 'Pendente'}</td>
-                                                    <td>{os.executadoPorNome || 'Pendente'}</td>
+                                                    {/* ✨ ALTERAÇÃO AQUI: Mostra o nome do primeiro executor ou 'Pendente' */}
+                                                    <td>{os.executores && os.executores.length > 0 ? os.executores[0].nome : 'Pendente'}</td>
                                                     <td>{renderAcoes(os)}</td>
                                                 </tr>
                                             ))}
@@ -394,9 +436,13 @@ function DashboardPage() {
                 <ExecucaoModal 
                     isOpen={isExecucaoModalOpen}
                     onClose={() => setIsExecucaoModalOpen(false)}
-                    onSubmit={handleExecucaoSubmit}
+                    // ✨ ALTERAÇÃO AQUI: Passando as props corretas
+                    onFinalizar={handleFinalizacaoSubmit}
+                    onSalvarRelatorio={handleSalvarRelatorio}
                     os={selectedOs}
                     actionLoading={actionLoading}
+                    // ✨ ALTERAÇÃO AQUI: Passando o novo estado de loading
+                    isReportLoading={isReportLoading}
                 />
             )}
             {/* Modal de Verificação (Existente) */}

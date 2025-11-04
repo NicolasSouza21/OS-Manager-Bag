@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
+// ✨ ALTERAÇÃO AQUI: Importei o FuncionarioDTO que será usado na lista
+import com.bag.osmanager.dto.FuncionarioDTO;
+
 @Data
 public class OrdemServicoDTO {
     
@@ -32,9 +35,13 @@ public class OrdemServicoDTO {
     private String liderCienciaNome;
     private LocalDateTime dataCiencia;
     
-    // Dados da Execução
-    private Long executadoPorId;
-    private String executadoPorNome;
+    // ✨ ALTERAÇÃO AQUI: Campos de execução unitária removidos
+    // private Long executadoPorId;
+    // private String executadoPorNome;
+
+    // ✨ ALTERAÇÃO AQUI: Novo campo para a lista de executores (equipe)
+    private Set<FuncionarioDTO> executores;
+
     private LocalDateTime dataExecucao;
     private String acaoRealizada;
     private LocalDateTime inicio;

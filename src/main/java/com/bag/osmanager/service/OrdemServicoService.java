@@ -45,8 +45,7 @@ public class OrdemServicoService {
     public List<OrdemServicoDTO> getHistoricoPorEquipamento(Long equipamentoId) {
         return historicoService.getHistoricoPorEquipamento(equipamentoId);
     }
-
-    // ... (método criarOS inalterado - já o atualizamos) ...
+    
     @Transactional
     public OrdemServicoDTO criarOS(CriarOrdemServicoDTO dto) {
         if (dto.getEquipamentoId() == null) {
@@ -120,7 +119,7 @@ public class OrdemServicoService {
         return ordemServicoMapper.converteParaDTO(osSalva);
     }
 
-    // ... (método registrarCiencia inalterado) ...
+    // ... (registrarCiencia e iniciarExecucao permanecem inalterados) ...
     @Transactional
     public OrdemServicoDTO registrarCiencia(Long osId, Long funcionarioId) {
         OrdemServico os = osRepository.findById(osId)
@@ -139,8 +138,7 @@ public class OrdemServicoService {
         OrdemServico osAtualizada = osRepository.save(os);
         return ordemServicoMapper.converteParaDTO(osAtualizada);
     }
-
-    // ... (método iniciarExecucao inalterado) ...
+    
     @Transactional
     public OrdemServicoDTO iniciarExecucao(Long osId) {
          OrdemServico os = osRepository.findById(osId)
@@ -153,9 +151,9 @@ public class OrdemServicoService {
         return ordemServicoMapper.converteParaDTO(osAtualizada);
     }
 
-    // ✨ ALTERAÇÃO AQUI: Método registrarExecucao ATUALIZADO
+    // ... (registrarExecucao permanece inalterado) ...
     @Transactional
-    public OrdemServicoDTO registrarExecucao(Long osId, Long executanteId, ExecucaoDTO dto) {
+    public OrdemServicoDTO registrarExecucao(Long osId, ExecucaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
         
@@ -163,28 +161,31 @@ public class OrdemServicoService {
             throw new IllegalStateException("Ação não permitida: a OS precisa estar com status 'EM EXECUÇÃO' para ser finalizada.");
         }
         
-        Funcionario executante = funcionarioRepository.findById(executanteId)
-                .orElseThrow(() -> new ResourceNotFoundException("Mecânico executante com ID " + executanteId + " não encontrado!"));
+        if (dto.getExecutoresIds() == null || dto.getExecutoresIds().isEmpty()) {
+            throw new IllegalArgumentException("A lista de executores (executoresIds) não pode estar vazia.");
+        }
         
-        os.setExecutadoPor(executante);
+        List<Funcionario> executoresList = funcionarioRepository.findAllById(dto.getExecutoresIds());
+
+        if (executoresList.size() != dto.getExecutoresIds().size()) {
+            throw new ResourceNotFoundException("Um ou mais IDs de executores não foram encontrados no banco de dados.");
+        }
+        
+        os.setExecutores(new HashSet<>(executoresList));
+        
         os.setDataExecucao(LocalDateTime.now());
         os.setAcaoRealizada(dto.getAcaoRealizada());
         os.setTrocaPecas(dto.getTrocaPecas());
         os.setInicio(dto.getInicio()); // Início da execução
         os.setTermino(dto.getTermino()); // Fim da execução
         
-        // ✨ Lógica de Downtime ✨
-        // Se a máquina estava parada (definido na criação), salvamos a hora que ela voltou
         if (os.getMaquinaParada() != null && os.getMaquinaParada()) {
             os.setFimDowntime(dto.getFimDowntime()); 
         }
-        // Se a máquina não estava parada, os dois campos (inicio/fim downtime) permanecem nulos
         
-        // ✨ Lógica de Justificativa de Troca de Peça ✨
         if (Boolean.TRUE.equals(dto.getTrocaPecas())) {
             os.setMotivoTrocaPeca(dto.getMotivoTrocaPeca());
             
-            // Lógica das peças (inalterada)
             if (dto.getPecasSubstituidas() != null) {
                 if (os.getPecasSubstituidas() == null) {
                     os.setPecasSubstituidas(new ArrayList<>());
@@ -193,20 +194,18 @@ public class OrdemServicoService {
                 }
                 dto.getPecasSubstituidas().forEach(pecaDTO -> {
                     PecaSubstituida peca = new PecaSubstituida();
-                    BeanUtils.copyProperties(pecaDTO, peca);
+                    BeanUtils.copyProperties(pecaDTO, peca); 
                     peca.setOrdemServico(os);
                     os.getPecasSubstituidas().add(peca);
                 });
             }
         } else {
-            // Se não trocou peças, limpa a lista e o motivo
             os.setMotivoTrocaPeca(null);
             if (os.getPecasSubstituidas() != null) {
                 os.getPecasSubstituidas().clear();
             }
         }
         
-        // Lógica de Status (inalterada)
         if (os.getTipoManutencao() == TipoManutencao.PREVENTIVA && dto.getStatusFinal() == StatusOrdemServico.CONCLUIDA) {
             os.setStatus(StatusOrdemServico.AGUARDANDO_VERIFICACAO);
             os.setStatusVerificacao(StatusVerificacao.PENDENTE);
@@ -219,22 +218,33 @@ public class OrdemServicoService {
         return ordemServicoMapper.converteParaDTO(osAtualizada);
     }
 
-    // ... (método verificarOS inalterado) ...
+    // ✨ ALTERAÇÃO AQUI: Método verificarOS ATUALIZADO
     @Transactional
     public OrdemServicoDTO verificarOS(Long osId, Long verificadorId, VerificacaoDTO dto) {
         OrdemServico osConcluida = osRepository.findById(osId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada!"));
+        
         if (osConcluida.getStatus() != StatusOrdemServico.AGUARDANDO_VERIFICACAO) {
             throw new IllegalStateException("A OS não está aguardando verificação.");
         }
+        
         Funcionario verificador = funcionarioRepository.findById(verificadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Funcionário com ID " + verificadorId + " não encontrado!"));
-        if (verificador.getTipoFuncionario() != TipoFuncionario.ENCARREGADO) {
-            throw new IllegalStateException("Ação não permitida. Apenas ENCARREGADOS podem realizar a verificação.");
+        
+        // ✨ CORREÇÃO AQUI: A lógica de permissão foi expandida
+        TipoFuncionario cargo = verificador.getTipoFuncionario();
+        if (cargo != TipoFuncionario.ENCARREGADO && 
+            cargo != TipoFuncionario.LIDER && 
+            cargo != TipoFuncionario.ANALISTA_CQ) {
+            
+            throw new IllegalStateException("Ação não permitida. Apenas Encarregados, Líderes ou Analistas de Qualidade podem realizar a verificação.");
         }
+        // --- Fim da correção ---
+
         osConcluida.setVerificadoPor(verificador);
         osConcluida.setDataVerificacao(LocalDateTime.now());
         osConcluida.setComentarioVerificacao(dto.getComentarioVerificacao());
+        
         if (dto.getAprovado()) {
             osConcluida.setStatus(StatusOrdemServico.CONCLUIDA);
             osConcluida.setStatusVerificacao(StatusVerificacao.APROVADO);
@@ -243,11 +253,11 @@ public class OrdemServicoService {
             osConcluida.setStatus(StatusOrdemServico.EM_EXECUCAO);
             osConcluida.setStatusVerificacao(StatusVerificacao.REPROVADO);
         }
+        
         OrdemServico osAtualizada = osRepository.save(osConcluida);
         return ordemServicoMapper.converteParaDTO(osAtualizada);
     }
 
-    // ... (método buscarComFiltros inalterado) ...
     public Page<OrdemServicoDTO> buscarComFiltros(
             String keyword, StatusOrdemServico status, TipoManutencao tipoManutencao,
             Long equipamentoId, Long localId, Long mecanicoId,
@@ -261,14 +271,12 @@ public class OrdemServicoService {
         return paginaDeOS.map(ordemServicoMapper::converteParaDTO);
     }
 
-    // ... (método buscarPorId inalterado) ...
     public OrdemServicoDTO buscarPorId(Long id) {
         return osRepository.findById(id)
                 .map(ordemServicoMapper::converteParaDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem de Serviço com ID " + id + " não encontrada!"));
     }
 
-    // ... (método deletarOrdemServico inalterado) ...
     @Transactional
     public void deletarOrdemServico(Long id) {
         OrdemServico os = osRepository.findById(id)
@@ -276,7 +284,6 @@ public class OrdemServicoService {
         osRepository.delete(os);
     }
     
-    // ... (método agendarProximaPreventiva inalterado) ...
     private void agendarProximaPreventiva(OrdemServico osConcluida) {
         if (osConcluida.getTipoManutencao() != TipoManutencao.PREVENTIVA || osConcluida.getFrequencia() == null || osConcluida.getDataInicioPreventiva() == null) {
             return;
@@ -316,6 +323,4 @@ public class OrdemServicoService {
         proximaOS.setCodigoOs(String.valueOf(proximoNumero));
         osRepository.save(proximaOS);
     }
-    
-    // ✨ ALTERAÇÃO AQUI: O método de conversão foi removido daqui para quebrar o ciclo de dependência.
 }

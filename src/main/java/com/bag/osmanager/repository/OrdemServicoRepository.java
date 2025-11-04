@@ -1,3 +1,4 @@
+// Local: src/main/java/com/bag/osmanager/repository/OrdemServicoRepository.java
 package com.bag.osmanager.repository;
 
 import com.bag.osmanager.model.OrdemServico;
@@ -34,9 +35,10 @@ public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long
     // --- MÉTODOS PARA RELATÓRIOS ---
 
     /**
-     * (Gráfico 1: Mecânicos) Busca OSs concluídas COM executor e tempos válidos, dentro do período.
+     * (Gráfico 1: Mecânicos) Busca OSs concluídas COM executores e tempos válidos, dentro do período.
+     * ✨ CORREÇÃO AQUI: O nome do método foi atualizado de 'ExecutadoPorIsNotNull' para 'ExecutoresIsNotEmpty'
      */
-    List<OrdemServico> findByStatusAndExecutadoPorIsNotNullAndInicioIsNotNullAndTerminoIsNotNullAndTerminoBetween(
+    List<OrdemServico> findByStatusAndExecutoresIsNotEmptyAndInicioIsNotNullAndTerminoIsNotNullAndTerminoBetween(
         StatusOrdemServico status, 
         LocalDateTime inicioPeriodo, 
         LocalDateTime fimPeriodo
@@ -72,6 +74,11 @@ public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long
         LocalDateTime inicioPeriodo,
         LocalDateTime fimPeriodo
     );
+
+    // ✨ ALTERAÇÃO AQUI: Novo método para o Gráfico 5 (Indicadores MTTR/MTBF)
+    /**
+     * (Gráfico 5: Indicadores) Busca OSs Corretivas, Concluídas e com Máquina Parada, dentro do período.
+     */
     List<OrdemServico> findAllByStatusAndTipoManutencaoAndMaquinaParadaIsTrueAndTerminoBetween(
         StatusOrdemServico status,
         TipoManutencao tipo,

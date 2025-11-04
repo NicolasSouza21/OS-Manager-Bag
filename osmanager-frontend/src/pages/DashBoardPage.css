@@ -1,303 +1,456 @@
-/* =======================
-    DASHBOARD LAYOUT GERAL
-    ======================= */
+/* Local: osmanager-frontend/src/pages/DashBoardPage.css */
 
-    .dashboard-container {
-        width: 100%;
-        padding: 2rem;
-        background-color: #F4F7FC;
-        box-sizing: border-box;
-        min-height: 100vh;
-        margin-top: 8px;
-        margin-left: -8px;
-        padding-right: 20px;
-        max-width: 100%;
-    }
-    
-    .dashboard-title {
-        color: #334155;
-        font-size: 1.8rem;
-        margin-bottom: 2rem;
-        font-weight: 700;
-    }
-    
-    /* ===================
-        FILTROS
-        =================== */
-    
-    .filtros-container {
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.07);
-        padding: 1.5rem;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 2.2rem;
-    }
-    
-    .filtro-input-busca {
-        flex: 2 1 250px;
-        padding: 10px 14px;
-        font-size: 1rem;
-        border-radius: 6px;
-        border: 1px solid #d1d5db;
-    }
-    
-    .filtro-select {
-        flex: 1 1 160px;
-        padding: 10px;
-        border-radius: 6px;
-        border: 1px solid #d1d5db;
-        font-size: 1rem;
-        background: #f7fafc;
-        color: #334155;
-    }
-    
-    .filtro-btn-rapido {
-        padding: 10px 16px;
-        background: #f4f7fc;
-        border: 1.5px solid #d1d5db;
-        border-radius: 6px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #1976d2;
-        cursor: pointer;
-        transition: all 0.18s;
-    }
-    
-    .filtro-btn-rapido.ativo,
-    .filtro-btn-rapido:hover {
-        background: #1976d2;
-        color: #fff;
-        border-color: #1976d2;
-    }
-    
-    /* =======================
-        GRUPOS DE ORDENS
-        ======================= */
-    
-    .os-date-group {
-        margin-bottom: 2rem;
-    }
-    
-    .date-header {
-        padding: 0.5rem 1.2rem;
-        background-color: #e9ecef;
-        color: #495057;
-        font-size: 0.9rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        border-radius: 8px 8px 0 0;
-    }
-    
-    /* =====================
-        TABELA DE ORDENS
-        ===================== */
-    
-    .table-container {
-        width: 100%;
-        overflow-x: auto;
-        background-color: #ffffff;
-        border-radius: 0 0 8px 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    }
-    
-    .os-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.95rem;
-        background: #fff;
-        table-layout: fixed;
-    }
-    
-    .os-table th,
-    .os-table td {
-        padding: 14px 17px;
-        text-align: left;
-        border-bottom: 1px solid #eef2f9;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    .os-table th {
-        background-color: #f8f9fa;
-        font-weight: 700;
-        color: #6c757d;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        letter-spacing: 0.5px;
-    }
-    
-    .os-table th:nth-child(1), .os-table td:nth-child(1) { width: 140px; } /* Status */
-    .os-table th:nth-child(2), .os-table td:nth-child(2) { width: 80px; }  /* Nº O.S. */
-    .os-table th:nth-child(3), .os-table td:nth-child(3) { width: 180px; } /* Data */
-    .os-table th:nth-child(4), .os-table td:nth-child(4) { width: 120px; } /* Tipo */
-    .os-table th:nth-child(5), .os-table td:nth-child(5) { width: 20%; }   /* Equipamento */
-    .os-table th:nth-child(6), .os-table td:nth-child(6) { width: 15%; }   /* Solicitante */
-    .os-table th:nth-child(7), .os-table td:nth-child(7) { width: 15%; }   /* Assumido Por */
-    .os-table th:nth-child(8), .os-table td:nth-child(8) { width: 15%; }   /* Executado Por */
-    .os-table th:nth-child(9), .os-table td:nth-child(9) { width: 100px; text-align: right; } /* Ações */
-    
-    
-    .os-table tbody tr:hover {
-        background-color: #eaf2fa;
-    }
-    
-    /* =========================
-        STATUS PILL (ETIQUETA)
-        ========================= */
-    .status-pill, .tipo-pill {
-        display: inline-block;
-        padding: 0.3em 1em;
-        border-radius: 18px;
-        font-weight: 600;
-        font-size: 0.9em;
-        text-align: center;
-    }
-    
-    .status-aberta { background-color: #eaf7eb; color: #4caf50; }
-    /* ✨ ALTERAÇÃO AQUI: .status-ciente renomeado para .status-pendente */
-    .status-pendente { background-color: #e7f3fe; color: #007bff; }
-    .status-em_execucao, .status-em-execucao { background-color: #fff8e1; color: #ffab00; }
-    .status-aguardando_verificacao { background-color: #fff0e7; color: #ff6f00; }
-    .status-concluida { background-color: #f1f3f5; color: #6c757d; }
-    .status-cancelada { background-color: #fbe9eb; color: #dc3545; }
-    
-    .tipo-preventiva { background-color: #e7f3fe; color: #007bff; }
-    /* ✨ ALTERAÇÃO AQUI: Nova cor para a corretiva, um amarelo mais forte para chamar atenção */
-    .tipo-corretiva { background-color: #fffbe6; color: #f59e0b; }
-    
-    /* =========================
-        BOTÕES DE AÇÃO
-        ========================= */
-    .actions-cell {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .action-button-circle {
-        width: 32px; height: 32px; border-radius: 50%; display: flex;
-        align-items: center; justify-content: center; border: none;
-        color: white; font-size: 1rem; cursor: pointer; transition: all 0.2s;
-    }
-    
-    .action-button-circle:hover { transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-    .ciencia-btn { background-color: #28a745; }
-    .iniciar-btn { background-color: #17a2b8; }
-    .executar-btn { background-color: #007bff; }
-    .verificar-btn { background-color: #ffc107; }
-    
-    .os-table .actions-cell .view-button {
-        background-color: transparent;
-        border: none;
-        color: #868e96;
-        font-size: 1.2rem;
-        padding: 5px;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: all 0.2s;
-        opacity: 1;
-        visibility: visible;
-    }
-    
-    .os-table tbody tr:hover .view-button {
-        background-color: #e2e8f0;
-        color: #1a1a1a;
-    }
-    
-    .view-button:hover { color: #1976d2; background: #e2e8f0; }
-    
-    .no-os-message {
-        text-align: center; padding: 3rem 0; font-size: 1.1rem; color: #64748B;
-    }
-  
-    .filtro-data-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .filtro-data-item label {
-        font-size: 14px;
-        color: #333;
-    }
-    
-    .filtro-input-data {
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 14px;
-        font-family: inherit;
-    }
-    
-    /* ===================================================================
-        RESPONSIVIDADE PARA TABLETS E DISPOSITIVOS MENORES
-        =================================================================== */
-    
-    /* Para tablets e telas menores (até 992px) */
-    @media (max-width: 992px) {
-        .dashboard-container {
-            padding: 1.5rem;
-            margin-left: 0;
-        }
-    
-        .dashboard-title {
-            font-size: 1.6rem;
-        }
-    
-        /* Esconde colunas menos importantes para evitar scroll excessivo */
-        .os-table th:nth-child(4), .os-table td:nth-child(4), /* Tipo */
-        .os-table th:nth-child(7), .os-table td:nth-child(7), /* Assumido Por */
-        .os-table th:nth-child(8), .os-table td:nth-child(8) { /* Executado Por */
-            display: none;
-        }
-    
-        /* Reajusta a largura das colunas restantes */
-        .os-table th:nth-child(1), .os-table td:nth-child(1) { width: 130px; } /* Status */
-        .os-table th:nth-child(2), .os-table td:nth-child(2) { width: 70px; }  /* Nº O.S. */
-        .os-table th:nth-child(3), .os-table td:nth-child(3) { width: 160px; } /* Data */
-        .os-table th:nth-child(5), .os-table td:nth-child(5) { width: auto; }   /* Equipamento (ocupa o resto) */
-        .os-table th:nth-child(6), .os-table td:nth-child(6) { width: 25%; }    /* Solicitante */
-        .os-table th:nth-child(9), .os-table td:nth-child(9) { width: 90px; }   /* Ações */
-    }
-    
-    /* Para tablets menores e celulares em modo paisagem (até 768px) */
-    @media (max-width: 768px) {
-        .dashboard-container {
-            padding: 1rem;
-        }
-    
-        /* Faz os filtros ocuparem a largura toda e se empilharem */
-        .filtros-container {
-            flex-direction: column;
-            align-items: stretch;
-        }
-    
-        .filtro-input-busca, .filtro-select, .filtro-btn-rapido {
-            width: 100%;
-        }
-    
-        /* Esconde mais colunas para caber o essencial */
-        .os-table th:nth-child(3), .os-table td:nth-child(3), /* Data */
-        .os-table th:nth-child(6), .os-table td:nth-child(6) { /* Solicitante */
-            display: none;
-        }
-    
-        /* Diminui o padding das células para ganhar espaço */
-        .os-table th,
-        .os-table td {
-            padding: 12px 10px;
-            font-size: 0.9rem;
-        }
-    
-        /* Reajusta as larguras novamente */
-        .os-table th:nth-child(1), .os-table td:nth-child(1) { width: 120px; } /* Status */
-        .os-table th:nth-child(2), .os-table td:nth-child(2) { width: 70px; }  /* Nº O.S. */
-        .os-table th:nth-child(5), .os-table td:nth-child(5) { width: auto; }  /* Equipamento */
-        .os-table th:nth-child(9), .os-table td:nth-child(9) { width: 80px; }   /* Ações */
-    }
+/* =======================
+   DASHBOARD LAYOUT GERAL
+   ======================= */
+
+.dashboard-container {
+  width: 100%;
+  padding: 2rem;
+  background-color: #f4f7fc;
+  box-sizing: border-box;
+  min-height: 100vh;
+  margin-top: 8px;
+  margin-left: -8px;
+  padding-right: 20px;
+  max-width: 100%;
+}
+
+.dashboard-title {
+  color: #334155;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  font-weight: 700;
+}
+
+/* ===================
+   FILTROS
+   =================== */
+
+.filtros-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+  padding: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.2rem;
+}
+
+.filtro-input-busca {
+  flex: 2 1 250px;
+  padding: 10px 14px;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+.filtro-select {
+  flex: 1 1 160px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+  background: #f7fafc;
+  color: #334155;
+}
+
+.filtro-btn-rapido {
+  padding: 10px 16px;
+  background: #f4f7fc;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1976d2;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.filtro-btn-rapido.ativo,
+.filtro-btn-rapido:hover {
+  background: #1976d2;
+  color: #fff;
+  border-color: #1976d2;
+}
+
+/* =======================
+   GRUPOS DE ORDENS
+   ======================= */
+
+.os-date-group {
+  margin-bottom: 2rem;
+}
+
+.date-header {
+  padding: 0.5rem 1.2rem;
+  background-color: #e9ecef;
+  color: #495057;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 8px 8px 0 0;
+}
+
+/* =====================
+   TABELA DE ORDENS
+   ===================== */
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  background-color: #ffffff;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.os-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  background: #fff;
+  table-layout: fixed;
+}
+
+.os-table th,
+.os-table td {
+  padding: 14px 17px;
+  text-align: left;
+  border-bottom: 1px solid #eef2f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.os-table th {
+  background-color: #f8f9fa;
+  font-weight: 700;
+  color: #6c757d;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.os-table th:nth-child(1),
+.os-table td:nth-child(1) {
+  width: 140px;
+}
+.os-table th:nth-child(2),
+.os-table td:nth-child(2) {
+  width: 80px;
+}
+.os-table th:nth-child(3),
+.os-table td:nth-child(3) {
+  width: 180px;
+}
+.os-table th:nth-child(4),
+.os-table td:nth-child(4) {
+  width: 120px;
+}
+.os-table th:nth-child(5),
+.os-table td:nth-child(5) {
+  width: 20%;
+}
+.os-table th:nth-child(6),
+.os-table td:nth-child(6) {
+  width: 15%;
+}
+.os-table th:nth-child(7),
+.os-table td:nth-child(7) {
+  width: 15%;
+}
+.os-table th:nth-child(8),
+.os-table td:nth-child(8) {
+  width: 15%;
+}
+.os-table th:nth-child(9),
+.os-table td:nth-child(9) {
+  width: 120px;
+  text-align: right;
+}
+
+.os-table tbody tr:hover {
+  background-color: #eaf2fa;
+}
+
+/* =========================
+   STATUS PILL (ETIQUETA)
+   ========================= */
+
+.status-pill,
+.tipo-pill {
+  display: inline-block;
+  padding: 0.3em 1em;
+  border-radius: 18px;
+  font-weight: 600;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.status-aberta {
+  background-color: #eaf7eb;
+  color: #4caf50;
+}
+.status-pendente {
+  background-color: #e7f3fe;
+  color: #007bff;
+}
+.status-em_execucao,
+.status-em-execucao {
+  background-color: #fff8e1;
+  color: #ffab00;
+}
+.status-aguardando_verificacao {
+  background-color: #fff0e7;
+  color: #ff6f00;
+}
+.status-concluida {
+  background-color: #f1f3f5;
+  color: #6c757d;
+}
+.status-cancelada {
+  background-color: #fbe9eb;
+  color: #dc3545;
+}
+
+.tipo-preventiva {
+  background-color: #e7f3fe;
+  color: #007bff;
+}
+.tipo-corretiva {
+  background-color: #fffbe6;
+  color: #f59e0b;
+}
+
+/* =========================
+   BOTÕES DE AÇÃO
+   ========================= */
+
+.actions-cell {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-button-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.action-button-circle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+.ciencia-btn {
+  background-color: #28a745;
+}
+.iniciar-btn {
+  background-color: #17a2b8;
+}
+.executar-btn {
+  background-color: #007bff;
+}
+.verificar-btn {
+  background-color: #ffc107;
+}
+
+/* Estilo da "Lupa" (view-button) */
+.os-table .actions-cell .view-button {
+  background-color: transparent;
+  border: none;
+  color: #868e96;
+  font-size: 1rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 1;
+  visibility: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.os-table tbody tr:hover .view-button {
+  background-color: #e2e8f0;
+  color: #1a1a1a;
+}
+
+.view-button:hover {
+  color: #1976d2;
+  background: #e2e8f0;
+}
+
+/* Botão de Prancheta (Acompanhamento) */
+.acompanhamento-btn {
+  background-color: transparent;
+  border: none;
+  color: #868e96;
+  font-size: 1rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  box-sizing: border-box;
+  font-weight: bold;
+  position: relative;
+}
+
+.os-table tbody tr:hover .acompanhamento-btn {
+  background-color: #e2e8f0;
+  color: #1a1a1a;
+}
+
+.acompanhamento-btn:hover {
+  color: #1976d2;
+  background: #e2e8f0;
+}
+
+.acompanhamento-btn .contador {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.no-os-message {
+  text-align: center;
+  padding: 3rem 0;
+  font-size: 1.1rem;
+  color: #64748b;
+}
+
+.filtro-data-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filtro-data-item label {
+  font-size: 14px;
+  color: #333;
+}
+
+.filtro-input-data {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+/* ===================================================================
+   RESPONSIVIDADE
+   =================================================================== */
+
+@media (max-width: 992px) {
+  .dashboard-container {
+    padding: 1.5rem;
+    margin-left: 0;
+  }
+
+  .dashboard-title {
+    font-size: 1.6rem;
+  }
+
+  .os-table th:nth-child(4),
+  .os-table td:nth-child(4),
+  .os-table th:nth-child(7),
+  .os-table td:nth-child(7),
+  .os-table th:nth-child(8),
+  .os-table td:nth-child(8) {
+    display: none;
+  }
+
+  .os-table th:nth-child(1),
+  .os-table td:nth-child(1) {
+    width: 130px;
+  }
+  .os-table th:nth-child(2),
+  .os-table td:nth-child(2) {
+    width: 70px;
+  }
+  .os-table th:nth-child(3),
+  .os-table td:nth-child(3) {
+    width: 160px;
+  }
+  .os-table th:nth-child(5),
+  .os-table td:nth-child(5) {
+    width: auto;
+  }
+  .os-table th:nth-child(6),
+  .os-table td:nth-child(6) {
+    width: 25%;
+  }
+  .os-table th:nth-child(9),
+  .os-table td:nth-child(9) {
+    width: 90px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .filtros-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtro-input-busca,
+  .filtro-select,
+  .filtro-btn-rapido {
+    width: 100%;
+  }
+
+  .os-table th:nth-child(3),
+  .os-table td:nth-child(3),
+  .os-table th:nth-child(6),
+  .os-table td:nth-child(6) {
+    display: none;
+  }
+
+  .os-table th,
+  .os-table td {
+    padding: 12px 10px;
+    font-size: 0.9rem;
+  }
+
+  .os-table th:nth-child(1),
+  .os-table td:nth-child(1) {
+    width: 120px;
+  }
+  .os-table th:nth-child(2),
+  .os-table td:nth-child(2) {
+    width: 70px;
+  }
+  .os-table th:nth-child(5),
+  .os-table td:nth-child(5) {
+    width: auto;
+  }
+  .os-table th:nth-child(9),
+  .os-table td:nth-child(9) {
+    width: 80px;
+  }
+}
