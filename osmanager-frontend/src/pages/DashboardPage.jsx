@@ -13,8 +13,11 @@ import {
 } from '../services/apiService';
 import ExecucaoModal from '../components/ExecucaoModal';
 import VerificacaoModal from '../components/VerificacaoModal';
+// ✨ ALTERAÇÃO AQUI: Importa o novo modal de acompanhamento
+import AcompanhamentoModal from '../components/AcompanhamentoModal'; 
 import { jwtDecode } from 'jwt-decode';
-import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck } from 'react-icons/fa';
+// ✨ ALTERAÇÃO AQUI: Importa o ícone da prancheta (FaClipboardList)
+import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck, FaClipboardList } from 'react-icons/fa';
 import './DashBoardPage.css';
 
 // Hook useDebounce (inalterado)
@@ -83,12 +86,17 @@ function DashboardPage() {
     const [equipamentos, setEquipamentos] = useState([]);
     const [locais, setLocais] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedOs, setSelectedOs] = useState(null);
+    const [selectedOs, setSelectedOs] = useState(null); // Usado pelos modais antigos
     const [userRole, setUserRole] = useState('');
     const [userId, setUserId] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
+    
+    // Estados dos Modais
     const [isExecucaoModalOpen, setIsExecucaoModalOpen] = useState(false);
     const [isVerificacaoModalOpen, setIsVerificacaoModalOpen] = useState(false);
+    // ✨ ALTERAÇÃO AQUI: Novos estados para o modal de Acompanhamento
+    const [isAcompanhamentoModalOpen, setIsAcompanhamentoModalOpen] = useState(false);
+    const [osParaAcompanhamento, setOsParaAcompanhamento] = useState(null); // Armazena a OS selecionada para ver o histórico
     
     const [filtros, setFiltros] = useState({
         keyword: '', status: '', equipamentoId: '', localId: '',
@@ -98,7 +106,6 @@ function DashboardPage() {
     
     const debouncedFiltros = useDebounce(filtros, 500);
 
-    // ✨ ALTERAÇÃO AQUI: 'CIENTE' foi trocado por 'PENDENTE' para alinhar com o backend.
     const statusOptions = [
         { label: 'Abertas', value: 'ABERTA' }, 
         { label: 'Pendente', value: 'PENDENTE' },
@@ -108,6 +115,7 @@ function DashboardPage() {
         { label: 'Cancelada', value: 'CANCELADA' }
     ];
 
+    // ... (fetchData e useEffects permanecem os mesmos) ...
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -125,6 +133,8 @@ function DashboardPage() {
             Object.keys(params).forEach(key => { if (!params[key]) delete params[key]; });
             
             const osRes = await getOrdensServico(params);
+            // DEBUG: Log para verificar se 'acompanhamentos' está vindo da API
+            // console.log("Dados recebidos:", osRes.data.content); 
             setOrdens(osRes.data.content || []);
         } catch (err) {
             console.error("Erro ao carregar Ordens de Serviço:", err);
@@ -165,6 +175,7 @@ function DashboardPage() {
         }
     }, [fetchData, userId]);
     
+    // ... (handleFilterChange e handleToggleFilter permanecem os mesmos) ...
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         setFiltros(prev => ({ ...prev, [name]: value }));
@@ -194,6 +205,7 @@ function DashboardPage() {
         return date.toLocaleString('pt-BR', options);
     };
 
+    // ... (handleExecucaoSubmit e handleVerificacaoSubmit permanecem os mesmos) ...
     const handleExecucaoSubmit = async (dadosExecucao) => {
         if (!selectedOs) return;
         setActionLoading(true);
@@ -226,10 +238,15 @@ function DashboardPage() {
         }
     };
     
+    // ✨ ALTERAÇÃO AQUI: Função `renderAcoes` atualizada
     const renderAcoes = (os) => {
         const cargosDeAcao = ['ADMIN', 'LIDER', 'MECANICO'];
         const podeExecutarAcao = cargosDeAcao.some(cargo => userRole.includes(cargo));
         const isEncarregado = userRole.includes('ENCARREGADO');
+
+        // ✨ Verifica se a OS tem relatórios parciais. 
+        // A API (via OrdemServicoDTO) agora envia a lista 'acompanhamentos'
+        const hasAcompanhamentos = os.acompanhamentos && os.acompanhamentos.length > 0;
 
         return (
             <div className="actions-cell">
@@ -240,7 +257,6 @@ function DashboardPage() {
                         </button>
                     )}
 
-                    {/* ✨ ALTERAÇÃO AQUI: Botão "Iniciar Execução" agora verifica pelo status 'PENDENTE' */}
                     {podeExecutarAcao && os.status === 'PENDENTE' && (
                         <button title="Iniciar Execução" className="action-button-circle iniciar-btn" onClick={() => iniciarExecucao(os.id).then(fetchData)}>
                             <FaPlay />
@@ -259,6 +275,22 @@ function DashboardPage() {
                         </button>
                     )}
                 </div>
+
+                {/* ✨ ALTERAÇÃO AQUI: Novo botão de Prancheta/Relatórios */}
+                {/* Mostra o ícone se houver acompanhamentos */}
+                {hasAcompanhamentos && (
+                    <button 
+                        title="Ver Relatórios Parciais" 
+                        className="view-button-report" // Usaremos uma classe nova para estilizar
+                        onClick={() => {
+                            setOsParaAcompanhamento(os); // Guarda a OS selecionada
+                            setIsAcompanhamentoModalOpen(true); // Abre o novo modal
+                        }}
+                    >
+                        <FaClipboardList />
+                    </button>
+                )}
+
                 <button title="Visualizar Detalhes" className="view-button" onClick={() => navigate(`/os/${os.id}`)}>
                     <FaSearch />
                 </button>
@@ -357,6 +389,7 @@ function DashboardPage() {
                     )}
                 </div>
             </main>
+            {/* Modal de Execução (Existente) */}
             {isExecucaoModalOpen && selectedOs && (
                 <ExecucaoModal 
                     isOpen={isExecucaoModalOpen}
@@ -366,6 +399,7 @@ function DashboardPage() {
                     actionLoading={actionLoading}
                 />
             )}
+            {/* Modal de Verificação (Existente) */}
             {isVerificacaoModalOpen && selectedOs && (
                 <VerificacaoModal
                     isOpen={isVerificacaoModalOpen}
@@ -373,6 +407,16 @@ function DashboardPage() {
                     onSubmit={handleVerificacaoSubmit}
                     os={{...selectedOs, equipamentoNome: getEquipamentoNome(selectedOs.equipamentoId)}}
                     actionLoading={actionLoading}
+                />
+            )}
+            {/* ✨ ALTERAÇÃO AQUI: Renderização do novo Modal de Acompanhamento */}
+            {isAcompanhamentoModalOpen && osParaAcompanhamento && (
+                <AcompanhamentoModal
+                    isOpen={isAcompanhamentoModalOpen}
+                    onClose={() => setIsAcompanhamentoModalOpen(false)}
+                    osCodigo={osParaAcompanhamento.codigoOs}
+                    // Passa a lista de acompanhamentos que já veio no objeto 'os'
+                    acompanhamentos={osParaAcompanhamento.acompanhamentos || []} 
                 />
             )}
         </div>

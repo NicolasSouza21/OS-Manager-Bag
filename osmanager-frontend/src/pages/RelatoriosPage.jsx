@@ -42,11 +42,13 @@ const COR_ROXO = 'rgba(153, 102, 255, 0.7)';
 
 
 function RelatoriosPage() {
-    // ✨ ALTERAÇÃO AQUI: 4 estados, um para cada gráfico
+    // ✨ ALTERAÇÃO AQUI: 4 estados para os gráficos
     const [chartMecanicos, setChartMecanicos] = useState(null);
     const [chartSaude, setChartSaude] = useState(null);
     const [chartRankingCorretivas, setChartRankingCorretivas] = useState(null);
     const [chartRankingDowntime, setChartRankingDowntime] = useState(null);
+    // ✨ ALTERAÇÃO AQUI: Novo estado para os indicadores
+    const [indicadores, setIndicadores] = useState(null);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -67,6 +69,8 @@ function RelatoriosPage() {
                 setChartSaude(null);
                 setChartRankingCorretivas(null);
                 setChartRankingDowntime(null);
+                // ✨ ALTERAÇÃO AQUI: Limpa os indicadores antigos
+                setIndicadores(null); 
 
                 const [ano, mes] = mesSelecionado.split('-').map(Number);
                 const dataInicio = new Date(ano, mes - 1, 1).toISOString().slice(0, 10);
@@ -80,6 +84,7 @@ function RelatoriosPage() {
 
                 if (!data) {
                     setError(`Nenhum dado encontrado para ${mes}/${ano}.`);
+                    setLoading(false); // ✅ CORREÇÃO: Garante que o loading pare
                     return;
                 }
 
@@ -165,8 +170,15 @@ function RelatoriosPage() {
                     });
                 }
 
+                // ✨ ALTERAÇÃO AQUI: Processar os novos indicadores
+                // --- 5. Processar Indicadores (MTTR / MTBF) ---
+                if (data.relatorioIndicadores) {
+                    setIndicadores(data.relatorioIndicadores);
+                }
+
                 // Se nenhum dado foi encontrado em nenhum relatório
-                if (!chartMecanicos && !chartSaude && !chartRankingCorretivas && !chartRankingDowntime) {
+                // ✨ ALTERAÇÃO AQUI: Adiciona !data.relatorioIndicadores à verificação
+                if (!data.relatorioMecanicos && !data.relatorioSaudeManutencao && !data.relatorioRankingCorretivas && !data.relatorioRankingDowntime && !data.relatorioIndicadores) {
                      setError(`Nenhum dado encontrado para ${mes}/${ano}.`);
                 }
 
@@ -239,7 +251,7 @@ function RelatoriosPage() {
             title: { display: true, text: 'Top 10 Equipamentos (Downtime)', font: { size: 18 } },
         },
         scales: {
-            x: { title: { display: true, text: 'Horas Paradas' } }
+            x: { title: { display: true, text: 'Horas Paradas (Corridas)' } } // ✨ ALTERAÇÃO AQUI: Texto atualizado
         }
     };
 
@@ -268,7 +280,7 @@ function RelatoriosPage() {
                 />
             </div>
 
-            {/* ✨ ALTERAÇÃO AQUI: Renderização condicional dos 4 gráficos */}
+            {/* ✨ ALTERAÇÃO AQUI: Renderização condicional dos 4 gráficos + 2 indicadores */}
             {loading && <p className="relatorio-mensagem">Carregando dados do dashboard...</p>}
             {error && <p className="relatorio-mensagem erro">{error}</p>}
             
@@ -283,6 +295,27 @@ function RelatoriosPage() {
                             </div>
                         </div>
                     ) : <p className="relatorio-mensagem-small">Sem dados de produtividade.</p>}
+
+                    {/* ✨ ALTERAÇÃO AQUI: Adiciona os cards de indicadores */}
+                    {/* Indicador 1: MTTR */}
+                    {indicadores ? (
+                        <div className="relatorio-card small indicator-card">
+                            <h3 className="indicator-title">MTTR (Horas)</h3>
+                            <p className="indicator-value">{indicadores.mttr.toFixed(2)}</p>
+                            <span className="indicator-desc">Tempo Médio Para Reparo</span>
+                        </div>
+                    ) : <p className="relatorio-mensagem-small">Sem dados de MTTR.</p>}
+
+                    {/* Indicador 2: MTBF */}
+                    {indicadores ? (
+                        <div className="relatorio-card small indicator-card">
+                            <h3 className="indicator-title">MTBF (Horas)</h3>
+                            <p className="indicator-value">{indicadores.mtbf.toFixed(2)}</p>
+                            <span className="indicator-desc">Tempo Médio Entre Falhas</span>
+                        </div>
+                    ) : <p className="relatorio-mensagem-small">Sem dados de MTBF.</p>}
+                    {/* Fim da alteração */}
+
 
                     {/* Gráfico 4: Saúde (Pequeno) */}
                     {chartSaude ? (

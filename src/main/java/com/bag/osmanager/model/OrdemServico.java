@@ -1,6 +1,7 @@
 package com.bag.osmanager.model;
 
 import com.bag.osmanager.model.enums.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference; // ✨ ALTERAÇÃO AQUI: Import adicionado
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +11,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList; // ✨ ALTERAÇÃO AQUI: Import adicionado
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -91,6 +93,17 @@ public class OrdemServico {
 
     @OneToMany(mappedBy = "ordemServico", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PecaSubstituida> pecasSubstituidas;
+
+    // ✨ ALTERAÇÃO AQUI: Adiciona a Relação com os Acompanhamentos (Relatórios Parciais)
+    @OneToMany(
+        mappedBy = "ordemServico", 
+        cascade = CascadeType.ALL, 
+        orphanRemoval = true, 
+        fetch = FetchType.LAZY
+    )
+    @JsonManagedReference // Lado "Pai" da relação, para evitar loops
+    private List<AcompanhamentoOS> acompanhamentos = new ArrayList<>();
+    // --- Fim da nova Relação ---
 
     @ManyToOne
     @JoinColumn(name = "executado_por_id")

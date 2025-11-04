@@ -1,16 +1,23 @@
 package com.bag.osmanager.service.mapper;
 
+// ✨ ALTERAÇÃO AQUI: Imports adicionados
+import com.bag.osmanager.dto.AcompanhamentoOSDTO;
 import com.bag.osmanager.dto.FrequenciaDTO;
 import com.bag.osmanager.dto.OrdemServicoDTO;
 import com.bag.osmanager.dto.PecaSubstituidaDTO;
 import com.bag.osmanager.dto.TipoServicoDTO;
+import com.bag.osmanager.model.AcompanhamentoOS; // ✨ Import da entidade
 import com.bag.osmanager.model.OrdemServico;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
+// ✨ ALTERAÇÃO AQUI: Imports adicionados
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+// ---
 import java.util.stream.Collectors;
 
-// ✨ ALTERAÇÃO AQUI: Código completo do novo Mapper
 @Component // Marca esta classe como um bean do Spring para que possamos injetá-la
 public class OrdemServicoMapper {
 
@@ -25,7 +32,8 @@ public class OrdemServicoMapper {
         }
 
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto, "frequencia", "tiposServico", "local");
+        // ✨ ALTERAÇÃO AQUI: "acompanhamentos" adicionado à lista de exclusão do BeanUtils
+        BeanUtils.copyProperties(os, dto, "frequencia", "tiposServico", "local", "pecasSubstituidas", "acompanhamentos");
 
         dto.setCodigoOs(os.getCodigoOs());
 
@@ -49,7 +57,6 @@ public class OrdemServicoMapper {
             dto.setEquipamentoId(os.getEquipamento().getId());
         }
 
-        // ✅ CORREÇÃO AQUI: Linhas descomentadas e ajustadas
         if (os.getLocal() != null) {
             dto.setLocalId(os.getLocal().getId());
             dto.setLocalNome(os.getLocal().getNome()); // Adiciona o nome do Local
@@ -80,11 +87,44 @@ public class OrdemServicoMapper {
             dto.setFrequencia(freqDTO);
         }
 
-        // ✨ ALTERAÇÃO AQUI: Adiciona a cópia manual dos novos campos de downtime
-        // Isso garante que eles sejam enviados ao frontend.
         dto.setInicioDowntime(os.getInicioDowntime());
         dto.setFimDowntime(os.getFimDowntime());
 
+        // ✨ ALTERAÇÃO AQUI: Lógica para converter a lista de acompanhamentos
+        if (os.getAcompanhamentos() != null && !os.getAcompanhamentos().isEmpty()) {
+            dto.setAcompanhamentos(
+                os.getAcompanhamentos().stream()
+                    .map(this::converteAcompanhamentoParaDTO)
+                    // Ordena pela data mais recente primeiro
+                    .sorted(Comparator.comparing(AcompanhamentoOSDTO::getDataHora).reversed())
+                    .collect(Collectors.toList())
+            );
+        } else {
+            dto.setAcompanhamentos(Collections.emptyList()); // Garante que seja uma lista vazia, não nula
+        }
+        // --- Fim da alteração ---
+
+        return dto;
+    }
+
+    // ✨ ALTERAÇÃO AQUI: Novo método helper privado para converter o acompanhamento
+    /**
+     * Helper para converter a entidade AcompanhamentoOS em AcompanhamentoOSDTO.
+     */
+    private AcompanhamentoOSDTO converteAcompanhamentoParaDTO(AcompanhamentoOS entidade) {
+        if (entidade == null) {
+            return null;
+        }
+        AcompanhamentoOSDTO dto = new AcompanhamentoOSDTO();
+        BeanUtils.copyProperties(entidade, dto);
+        
+        if (entidade.getFuncionario() != null) {
+            dto.setFuncionarioId(entidade.getFuncionario().getId());
+            dto.setFuncionarioNome(entidade.getFuncionario().getNome());
+        }
+        if (entidade.getOrdemServico() != null) {
+            dto.setOrdemServicoId(entidade.getOrdemServico().getId());
+        }
         return dto;
     }
 }

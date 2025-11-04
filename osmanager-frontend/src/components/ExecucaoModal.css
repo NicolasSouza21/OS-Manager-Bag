@@ -72,7 +72,9 @@
     color: #495057;
   }
   
+  /* ✨ ALTERAÇÃO AQUI: Adicionado input[type="number"] ao seletor */
   .form-group input[type="datetime-local"],
+  .form-group input[type="number"],
   .form-group textarea {
     width: 100%;
     padding: 0.8rem 1rem;
@@ -84,7 +86,9 @@
   }
   
   /* Efeito de foco para guiar o usuário */
+  /* ✨ ALTERAÇÃO AQUI: Adicionado input[type="number"]:focus ao seletor */
   .form-group input[type="datetime-local"]:focus,
+  .form-group input[type="number"]:focus,
   .form-group textarea:focus {
     outline: none;
     border-color: #80bdff;
@@ -94,6 +98,8 @@
   .form-group-inline {
     display: flex;
     gap: 1.5rem;
+    /* ✨ ALTERAÇÃO AQUI: Garante alinhamento dos labels quando os inputs têm alturas diferentes */
+    align-items: flex-start;
   }
   .form-group-inline .form-group {
     flex: 1;
@@ -214,13 +220,20 @@
     background-color: #c82333;
   }
 
-/* ✨ ALTERAÇÃO AQUI: NOVOS ESTILOS PARA O CHECKLIST DE SERVIÇOS DA PREVENTIVA */
+/* CHECKLIST DE SERVIÇOS DA PREVENTIVA */
 .servico-checklist-container {
     border: 1px solid #dee2e6;
     border-radius: 8px;
     max-height: 250px;
     overflow-y: auto;
-    background-color: #f8f9fa;
+    background-color: #fdfdfd; /* Alterado de f8f9fa */
+}
+
+.servico-checklist-wrapper {
+    border-bottom: 1px solid #e9ecef;
+}
+.servico-checklist-wrapper:last-child {
+    border-bottom: none;
 }
 
 .servico-checklist-item {
@@ -228,11 +241,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.servico-checklist-item:last-child {
-    border-bottom: none;
 }
 
 .servico-nome {
@@ -257,4 +265,87 @@
     width: 1.1em;
     height: 1.1em;
     cursor: pointer;
+}
+
+.servico-motivo-container {
+    padding: 0 1rem 0.75rem 1rem;
+}
+.motivo-textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 0.9rem;
+    resize: vertical;
+}
+.motivo-textarea:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+
+.radio-group-container {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+}
+.radio-group-container label {
+    margin-bottom: 0;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.radio-group-container input[type="radio"] {
+    width: 1.2em;
+    height: 1.2em;
+}
+.motivo-explicacao {
+    margin-top: -0.5rem;
+}
+
+.downtime-section {
+    background-color: #fffbeb;
+    border: 1px solid #ffeeba;
+    padding: 1rem;
+    border-radius: 6px;
+    align-items: center;
+}
+.downtime-info label {
+    font-weight: bold;
+}
+.downtime-info input:disabled {
+    background-color: #fff9e0;
+    border-style: dashed;
+    font-weight: 500;
+}
+
+.relatorio-parcial-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px dashed #ced4da;
+}
+.relatorio-parcial-section h3 {
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    color: #0056b3; /* Um azul para destacar */
+}
+.relatorio-parcial-section p {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}
+/* Botão de salvar relatório parcial */
+.report-btn {
+    background-color: #007bff; /* Azul padrão (primário) */
+    color: white;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+.report-btn:hover:not(:disabled) {
+    background-color: #0056b3;
 }

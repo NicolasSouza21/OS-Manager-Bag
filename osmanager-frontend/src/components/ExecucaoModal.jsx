@@ -1,5 +1,6 @@
+// ✨ ALTERAÇÃO AQUI: Importa a nova função criarAcompanhamento
 import React, { useState, useEffect } from 'react';
-import { listarServicosPorEquipamento } from '../services/apiService';
+import { listarServicosPorEquipamento, criarAcompanhamento } from '../services/apiService';
 import './ExecucaoModal.css';
 
 const toInputDateTimeFormat = (isoString) => {
@@ -11,24 +12,28 @@ const toInputDateTimeFormat = (isoString) => {
 };
 
 function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
+    // --- Estados para a FINALIZAÇÃO da OS ---
     const [acaoRealizada, setAcaoRealizada] = useState(os?.acaoRealizada || '');
     const [pecasSubstituidas, setPecasSubstituidas] = useState(os?.pecasSubstituidas?.length > 0 ? os.pecasSubstituidas : [{ nome: '', quantidade: 1 }]);
     const [inicio, setInicio] = useState(() => toInputDateTimeFormat(os?.inicio || new Date().toISOString()));
     const [termino, setTermino] = useState(toInputDateTimeFormat(os?.termino || ''));
-
-    // ✨ ALTERAÇÃO AQUI: 'maquinaParada' e 'motivoMaquinaParada' foram removidos.
-    // O 'os.maquinaParada' (vindo do banco) agora é a nossa fonte da verdade.
     const [trocaPecas, setTrocaPecas] = useState(os?.trocaPecas ?? null);
     const [motivoTrocaPeca, setMotivoTrocaPeca] = useState('');
-    
-    // ✨ ALTERAÇÃO AQUI: Novo estado para a data/hora que a máquina voltou.
-    // Inicia com a hora atual, que é uma suposição razoável para o término.
     const [fimDowntime, setFimDowntime] = useState(() => toInputDateTimeFormat(new Date().toISOString()));
 
+    // --- Estados do Checklist de Preventiva ---
     const [servicosDoEquipamento, setServicosDoEquipamento] = useState([]);
     const [loadingServicos, setLoadingServicos] = useState(false);
     const [servicoStatus, setServicoStatus] = useState({});
 
+    // ✨ ALTERAÇÃO AQUI: Novos estados para o Relatório Parcial / Pausa
+    const [relatorioDescricao, setRelatorioDescricao] = useState('');
+    const [relatorioMotivoPausa, setRelatorioMotivoPausa] = useState('');
+    // ✨ ALTERAÇÃO AQUI: Novo estado para os minutos da pausa
+    const [relatorioMinutosPausa, setRelatorioMinutosPausa] = useState(''); // Começa como string vazia
+    const [isReportLoading, setIsReportLoading] = useState(false); // Loading para o botão de salvar relatório
+
+    // ... (useEffect para carregar serviços da preventiva, não modificado) ...
     useEffect(() => {
         if (isOpen && os?.tipoManutencao === 'PREVENTIVA' && os?.equipamentoId) {
             setLoadingServicos(true);
@@ -53,22 +58,23 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
         }
     }, [isOpen, os]);
 
+    // ... (useEffect para preencher datas, não modificado) ...
     useEffect(() => {
         if (!inicio) {
             setInicio(toInputDateTimeFormat(new Date().toISOString()));
         }
         
-        // ✨ ALTERAÇÃO AQUI: Se a OS já tem um fimDowntime, preenche o estado
         if (os.fimDowntime) {
             setFimDowntime(toInputDateTimeFormat(os.fimDowntime));
         } else {
              setFimDowntime(toInputDateTimeFormat(new Date().toISOString()));
         }
 
-    }, [inicio, os.fimDowntime]); // Adiciona dependencia
+    }, [inicio, os.fimDowntime]);
 
     if (!isOpen) return null;
 
+    // ... (funções handlePecaChange, adicionarPeca, handleStatusChange, handleMotivoChange, não modificadas) ...
     const handlePecaChange = (index, field, value) => {
         const novasPecas = [...pecasSubstituidas];
         novasPecas[index][field] = value;
@@ -93,8 +99,50 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
         }));
     };
 
+    /**
+     * Salva um acompanhamento (relatório parcial ou pausa) sem fechar o modal.
+     */
+    const handleSalvarRelatorioParcial = async () => {
+        // ✨ ALTERAÇÃO AQUI: Validação atualizada
+        // Permite salvar se qualquer um dos três campos for preenchido
+        const minutos = Number(relatorioMinutosPausa) || 0;
+        if (!relatorioDescricao.trim() && !relatorioMotivoPausa.trim() && minutos <= 0) {
+            alert('Preencha pelo menos um campo para salvar o relatório: "O que foi feito", "Motivo da Pausa" ou "Duração".');
+            return;
+        }
+
+        setIsReportLoading(true);
+
+        // ✨ ALTERAÇÃO AQUI: Adiciona 'minutosPausa' ao payload
+        const dadosRelatorio = {
+            descricao: relatorioDescricao,
+            motivoPausa: relatorioMotivoPausa,
+            minutosPausa: minutos, // Envia o valor numérico
+            ordemServicoId: os.id, // Vincula o relatório a esta OS
+        };
+
+        try {
+            // Chama a nova função da API
+            await criarAcompanhamento(dadosRelatorio);
+            alert('Relatório parcial salvo com sucesso!');
+            // Limpa os campos após salvar
+            setRelatorioDescricao('');
+            setRelatorioMotivoPausa('');
+            setRelatorioMinutosPausa(''); // ✨ ALTERAÇÃO AQUI: Limpa os minutos
+        } catch (error) {
+            console.error("Erro ao salvar relatório parcial:", error);
+            alert(error?.response?.data?.message || "Falha ao salvar relatório parcial.");
+        } finally {
+            setIsReportLoading(false);
+        }
+    };
+
+
+    /**
+     * Handler para a FINALIZAÇÃO da OS (botão 'Concluir OS')
+     */
     const handleFinalizacao = async (statusFinal) => {
-        // ✨ ALTERAÇÃO AQUI: Validação do 'maquinaParada' foi removida
+        // ... (Validações de finalização - sem alteração) ...
         if (statusFinal === 'CONCLUIDA' && (trocaPecas === null)) {
             alert('Por favor, selecione "Sim" ou "Não" para "Houve Troca de Peças".');
             return;
@@ -113,7 +161,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             }
             
             acaoFinalFormatada = servicosDoEquipamento.map(servico => {
-                const { status, motivo } = servicoStatus[servico.id] || { status: 'NÃO MARCADO', motivo: ''}; // Garante que status exista
+                const { status, motivo } = servicoStatus[servico.id] || { status: 'NÃO MARCADO', motivo: ''}; 
                 if (status === 'NÃO REALIZADO' && motivo) {
                     return `- ${servico.nome}: ${status} (Motivo: ${motivo})`;
                 }
@@ -121,19 +169,17 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             }).join('\n');
         }
         
-        if (statusFinal === 'CONCLUIDA' && (!acaoFinalFormatada || !inicio || !termino)) {
+        if (statusFinal === 'CONCLUIDA' && (!acaoFinalFormatada.trim() || !inicio || !termino)) {
             alert("Para concluir, preencha a Ação Realizada (ou o checklist) e as datas de Início e Término.");
             return;
         }
 
-        // ✨ ALTERAÇÃO AQUI: Validação do 'fimDowntime'
         if (statusFinal === 'CONCLUIDA' && os.maquinaParada && !fimDowntime) {
              alert("Esta OS foi marcada com 'Máquina Parada'. Por favor, informe a data e hora que a máquina voltou a funcionar.");
             return;
         }
 
-
-        // ✨ ALTERAÇÃO AQUI: Objeto de dados atualizado para o novo DTO
+        // --- (Objeto de dados da finalização - sem alteração) ---
         const dados = {
             acaoRealizada: acaoFinalFormatada,
             trocaPecas,
@@ -142,13 +188,14 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             termino,
             motivoTrocaPeca: trocaPecas ? motivoTrocaPeca : null,
             statusFinal,
-            // Envia o 'fimDowntime' apenas se a máquina estava parada
             fimDowntime: os.maquinaParada ? fimDowntime : null, 
         };
         
+        // Esta função 'onSubmit' vem da DashboardPage e é responsável por fechar o modal
         await onSubmit(dados);
     };
 
+    // ... (renderAcaoRealizada - sem alteração) ...
     const renderAcaoRealizada = () => {
         if (os.tipoManutencao === 'PREVENTIVA') {
             if (loadingServicos) return <p>Carregando checklist de serviços...</p>;
@@ -187,8 +234,10 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             );
         }
 
+        // ✨ ALTERAÇÃO AQUI: O 'required' foi removido do textarea principal,
+        // já que ele só é obrigatório ao *finalizar* (validação movida para o JS)
         return (
-            <textarea rows="4" value={acaoRealizada} onChange={(e) => setAcaoRealizada(e.target.value)} required />
+            <textarea rows="4" value={acaoRealizada} onChange={(e) => setAcaoRealizada(e.target.value)} />
         );
     };
 
@@ -197,22 +246,16 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             <div className="modal-content">
                 <h2>Registrar Execução da OS: #{os.codigoOs}</h2>
                 <div className="form-container">
+                    {/* --- Seção de Finalização (só preenchida ao concluir) --- */}
                     <div className="form-group">
-                        <label>Ação Realizada:</label>
+                        <label>Ação Realizada (Preencher ao Concluir):</label>
                         {renderAcaoRealizada()}
                     </div>
                     <div className="form-group-inline">
                         <div className="form-group"><label>Início da Execução:</label><input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} required /></div>
-                        <div className="form-group"><label>Término da Execução:</label><input type="datetime-local" value={termino} onChange={(e) => setTermino(e.target.value)} required /></div>
+                        <div className="form-group"><label>Término da Execução (Preencher ao Concluir):</label><input type="datetime-local" value={termino} onChange={(e) => setTermino(e.target.value)} /></div>
                     </div>
                     
-                    {/* ✨ ALTERAÇÃO AQUI: Seção de "Máquina Parada" removida daqui */}
-                    {/* <div className="form-group"> ... (bloco removido) ... </div>
-                    {maquinaParada && ( ... (bloco removido) ... )}
-                    */}
-
-                    {/* ✨ ALTERAÇÃO AQUI: Novo campo condicional para FIM do Downtime */}
-                    {/* Ele só aparece se a OS foi marcada como 'maquinaParada' na criação */}
                     {os.maquinaParada && (
                          <div className="form-group-inline downtime-section">
                             <div className="form-group downtime-info">
@@ -220,20 +263,18 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                                 <input type="datetime-local" value={toInputDateTimeFormat(os.inicioDowntime)} disabled />
                             </div>
                             <div className="form-group">
-                                <label>Máquina Voltou (data/hora):</label>
+                                <label>Máquina Voltou (Preencher ao Concluir):</label>
                                 <input 
                                     type="datetime-local" 
                                     value={fimDowntime} 
                                     onChange={(e) => setFimDowntime(e.target.value)} 
-                                    required 
                                 />
                             </div>
                         </div>
                     )}
 
-
                     <div className="form-group">
-                        <label>Houve Troca de Peças?</label>
+                        <label>Houve Troca de Peças? (Preencher ao Concluir)</label>
                         <div className="radio-group-container">
                             <label><input type="radio" name="trocaPecas" checked={trocaPecas === true} onChange={() => setTrocaPecas(true)} /> Sim</label>
                             <label><input type="radio" name="trocaPecas" checked={trocaPecas === false} onChange={() => setTrocaPecas(false)} /> Não</label>
@@ -258,18 +299,64 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                         </>
                     )}
                     
+                    {/* ✨ ALTERAÇÃO AQUI: Nova seção para Relatório Parcial */}
+                    <div className="relatorio-parcial-section">
+                        <h3>Registrar Acompanhamento (Pausa / Relatório)</h3>
+                        <p>Use esta seção para salvar o progresso ou justificar uma pausa sem finalizar a OS.</p>
+                        <div className="form-group">
+                            <label htmlFor="relatorioDescricao">O que foi feito até agora?</label>
+                            <textarea 
+                                id="relatorioDescricao"
+                                rows="3" 
+                                value={relatorioDescricao} 
+                                onChange={(e) => setRelatorioDescricao(e.target.value)}
+                                placeholder="Ex: Trocado rolamento X, verificado nível do óleo..."
+                            />
+                        </div>
+
+                        {/* ✨ ALTERAÇÃO AQUI: Motivo e Duração agora estão lado a lado */}
+                        <div className="form-group-inline">
+                            <div className="form-group" style={{ flex: 3 }}>
+                                <label htmlFor="relatorioMotivoPausa">Motivo da Pausa (Opcional)</label>
+                                <textarea 
+                                    id="relatorioMotivoPausa"
+                                    rows="1" // Reduzido para 1 linha, já que está ao lado
+                                    value={relatorioMotivoPausa} 
+                                    onChange={(e) => setRelatorioMotivoPausa(e.target.value)}
+                                    placeholder="Ex: Aguardando peça, Fim do turno..."
+                                    style={{minHeight: '40px'}} // Garante altura mínima
+                                />
+                            </div>
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label htmlFor="relatorioMinutosPausa">Duração (min)</label>
+                                <input
+                                    type="number"
+                                    id="relatorioMinutosPausa"
+                                    value={relatorioMinutosPausa}
+                                    onChange={(e) => setRelatorioMinutosPausa(e.target.value)}
+                                    placeholder="Ex: 30"
+                                    min="0"
+                                    step="5" // Pulos de 5 min
+                                />
+                            </div>
+                        </div>
+
+                        <button 
+                            type="button" 
+                            onClick={handleSalvarRelatorioParcial} 
+                            className="action-button-modal report-btn" 
+                            disabled={isReportLoading || actionLoading} // Desabilita se estiver finalizando a OS ou salvando relatório
+                        >
+                            {isReportLoading ? 'Salvando Relatório...' : 'Salvar Relatório (e continuar OS)'}
+                        </button>
+                    </div>
+
                     <div className="modal-actions">
-                        <button type="button" onClick={onClose} className="action-button-modal cancel-btn" disabled={actionLoading}>
+                        <button type="button" onClick={onClose} className="action-button-modal cancel-btn" disabled={actionLoading || isReportLoading}>
                             Voltar
                         </button>
                         
-                        {os.tipoManutencao !== 'PREVENTIVA' && (
-                            <button type="button" onClick={() => handleFinalizacao('CANCELADA')} className="action-button-modal danger-btn" disabled={actionLoading}>
-                                {actionLoading ? 'Salvando...' : 'Cancelar OS'}
-                            </button>
-                        )}
-
-                        <button type="button" onClick={() => handleFinalizacao('CONCLUIDA')} className="action-button-modal success-btn" disabled={actionLoading}>
+                        <button type="button" onClick={() => handleFinalizacao('CONCLUIDA')} className="action-button-modal success-btn" disabled={actionLoading || isReportLoading}>
                            {actionLoading ? 'Salvando...' : 'Concluir OS'}
                         </button>
                     </div>
