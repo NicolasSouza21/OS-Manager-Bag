@@ -43,6 +43,10 @@ public class OrdemServicoDTO {
     private Boolean maquinaParada;
     private Boolean trocaPecas;
     
+    // ✨ ALTERAÇÃO AQUI: Novos campos de downtime adicionados
+    private LocalDateTime inicioDowntime; // (Vindo da entidade)
+    private LocalDateTime fimDowntime; // (Vindo da entidade)
+    
     // Dados da Verificação de Qualidade
     private Long verificadoPorId;
     private String verificadoPorNome;

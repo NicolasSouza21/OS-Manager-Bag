@@ -88,5 +88,18 @@ export const createFrequencia = (frequenciaData) => api.post('/frequencias', fre
 export const updateFrequencia = (id, frequenciaData) => api.put(`/frequencias/${id}`, frequenciaData);
 export const deleteFrequencia = (id) => api.delete(`/frequencias/${id}`);
 
+// ✨ ALTERAÇÃO AQUI: Seção de relatórios atualizada
+/** RELATÓRIOS */
+// A função agora busca o DTO completo do Dashboard do Líder
+export const getDashboardLider = (dataInicio, dataFim) => {
+    // Chama o novo endpoint /dashboard-lider
+    return api.get('/relatorios/dashboard-lider', { 
+        params: {
+            dataInicio: dataInicio, // ex: "2025-11-01"
+            dataFim: dataFim        // ex: "2025-11-30"
+        }
+    });
+};
+
 
 export default api;

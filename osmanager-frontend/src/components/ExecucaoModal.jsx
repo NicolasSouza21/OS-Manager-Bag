@@ -16,13 +16,15 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
     const [inicio, setInicio] = useState(() => toInputDateTimeFormat(os?.inicio || new Date().toISOString()));
     const [termino, setTermino] = useState(toInputDateTimeFormat(os?.termino || ''));
 
-    // ✨ ALTERAÇÃO AQUI: States iniciam como null para forçar uma escolha
-    const [maquinaParada, setMaquinaParada] = useState(os?.maquinaParada ?? null);
+    // ✨ ALTERAÇÃO AQUI: 'maquinaParada' e 'motivoMaquinaParada' foram removidos.
+    // O 'os.maquinaParada' (vindo do banco) agora é a nossa fonte da verdade.
     const [trocaPecas, setTrocaPecas] = useState(os?.trocaPecas ?? null);
-
-    const [motivoMaquinaParada, setMotivoMaquinaParada] = useState('');
     const [motivoTrocaPeca, setMotivoTrocaPeca] = useState('');
     
+    // ✨ ALTERAÇÃO AQUI: Novo estado para a data/hora que a máquina voltou.
+    // Inicia com a hora atual, que é uma suposição razoável para o término.
+    const [fimDowntime, setFimDowntime] = useState(() => toInputDateTimeFormat(new Date().toISOString()));
+
     const [servicosDoEquipamento, setServicosDoEquipamento] = useState([]);
     const [loadingServicos, setLoadingServicos] = useState(false);
     const [servicoStatus, setServicoStatus] = useState({});
@@ -55,7 +57,15 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
         if (!inicio) {
             setInicio(toInputDateTimeFormat(new Date().toISOString()));
         }
-    }, [inicio]);
+        
+        // ✨ ALTERAÇÃO AQUI: Se a OS já tem um fimDowntime, preenche o estado
+        if (os.fimDowntime) {
+            setFimDowntime(toInputDateTimeFormat(os.fimDowntime));
+        } else {
+             setFimDowntime(toInputDateTimeFormat(new Date().toISOString()));
+        }
+
+    }, [inicio, os.fimDowntime]); // Adiciona dependencia
 
     if (!isOpen) return null;
 
@@ -84,8 +94,9 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
     };
 
     const handleFinalizacao = async (statusFinal) => {
-        if (statusFinal === 'CONCLUIDA' && (maquinaParada === null || trocaPecas === null)) {
-            alert('Por favor, selecione "Sim" ou "Não" para "Máquina Parada" e "Houve Troca de Peças".');
+        // ✨ ALTERAÇÃO AQUI: Validação do 'maquinaParada' foi removida
+        if (statusFinal === 'CONCLUIDA' && (trocaPecas === null)) {
+            alert('Por favor, selecione "Sim" ou "Não" para "Houve Troca de Peças".');
             return;
         }
 
@@ -93,7 +104,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
 
         if (os.tipoManutencao === 'PREVENTIVA') {
             const todosMarcados = servicosDoEquipamento.every(
-                servico => servicoStatus[servico.id].status !== null
+                (servico) => servicoStatus[servico.id] && servicoStatus[servico.id].status !== null
             );
 
             if (!todosMarcados && statusFinal === 'CONCLUIDA') {
@@ -102,7 +113,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             }
             
             acaoFinalFormatada = servicosDoEquipamento.map(servico => {
-                const { status, motivo } = servicoStatus[servico.id];
+                const { status, motivo } = servicoStatus[servico.id] || { status: 'NÃO MARCADO', motivo: ''}; // Garante que status exista
                 if (status === 'NÃO REALIZADO' && motivo) {
                     return `- ${servico.nome}: ${status} (Motivo: ${motivo})`;
                 }
@@ -115,16 +126,24 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             return;
         }
 
+        // ✨ ALTERAÇÃO AQUI: Validação do 'fimDowntime'
+        if (statusFinal === 'CONCLUIDA' && os.maquinaParada && !fimDowntime) {
+             alert("Esta OS foi marcada com 'Máquina Parada'. Por favor, informe a data e hora que a máquina voltou a funcionar.");
+            return;
+        }
+
+
+        // ✨ ALTERAÇÃO AQUI: Objeto de dados atualizado para o novo DTO
         const dados = {
             acaoRealizada: acaoFinalFormatada,
             trocaPecas,
             pecasSubstituidas: trocaPecas ? pecasSubstituidas.filter(p => p.nome.trim()) : [],
             inicio,
             termino,
-            maquinaParada,
-            motivoMaquinaParada: maquinaParada ? motivoMaquinaParada : null,
             motivoTrocaPeca: trocaPecas ? motivoTrocaPeca : null,
             statusFinal,
+            // Envia o 'fimDowntime' apenas se a máquina estava parada
+            fimDowntime: os.maquinaParada ? fimDowntime : null, 
         };
         
         await onSubmit(dados);
@@ -183,23 +202,35 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                         {renderAcaoRealizada()}
                     </div>
                     <div className="form-group-inline">
-                        <div className="form-group"><label>Início:</label><input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} required /></div>
-                        <div className="form-group"><label>Término:</label><input type="datetime-local" value={termino} onChange={(e) => setTermino(e.target.value)} required /></div>
+                        <div className="form-group"><label>Início da Execução:</label><input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} required /></div>
+                        <div className="form-group"><label>Término da Execução:</label><input type="datetime-local" value={termino} onChange={(e) => setTermino(e.target.value)} required /></div>
                     </div>
                     
-                    <div className="form-group">
-                        <label>Máquina Parada?</label>
-                        <div className="radio-group-container">
-                            <label><input type="radio" name="maquinaParada" checked={maquinaParada === true} onChange={() => setMaquinaParada(true)} /> Sim</label>
-                            <label><input type="radio" name="maquinaParada" checked={maquinaParada === false} onChange={() => setMaquinaParada(false)} /> Não</label>
-                        </div>
-                    </div>
-                    {maquinaParada && (
-                        <div className="form-group motivo-explicacao">
-                            <label htmlFor="motivoMaquinaParada">Por que a máquina ficou parada?</label>
-                            <textarea id="motivoMaquinaParada" rows="2" value={motivoMaquinaParada} onChange={(e) => setMotivoMaquinaParada(e.target.value)} />
+                    {/* ✨ ALTERAÇÃO AQUI: Seção de "Máquina Parada" removida daqui */}
+                    {/* <div className="form-group"> ... (bloco removido) ... </div>
+                    {maquinaParada && ( ... (bloco removido) ... )}
+                    */}
+
+                    {/* ✨ ALTERAÇÃO AQUI: Novo campo condicional para FIM do Downtime */}
+                    {/* Ele só aparece se a OS foi marcada como 'maquinaParada' na criação */}
+                    {os.maquinaParada && (
+                         <div className="form-group-inline downtime-section">
+                            <div className="form-group downtime-info">
+                                <label>Máquina Parou em:</label>
+                                <input type="datetime-local" value={toInputDateTimeFormat(os.inicioDowntime)} disabled />
+                            </div>
+                            <div className="form-group">
+                                <label>Máquina Voltou (data/hora):</label>
+                                <input 
+                                    type="datetime-local" 
+                                    value={fimDowntime} 
+                                    onChange={(e) => setFimDowntime(e.target.value)} 
+                                    required 
+                                />
+                            </div>
                         </div>
                     )}
+
 
                     <div className="form-group">
                         <label>Houve Troca de Peças?</label>

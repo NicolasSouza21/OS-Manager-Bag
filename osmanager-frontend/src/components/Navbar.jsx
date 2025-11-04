@@ -46,7 +46,7 @@ function Navbar() {
                         <span>Dashboard</span>
                     </NavLink>
                 </li>
-
+                
                 <li className="nav-item">
                     <NavLink to="/calendario" className="nav-link">
                         <i className="fas fa-calendar-alt"></i>
@@ -60,6 +60,17 @@ function Navbar() {
                         <span>Criar OS</span>
                     </NavLink>
                 </li>
+
+                {/* ✨ ALTERAÇÃO AQUI: Novo link de Relatórios adicionado */}
+                {/* Visível apenas para ADMIN ou LIDER */}
+                {(isAdmin || isLider) && (
+                    <li className="nav-item">
+                        <NavLink to="/relatorios" className="nav-link">
+                            <i className="fas fa-chart-bar"></i>
+                            <span>Relatórios</span>
+                        </NavLink>
+                    </li>
+                )}
 
                 {/* Link "Gerenciar Funcionários" - Apenas para ADMIN */}
                 {isAdmin && (
@@ -82,7 +93,7 @@ function Navbar() {
                     </li>
                 )}
             </ul>
-
+            
             {/* ✨ NOVO: Área do usuário separada à direita */}
             <div className="navbar-user">
                 <span className="user-greeting">Olá, {userName}!</span>

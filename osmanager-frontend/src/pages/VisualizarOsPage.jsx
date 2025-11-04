@@ -21,6 +21,7 @@ const formatFrequencia = (frequencia) => {
 };
 
 // --- COMPONENTE DE IMPRESSÃO ---
+// ✨ ALTERAÇÃO AQUI: Lógica do componente de impressão com parse de motivo e seção de reprovação
 const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
     // Verificação robusta para 'os'
     if (!os || typeof os !== 'object') {
@@ -53,6 +54,7 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
         return lower.charAt(0).toUpperCase() + lower.slice(1);
     };
 
+    // ✨ CORREÇÃO AQUI: Lógica de parsing do checklist de preventiva
     const renderAcaoRealizadaImpressao = () => {
         const acao = os.acaoRealizada;
         if (os.tipoManutencao === 'PREVENTIVA' && acao && acao.includes(':')) {
@@ -62,56 +64,90 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                     {servicos.map((servico, index) => {
                         const partes = servico.split(':');
                         const nome = partes[0]?.replace('-', '').trim();
-                        const status = partes[1]?.trim().toUpperCase();
+                        const resto = partes[1]?.trim() || '';
+                        
+                        let status = '';
+                        let motivo = '';
+                        
+                        // Verifica se existe um motivo entre parênteses
+                        const motivoIndex = resto.toUpperCase().indexOf('(MOTIVO:');
+                        if (motivoIndex !== -1) {
+                            status = resto.substring(0, motivoIndex).trim();
+                            // Extrai o motivo
+                            motivo = resto.substring(motivoIndex + 8, resto.length - 1).trim();
+                        } else {
+                            status = resto;
+                        }
+
+                        status = status.toUpperCase();
+                        
                         const checkRealizado = status === 'REALIZADO' ? 'X' : ' ';
                         const checkNaoRealizado = status === 'NÃO REALIZADO' ? 'X' : ' ';
+                        
                         return (
-                            <div key={index} className="checklist-item-impressao">
-                                <span className="checklist-nome-impressao">{nome}:</span>
-                                <span className="checklist-status-impressao">(&nbsp;{checkRealizado}&nbsp;) Realizado</span>
-                                <span className="checklist-status-impressao">(&nbsp;{checkNaoRealizado}&nbsp;) Não realizado</span>
+                            // ✨ CORREÇÃO AQUI: Adiciona a classe wrapper para o CSS funcionar
+                            <div key={index} className="checklist-item-impressao-wrapper">
+                                <div className="checklist-item-impressao">
+                                    <span className="checklist-nome-impressao">{nome}:</span>
+                                    <span className="checklist-status-impressao">(&nbsp;{checkRealizado}&nbsp;) Realizado</span>
+                                    <span className="checklist-status-impressao">(&nbsp;{checkNaoRealizado}&nbsp;) Não realizado</span>
+                                </div>
+                                {/* ✨ NOVO AQUI: Renderiza o motivo se ele existir */}
+                                {checkNaoRealizado === 'X' && motivo && (
+                                    <span className="checklist-motivo-impressao">Motivo: {motivo}</span>
+                                )}
                             </div>
                         );
                     })}
                 </div>
             );
         }
+        // Para corretivas, apenas exibe o texto
         return <p>{acao || 'Nenhuma ação realizada informada.'}</p>;
     };
 
+    // Desestruturação dos dados da OS (com valores padrão)
     const {
         dataInicioPreventiva, dataSolicitacao, dataExecucao, termino, dataVerificacao,
         status, trocaPecas, codigoOs, tipoManutencao, localNome, setorNome,
         frequencia, solicitante, descricaoProblema, executadoPorNome, pecasSubstituidas, acaoRealizada,
-        prioridade
+        prioridade,
+        // ✨ NOVO AQUI: Campos de verificação
+        verificadoPorNome, statusVerificacao, comentarioVerificacao
     } = os ?? {};
 
     const dataSolicitacaoFormatada = formatDateTime(dataInicioPreventiva || dataSolicitacao);
     const dataInicioFormatada = formatDateTime(dataExecucao);
     const dataTerminoFormatada = formatDateTime(termino);
-    const dataAprovacaoFormatada = formatDateTime(dataVerificacao);
+    const dataAprovacaoFormatada = formatDateTime(dataVerificacao); // Usado para data de aprovação/reprovação
+    
     const isRealizado = ['CONCLUIDA', 'AGUARDANDO_VERIFICACAO'].includes(status);
     const trocouPecasBool = trocaPecas === true;
     const naoTrocouPecasBool = trocaPecas === false && isRealizado;
+    
     const tituloFooter = `ORDEM DE SERVIÇO DE MANUTENÇÃO`;
     const dataImpressao = new Date().toLocaleDateString('pt-BR');
+
+    // ✨ CORREÇÃO AQUI: Lógica de Verificação/Aprovação
+    const isAprovado = statusVerificacao === 'APROVADO';
+    const isReprovado = statusVerificacao === 'REPROVADO';
+    // const isPendente = statusVerificacao === 'PENDENTE' || statusVerificacao === 'NAO_APLICAVEL' || !statusVerificacao;
 
     return (
         <div ref={ref} className="print-container">
             <table className="print-main-table">
                 <thead>
-                        <tr>
-                            <th className="header-logo-cell">
-                                {/* ✨ ALTERAÇÃO AQUI: Substitua '/img/logo.png' se o nome ou local for diferente na pasta public */}
-                                <img src="/img/logo.png" alt="Logo BagCleaner" style={{ maxWidth: '120px', height: 'auto', display: 'block', margin: 'auto' }} />
-                            </th>
-                            <th className="header-title-cell">Ordem de Serviço de Manutenção</th>
-                            <th className="header-os-number-cell">
-                                {/* ✨ ALTERAÇÃO AQUI: Conteúdo da célula do número da OS adicionado */}
-                                <div>Nº</div>
-                                <div>{codigoOs || 'N/A'}</div> {/* Exibe o codigoOs ou 'N/A' se não existir */}
-                            </th>
-                        </tr>
+                    <tr>
+                        <th className="header-logo-cell">
+                            {/* Você pode precisar colocar a imagem na pasta /public/img/logo.png */}
+                            <img src="/img/logo.png" alt="Logo BagCleaner" style={{ maxWidth: '120px', height: 'auto', display: 'block', margin: 'auto' }} />
+                        </th>
+                        <th className="header-title-cell">Ordem de Serviço de Manutenção</th>
+                        <th className="header-os-number-cell">
+                            <div>Nº</div>
+                            <div>{codigoOs || 'N/A'}</div>
+                        </th>
+                    </tr>
                 </thead>
                 <tbody>
                     <tr>
@@ -119,14 +155,11 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                             <table className="info-table">
                                 <tbody>
                                     <tr>
-                                        {/* ✨ ALTERAÇÃO AQUI: Sempre mostra Equipamento e Nº Ativo na primeira linha */}
                                         <td><strong>Equipamento:</strong> {equipamento?.nome || 'N/A'}</td>
                                         <td><strong>Nº Ativo:</strong> {equipamento?.tag || 'N/A'}</td>
                                     </tr>
                                     <tr>
-                                        {/* ✨ ALTERAÇÃO AQUI: Mostra Tipo OS na segunda linha */}
                                         <td><strong>Tipo de OS:</strong> {capitalize(tipoManutencao) || 'Não especificado'}</td>
-                                        {/* ✨ ALTERAÇÃO AQUI: Mostra Prioridade (se Corretiva) ou Frequência (se Preventiva) */}
                                         {tipoManutencao === 'CORRETIVA' ? (
                                             <td><strong>Prioridade:</strong> {capitalize(prioridade) || 'N/A'}</td>
                                         ) : (
@@ -139,10 +172,8 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                                             <td><strong>Setor:</strong> {setorNome}</td>
                                         </tr>
                                     )}
-                                    {/* ✨ ALTERAÇÃO AQUI: Modificado para usar "Data Programada" ou "Solicitante/Data" */}
                                     {tipoManutencao === 'PREVENTIVA' ? (
                                         <tr>
-                                            {/* ✨ ALTERAÇÃO AQUI: Label mudado para "Data Programada" */}
                                             <td colSpan="2"><strong>Data Programada:</strong> {dataSolicitacaoFormatada.date}</td>
                                         </tr>
                                     ) : (
@@ -155,7 +186,7 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                             </table>
                         </td>
                     </tr>
-                    {/* Restante da tabela (Preenchimento, Execução, Footer) permanece igual */}
+                    {/* Seção de Preenchimento (Problema) */}
                     <tr className="section-header">
                         <td colSpan="3">Preenchimento da Manutenção</td>
                     </tr>
@@ -164,6 +195,7 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                             <strong>Descrição do Problema/Serviço:</strong> {descricaoProblema || 'N/A'}
                         </td>
                     </tr>
+                    {/* Seção de Execução (Ação) */}
                     <tr>
                         <td colSpan="3" className="desc-cell no-padding">
                             <p style={{ paddingLeft: '5px' }}><strong>Ação Realizada:</strong></p>
@@ -207,14 +239,30 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                             </table>
                         </td>
                     </tr>
+                    {/* ✨ CORREÇÃO AQUI: Seção de Aprovação/Reprovação dinâmica */}
                     <tr>
                         <td colSpan="3" className="no-padding">
                             <table className="info-table">
                                 <tbody>
-                                    <tr>
-                                        <td style={{ width: '60%' }}><strong>Aprovado por :</strong> __________________________</td>
-                                        <td style={{ width: '20%' }}><strong>Data:</strong> {dataAprovacaoFormatada.date} Horas: ___ / ___</td>
+                                    {/* ✨ CORREÇÃO AQUI: Adiciona a classe 'reprovado-row' se estiver reprovado */}
+                                    <tr className={isReprovado ? 'reprovado-row' : ''}>
+                                        <td style={{ width: '60%' }}>
+                                            <strong>Aprovado por:</strong> {isAprovado ? (verificadoPorNome || 'Aprovado') : '__________________________'}
+                                        </td>
+                                        <td style={{ width: '40%' }}>
+                                            <strong>Data:</strong> {isAprovado ? dataAprovacaoFormatada.date : '__/__/____'} <strong>Horas:</strong> {isAprovado ? dataAprovacaoFormatada.time : '__:__'}
+                                        </td>
                                     </tr>
+                                    {/* ✨ NOVO AQUI: Seção de Reprovação (usa a classe 'reprovado-row-motivo') */}
+                                    {isReprovado && (
+                                        <tr className="reprovado-row-motivo">
+                                            <td colSpan="2">
+                                                <strong>Status:</strong> REPROVADO
+                                                <br />
+                                                <strong>Motivo da Reprovação:</strong> {comentarioVerificacao || 'Nenhum motivo fornecido.'}
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </td>
@@ -246,12 +294,15 @@ function VisualizarOsPage() {
     const componentRef = useRef();
     const [isPrinting, setIsPrinting] = useState(false);
 
-    // useReactToPrint hook (sem alterações)
+    // ✨ ALTERAÇÃO AQUI: O const pageStyle foi COMPLETAMENTE REMOVIDO.
+    // Os estilos agora virão 100% do 'VisualizarOsPage.print.css'
+
+    // useReactToPrint hook
     const handlePrint = useReactToPrint({
         content: () => componentRef.current,
         onBeforeGetContent: () => new Promise(resolve => { setIsPrinting(true); setTimeout(resolve, 50); }),
         onAfterPrint: () => setIsPrinting(false),
-        pageStyle: `@page { size: A4 portrait; margin: 15mm; } @media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .print-main-table { width: 100%; border-collapse: collapse; } .print-main-table th, .print-main-table td { border: 1px solid #ccc; padding: 4px; font-size: 9pt; color: black; } thead { display: table-header-group; } tfoot { display: table-footer-group; } }`,
+        // ✨ ALTERAÇÃO AQUI: O prop 'pageStyle' foi REMOVIDO.
     });
 
     // useEffect para buscar dados (sem alterações na lógica principal)
@@ -337,18 +388,22 @@ function VisualizarOsPage() {
     // JSX Principal (sem alterações significativas, pois a lógica está no PrintableOs)
     return (
         <>
-            {isPrinting && ordemServico && equipamento &&
+            {/* Div oculta para impressão, usando o Portal */}
+            {isPrinting && ordemServico &&
                 ReactDOM.createPortal(
-                    <div className="print-portal-wrapper">
+                    // ✨ ALTERAÇÃO AQUI: Classe corrigida para corresponder ao print.css
+                    <div className="printable-area-wrapper"> 
                         <PrintableOs
                             ref={componentRef}
                             os={ordemServico}
-                            equipamento={equipamento}
+                            equipamento={equipamento} // equipamento pode ser null, o PrintableOs deve tratar
                         />
                     </div>,
                     document.body
                 )
             }
+            
+            {/* Div visível na tela */}
             <div className="view-os-page">
                 <div className="view-os-form">
                     <header className="form-header-main">
@@ -379,6 +434,14 @@ function VisualizarOsPage() {
                             <div className="input-group"><label>Data da Execução</label><input type="text" value={formatDateTime(ordemServico.dataExecucao)} disabled /></div>
                         </div>
                         <div className="input-group full-width" style={{ marginTop: '1rem' }}><label>Ação Realizada</label><textarea value={ordemServico.acaoRealizada || 'Aguardando preenchimento.'} rows="3" disabled></textarea></div>
+                    
+                        {/* ✨ NOVO AQUI: Exibe o motivo da reprovação na tela, se houver */}
+                        {ordemServico.statusVerificacao === 'REPROVADO' && (
+                             <div className="input-group full-width verification-comment-display reprovado">
+                                <label>Motivo da Reprovação (Encarregado)</label>
+                                <textarea value={ordemServico.comentarioVerificacao || 'Motivo não especificado.'} rows="3" disabled></textarea>
+                            </div>
+                        )}
                     </section>
                     <footer className="form-actions">
                         <button type="button" className="button-print" onClick={handlePrint}>Imprimir</button>

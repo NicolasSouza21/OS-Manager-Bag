@@ -68,10 +68,10 @@ public class OrdemServico {
     @Column(columnDefinition = "TEXT")
     private String acaoRealizada;
 
-    private LocalDateTime inicio;
-    private LocalDateTime termino;
+    private LocalDateTime inicio; // Início da *execução*
+    private LocalDateTime termino; // Término da *execução*
 
-    private Boolean maquinaParada;
+    private Boolean maquinaParada; // Este é o campo antigo, vamos mantê-lo por enquanto
     private Boolean trocaPecas;
     
     // ✨ ALTERAÇÃO AQUI: Novos campos para as justificativas
@@ -80,6 +80,14 @@ public class OrdemServico {
 
     @Column(columnDefinition = "TEXT")
     private String motivoTrocaPeca;
+
+    // ✨ ALTERAÇÃO AQUI: Novos campos para DOWNTIME
+    @Column(nullable = true) // Será nulo se a máquina não parou
+    private LocalDateTime inicioDowntime; // A hora que a máquina parou (informado na ABERTURA)
+
+    @Column(nullable = true) // Será nulo até a OS ser fechada
+    private LocalDateTime fimDowntime; // A hora que a máquina voltou (informado na EXECUÇÃO)
+    // --- Fim das novas alterações ---
 
     @OneToMany(mappedBy = "ordemServico", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PecaSubstituida> pecasSubstituidas;

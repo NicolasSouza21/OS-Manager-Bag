@@ -79,6 +79,12 @@ public class OrdemServicoMapper {
             BeanUtils.copyProperties(os.getFrequencia(), freqDTO);
             dto.setFrequencia(freqDTO);
         }
+
+        // ✨ ALTERAÇÃO AQUI: Adiciona a cópia manual dos novos campos de downtime
+        // Isso garante que eles sejam enviados ao frontend.
+        dto.setInicioDowntime(os.getInicioDowntime());
+        dto.setFimDowntime(os.getFimDowntime());
+
         return dto;
     }
 }

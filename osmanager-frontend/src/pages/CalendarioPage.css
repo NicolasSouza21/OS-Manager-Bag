@@ -20,13 +20,47 @@
     margin-right: -8px;
 }
 
-.calendario-title {
-    text-align: center;
-    color: #343a40;
+/* ✨ ALTERAÇÃO AQUI: Estilos para o novo cabeçalho com o botão */
+.calendario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 2.5rem;
+    gap: 2rem; /* Adiciona espaço entre o título e os controles */
+}
+
+.calendario-title {
+    color: #343a40;
+    margin: 0;
     font-size: 2.2rem;
     font-weight: 600;
+    white-space: nowrap; /* Impede que o título quebre a linha */
 }
+
+/* ✨ ALTERAÇÃO AQUI: Container para a legenda e o botão */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.print-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background-color: var(--cor-principal);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap; /* Impede que o texto do botão quebre */
+}
+
+.print-button:hover {
+    background-color: #0056b3;
+}
+
 
 .calendario-wrapper {
     background-color: var(--cor-fundo-wrapper);
@@ -42,63 +76,59 @@
 .legenda-container {
     display: flex;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Impede que a legenda quebre para a próxima linha */
     gap: 1.5rem;
-    margin-bottom: 3rem;
+    margin-bottom: 0; /* Remove a margem que existia antes */
 }
 
 .legenda-item {
     display: flex;
     align-items: center;
-    font-size: 1rem;
+    font-size: 0.9rem; /* Levemente menor para caber melhor */
     color: var(--cor-texto-padrao);
+    white-space: nowrap;
 }
 
 .cor-box {
     width: 20px;
     height: 20px;
     border-radius: 5px;
-    margin-right: 10px;
+    margin-right: 8px;
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* ✅ --- ESTILO DO CARD DE EVENTO MELHORADO --- ✅ */
 .custom-event {
-    padding: 4px 8px; /* Mais espaço interno */
-    font-size: 0.85rem; /* Tamanho base da fonte */
+    padding: 4px 8px;
+    font-size: 0.85rem;
     border-radius: 4px;
-    line-height: 1.3;   /* Espaçamento entre linhas mais confortável */
-    white-space: nowrap; /* Impede que o texto quebre para a próxima linha */
-    overflow: hidden;    /* Esconde o que não couber */
-    text-overflow: ellipsis; /* Adiciona "..." ao final de textos longos */
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .custom-event strong {
-    display: block; /* Garante que o negrito ocupe a linha inteira */
+    display: block;
     font-weight: 600;
 }
 
 .custom-event .event-frequencia {
     display: block;
-    font-size: 0.8rem; /* Fonte da frequência um pouco menor */
+    font-size: 0.8rem;
     opacity: 0.9;
-    font-weight: 400; /* Texto normal, sem negrito */
+    font-weight: 400;
 }
 
 
 /* =================================================================== */
 /* ESTILOS DO REACT-BIG-CALENDAR                                       */
 /* =================================================================== */
-
-/* Barra de ferramentas (Toolbar) - Sem alterações */
 .rbc-toolbar { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--cor-borda-suave); display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .rbc-toolbar .rbc-toolbar-label { font-size: 2rem; font-weight: 600; text-align: center; flex-grow: 1; }
 .rbc-btn-group { display: flex; gap: 0.5rem; }
 .rbc-btn-group button { padding: 0.8rem 1.6rem; font-size: 1rem; border: 1px solid var(--cor-borda-suave) !important; background-color: white !important; color: var(--cor-texto-padrao) !important; border-radius: 8px !important; cursor: pointer; transition: all 0.2s; }
 .rbc-btn-group button:hover, .rbc-btn-group button.rbc-active { background-color: var(--cor-principal) !important; color: white !important; border-color: var(--cor-principal) !important; }
 
-
-/* --- Cabeçalho e Células do Dia --- */
 .rbc-header {
     padding: 1.2rem 0;
     font-size: 1.1rem;
@@ -106,9 +136,8 @@
     text-align: center;
 }
 
-/* ✅ --- AUMENTA A ALTURA DAS LINHAS DOS DIAS --- ✅ */
 .rbc-month-row {
-    min-height: 300px !important; /* Aumentado para dar mais espaço vertical */
+    min-height: 300px !important;
 }
 
 .rbc-month-cell .rbc-row-content {
@@ -119,13 +148,11 @@
     background-color: #eaf6ff;
 }
 
-/* ✅ --- AJUSTE PARA MOSTRAR MAIS EVENTOS ANTES DO "+ VER MAIS" --- ✅ */
 .rbc-month-view .rbc-row-content .rbc-event {
     display: block;
-    margin-bottom: 4px; /* Espaçamento entre os cards de evento */
+    margin-bottom: 4px;
 }
 
-/* Agora esconde a partir do 8º evento, pois há mais espaço */
 .rbc-month-view .rbc-row-content .rbc-event:nth-child(n+8) {
     display: none;
 }
@@ -139,7 +166,6 @@
     padding-left: 5px;
 }
 
-/* Ocultar Grid de Horas (Sem alterações) */
 .rbc-time-gutter, .rbc-time-content { display: none !important; }
 .rbc-time-header.rbc-overflowing { border-right: none; }
 .rbc-time-header-content { border-left: none; }
@@ -149,7 +175,6 @@
 /* AJUSTES RESPONSIVOS                                                 */
 /* =================================================================== */
 @media (max-width: 992px) {
-    /* ✅ Ajustado para telas menores */
     .rbc-month-row { min-height: 220px !important; }
 }
 
@@ -158,7 +183,6 @@
     .calendario-wrapper { padding: 1rem; }
     .rbc-toolbar { flex-direction: column; }
     .rbc-toolbar .rbc-toolbar-label { order: -1; }
-    /* ✅ Ajustado para telas de celular */
     .rbc-month-row { min-height: 180px !important; }
     .rbc-month-view .rbc-row-content .rbc-event:nth-child(n+5) {
         display: none;
