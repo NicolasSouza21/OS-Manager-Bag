@@ -3,8 +3,12 @@ package com.bag.osmanager.service;
 // ✨ ALTERAÇÃO AQUI: Vários imports novos
 import com.bag.osmanager.dto.DashboardLiderDTO;
 import com.bag.osmanager.dto.RelatorioEquipamentoDTO;
+// ✨ ALTERAÇÃO AQUI: Import do novo DTO de indicadores
+import com.bag.osmanager.dto.RelatorioIndicadoresDTO; 
 import com.bag.osmanager.dto.RelatorioTempoMecanicoDTO;
 import com.bag.osmanager.dto.RelatorioTipoManutencaoDTO;
+// ✨ ALTERAÇÃO AQUI: Import da entidade AcompanhamentoOS
+import com.bag.osmanager.model.AcompanhamentoOS; 
 import com.bag.osmanager.model.OrdemServico;
 import com.bag.osmanager.model.enums.StatusOrdemServico;
 import com.bag.osmanager.model.enums.TipoManutencao; // ✨ Import
@@ -32,6 +36,9 @@ import java.util.stream.Collectors;
 public class RelatorioService {
 
     private final OrdemServicoRepository ordemServicoRepository;
+    
+    // (Não precisamos do AcompanhamentoOSRepository aqui,
+    // pois a OrdemServico já carrega a lista de acompanhamentos)
 
     // ... (A classe Turno e o Map horariosMecanicos permanecem os mesmos) ...
     private static class Turno {
@@ -99,7 +106,6 @@ public class RelatorioService {
         horariosMecanicos.put("CARLOS", horarioCarlos); 
     }
 
-    // ✨ ALTERAÇÃO AQUI: Novo método principal que retorna o "Super DTO"
     /**
      * Agrega todos os dados de relatório para o dashboard do líder em um período.
      */
@@ -110,18 +116,22 @@ public class RelatorioService {
         List<RelatorioEquipamentoDTO> relatorioRankingCorretivas = gerarRelatorioRankingEquipamentos(inicioPeriodo, fimPeriodo);
         List<RelatorioEquipamentoDTO> relatorioRankingDowntime = gerarRelatorioDowntime(inicioPeriodo, fimPeriodo);
         List<RelatorioTipoManutencaoDTO> relatorioSaude = gerarRelatorioSaude(inicioPeriodo, fimPeriodo);
+        
+        RelatorioIndicadoresDTO relatorioIndicadores = gerarRelatorioIndicadores(inicioPeriodo, fimPeriodo);
 
         return new DashboardLiderDTO(
             relatorioMecanicos,
             relatorioRankingCorretivas,
             relatorioRankingDowntime,
-            relatorioSaude
+            relatorioSaude,
+            relatorioIndicadores
         );
     }
 
     // --- GRÁFICO 1: TEMPO POR MECÂNICO ---
     private List<RelatorioTempoMecanicoDTO> gerarRelatorioTempoMecanicos(LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
         
+        // 1. Busca as OS concluídas no período
         List<OrdemServico> osConcluidas = ordemServicoRepository
             .findByStatusAndExecutadoPorIsNotNullAndInicioIsNotNullAndTerminoIsNotNullAndTerminoBetween(
                 StatusOrdemServico.CONCLUIDA,
@@ -129,17 +139,44 @@ public class RelatorioService {
                 fimPeriodo
             );
 
+        // 2. Agrupa por mecânico
         Map<String, List<OrdemServico>> osPorMecanico = osConcluidas.stream()
             .filter(os -> os.getExecutadoPor() != null && os.getExecutadoPor().getNome() != null) 
             .collect(Collectors.groupingBy(os -> os.getExecutadoPor().getNome()));
 
+        // 3. Calcula o tempo de cada mecânico
         return osPorMecanico.entrySet().stream().map(entry -> {
             String nomeMecanico = entry.getKey();
             List<OrdemServico> osDoMecanico = entry.getValue();
             long totalOsConcluidas = osDoMecanico.size();
             
+            // ✨✅ ALTERAÇÃO AQUI: Lógica de cálculo de horas gastas foi atualizada
             double totalHorasGastas = osDoMecanico.stream()
-                .mapToDouble(os -> calcularMinutosUteis(os.getInicio(), os.getTermino(), os.getExecutadoPor().getNome()) / 60.0)
+                .mapToDouble(os -> {
+                    // Se a OS não tem início/término (dados antigos), não conta
+                    if (os.getInicio() == null || os.getTermino() == null) {
+                        return 0.0;
+                    }
+                    
+                    // 1. Calcula o tempo bruto (horas úteis) entre o início e o término da execução
+                    double minutosUteisBrutos = calcularMinutosUteis(os.getInicio(), os.getTermino(), os.getExecutadoPor().getNome());
+
+                    // 2. Busca e soma todas as pausas registradas para esta OS
+                    //    (O @Transactional no 'getDashboardLider' permite o lazy-loading aqui)
+                    double minutosDePausa = 0.0;
+                    if (os.getAcompanhamentos() != null) {
+                        minutosDePausa = os.getAcompanhamentos().stream()
+                            .filter(acomp -> acomp.getMinutosPausa() != null && acomp.getMinutosPausa() > 0)
+                            .mapToDouble(AcompanhamentoOS::getMinutosPausa)
+                            .sum();
+                    }
+
+                    // 3. Subtrai as pausas do tempo bruto para obter o tempo produtivo
+                    double minutosProdutivos = minutosUteisBrutos - minutosDePausa;
+
+                    // 4. Retorna o tempo produtivo em horas (garantindo que não seja negativo)
+                    return (minutosProdutivos > 0 ? minutosProdutivos : 0.0) / 60.0;
+                })
                 .sum();
             
             totalHorasGastas = Math.round(totalHorasGastas * 100.0) / 100.0;
@@ -148,7 +185,6 @@ public class RelatorioService {
         }).collect(Collectors.toList());
     }
 
-    // ✨ ALTERAÇÃO AQUI: Novo método para o Gráfico 2
     // --- GRÁFICO 2: RANKING DE CORRETIVAS POR EQUIPAMENTO ---
     private List<RelatorioEquipamentoDTO> gerarRelatorioRankingEquipamentos(LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
         
@@ -174,7 +210,6 @@ public class RelatorioService {
             .collect(Collectors.toList());
     }
 
-    // ✨ ALTERAÇÃO AQUI: Novo método para o Gráfico 3
     // --- GRÁFICO 3: RANKING DE DOWNTIME POR EQUIPAMENTO ---
     private List<RelatorioEquipamentoDTO> gerarRelatorioDowntime(LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
         
@@ -194,8 +229,13 @@ public class RelatorioService {
                 String nomeEquipamento = entry.getKey();
                 double totalHorasDowntime = entry.getValue().stream()
                     .mapToDouble(os -> {
-                        // Usamos o cálculo de horas úteis, pois a máquina só está "parada" durante o expediente
-                        return calcularMinutosUteis(os.getInicio(), os.getTermino(), "ANTONIO") / 60.0; // Usa um turno padrão para downtime
+                        // ✅ CORREÇÃO AQUI: Mudança para horas corridas (elapsed time)
+                        // Usar os campos de início e fim do downtime, não da execução
+                        if (os.getInicioDowntime() != null && os.getFimDowntime() != null) {
+                            // Calcula a duração real (corrida) entre o início e o fim da parada
+                            return Duration.between(os.getInicioDowntime(), os.getFimDowntime()).toMinutes() / 60.0;
+                        }
+                        return 0.0; // Retorna 0 se os dados de downtime estiverem ausentes
                     })
                     .sum();
                 totalHorasDowntime = Math.round(totalHorasDowntime * 100.0) / 100.0;
@@ -207,7 +247,6 @@ public class RelatorioService {
             .collect(Collectors.toList());
     }
 
-    // ✨ ALTERAÇÃO AQUI: Novo método para o Gráfico 4
     // --- GRÁFICO 4: SAÚDE (PREVENTIVA vs CORRETIVA) ---
     private List<RelatorioTipoManutencaoDTO> gerarRelatorioSaude(LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
         
@@ -229,8 +268,59 @@ public class RelatorioService {
             .collect(Collectors.toList());
     }
 
+    // --- GRÁFICO 5: INDICADORES (MTTR / MTBF) ---
+    private RelatorioIndicadoresDTO gerarRelatorioIndicadores(LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
+        
+        // 1. Busca todas as OS de corretiva que tiveram máquina parada e foram concluídas no período
+        List<OrdemServico> falhas = ordemServicoRepository
+            .findAllByStatusAndTipoManutencaoAndMaquinaParadaIsTrueAndTerminoBetween(
+                StatusOrdemServico.CONCLUIDA,
+                TipoManutencao.CORRETIVA, // MTTR/MTBF geralmente se aplica a falhas (Corretivas)
+                inicioPeriodo,
+                fimPeriodo
+            );
 
-    // ... (O método calcularMinutosUteis permanece o mesmo) ...
+        if (falhas.isEmpty()) {
+            // Se não houve falhas, os indicadores são 0 (ou indefinidos, mas 0 é mais seguro para o DTO)
+            return new RelatorioIndicadoresDTO(0.0, 0.0);
+        }
+
+        // 2. Calcular o Total de Minutos em Downtime (TTR - Time To Repair)
+        //    Usando a nova regra de horas corridas
+        double totalMinutosDowntime = falhas.stream()
+            .filter(os -> os.getInicioDowntime() != null && os.getFimDowntime() != null)
+            .mapToDouble(os -> Duration.between(os.getInicioDowntime(), os.getFimDowntime()).toMinutes())
+            .sum();
+
+        // 3. Número de Falhas
+        int numeroDeFalhas = falhas.size();
+
+        // 4. Calcular o Total de Minutos no Período Selecionado
+        long totalMinutosNoPeriodo = Duration.between(inicioPeriodo, fimPeriodo).toMinutes();
+
+        // 5. Calcular MTTR (Tempo Médio Para Reparo)
+        // (Total de tempo de reparo / Número de falhas) -> em horas
+        double mttr = (totalMinutosDowntime / numeroDeFalhas) / 60.0;
+
+        // 6. Calcular MTBF (Tempo Médio Entre Falhas)
+        // ( (Tempo Total no Período - Tempo Total de Reparo) / Número de falhas ) -> em horas
+        double totalMinutosOperacionais = totalMinutosNoPeriodo - totalMinutosDowntime;
+        // Se o tempo de reparo for maior que o período, MTBF é 0
+        if (totalMinutosOperacionais <= 0) {
+            totalMinutosOperacionais = 0;
+        }
+        
+        double mtbf = (totalMinutosOperacionais / numeroDeFalhas) / 60.0;
+
+        // Arredonda para 2 casas decimais
+        mttr = Math.round(mttr * 100.0) / 100.0;
+        mtbf = Math.round(mtbf * 100.0) / 100.0;
+
+        return new RelatorioIndicadoresDTO(mttr, mtbf);
+    }
+
+
+    // ... (O método calcularMinutosUteis permanece o mesmo, pois é usado pelo Gráfico 1) ...
     private long calcularMinutosUteis(LocalDateTime inicioOS, LocalDateTime fimOS, String nomeMecanico) {
         
         String nomeNormalizado = nomeMecanico.trim().toUpperCase().split(" ")[0]; 
@@ -242,8 +332,16 @@ public class RelatorioService {
                 horario = horariosMecanicos.get(nomes[1]); 
             }
             if (horario == null) {
+                // ✅ CORREÇÃO AQUI: Se não achar o mecânico, calcula horas corridas como fallback
+                // ⚠️ ATENÇÃO: Se inicioOS ou fimOS forem nulos, isso pode falhar.
+                if (inicioOS == null || fimOS == null) return 0;
                 return Duration.between(inicioOS, fimOS).toMinutes();
             }
+        }
+
+        // ⚠️ ATENÇÃO: Adicionando verificação de nulo para as datas
+        if (inicioOS == null || fimOS == null) {
+            return 0;
         }
 
         long totalMinutosUteis = 0;
@@ -276,9 +374,13 @@ public class RelatorioService {
                 totalMinutosUteis += Duration.between(inicioCalculo, fimCalculo).toMinutes();
             }
 
+            // Avança o cursor
+            // Se o fim da OS é depois do fim do turno, pulamos para o início do próximo dia
             if (fimOS.isAfter(fimTurno)) {
+                 // Define o cursor para o início do próximo dia (00:00)
                  cursor = cursor.toLocalDate().plusDays(1).atStartOfDay();
             } else {
+                // A OS terminou, o loop vai parar
                 cursor = fimOS;
             }
         }

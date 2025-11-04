@@ -26,4 +26,7 @@ public class DashboardLiderDTO {
     // 4. Gráfico de Saúde (Preventiva vs. Corretiva)
     private List<RelatorioTipoManutencaoDTO> relatorioSaudeManutencao;
 
+    // ✨ ALTERAÇÃO AQUI: Novo campo para os indicadores MTTR/MTBF
+    private RelatorioIndicadoresDTO relatorioIndicadores;
+
 }

@@ -19,7 +19,6 @@ public class OrdemServicoDTO {
     // Detalhes da OS
     private Long equipamentoId;
     private Long localId;
-    // ✨ ALTERAÇÃO AQUI: Campos para os nomes do local e setor adicionados
     private String localNome;
     private String setorNome;
     private Prioridade prioridade;
@@ -43,7 +42,6 @@ public class OrdemServicoDTO {
     private Boolean maquinaParada;
     private Boolean trocaPecas;
     
-    // ✨ ALTERAÇÃO AQUI: Novos campos de downtime adicionados
     private LocalDateTime inicioDowntime; // (Vindo da entidade)
     private LocalDateTime fimDowntime; // (Vindo da entidade)
     
@@ -63,4 +61,10 @@ public class OrdemServicoDTO {
     private Set<TipoServicoDTO> tiposServico;
     
     private FrequenciaDTO frequencia;
+
+    // ✨ ALTERAÇÃO AQUI: Novo campo para carregar os relatórios parciais
+    /**
+     * Lista de todos os relatórios parciais (acompanhamentos) salvos para esta OS.
+     */
+    private List<AcompanhamentoOSDTO> acompanhamentos;
 }

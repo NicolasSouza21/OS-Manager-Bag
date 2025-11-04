@@ -36,8 +36,13 @@ export const registrarCiencia = (osId) => api.put(`/ordens-servico/${osId}/cienc
 export const iniciarExecucao = (osId) => api.put(`/ordens-servico/${osId}/iniciar-execucao`);
 export const registrarExecucao = (osId, dadosExecucao) => api.put(`/ordens-servico/${osId}/execucao`, dadosExecucao);
 export const verificarOS = (osId, dadosVerificacao) => api.post(`/ordens-servico/${osId}/verificar`, dadosVerificacao);
-// ✨ ALTERAÇÃO AQUI: Nova função para buscar o histórico
 export const getHistoricoPorEquipamento = (equipamentoId) => api.get(`/ordens-servico/historico/equipamento/${equipamentoId}`);
+
+
+/** ACOMPANHAMENTOS DA OS (RELATÓRIOS PARCIAIS) */
+export const criarAcompanhamento = (acompanhamentoData) => api.post('/acompanhamentos', acompanhamentoData);
+// ✨ ALTERAÇÃO AQUI: Nova função para buscar os relatórios de uma OS
+export const getAcompanhamentosPorOS = (osId) => api.get(`/acompanhamentos/os/${osId}`);
 
 
 /** FUNCIONÁRIOS */
@@ -88,9 +93,7 @@ export const createFrequencia = (frequenciaData) => api.post('/frequencias', fre
 export const updateFrequencia = (id, frequenciaData) => api.put(`/frequencias/${id}`, frequenciaData);
 export const deleteFrequencia = (id) => api.delete(`/frequencias/${id}`);
 
-// ✨ ALTERAÇÃO AQUI: Seção de relatórios atualizada
 /** RELATÓRIOS */
-// A função agora busca o DTO completo do Dashboard do Líder
 export const getDashboardLider = (dataInicio, dataFim) => {
     // Chama o novo endpoint /dashboard-lider
     return api.get('/relatorios/dashboard-lider', { 

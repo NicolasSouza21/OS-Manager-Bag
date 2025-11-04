@@ -73,6 +73,9 @@
     padding: 2rem;
     border: 1px solid #e9ecef;
     margin-top: 0; /* Removido, pois o grid controla o espaço */
+    /* ✨ ALTERAÇÃO AQUI: Adicionado para que os cards de KPI funcionem */
+    display: flex;
+    flex-direction: column;
 }
 
 /* 3. Tamanhos dos Gráficos no Grid */
@@ -92,6 +95,7 @@
     height: 400px; /* Altura padrão */
     width: 100%;   /* <-- ✅ CORREÇÃO ADICIONADA */
     max-width: 100%; /* Garante que não ultrapasse */
+    flex-grow: 1; /* Permite que o wrapper do gráfico cresça */
 }
 
 .relatorio-card.large .chart-wrapper {
@@ -146,4 +150,45 @@
     .relatorio-card.small {
         grid-column: 1 / -1; /* Todos ocupam 1 coluna */
     }
+}
+
+/* ================================================= */
+/* --- ✨ ALTERAÇÃO AQUI: NOVOS ESTILOS ABAIXO --- */
+/* ================================================= */
+
+/* 6. Estilos para os Cards de Indicadores (MTTR / MTBF) */
+.relatorio-card.indicator-card {
+    /* Reutiliza o estilo de 'small' mas centraliza o conteúdo */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    /* Define uma altura mínima para ficar bom ao lado do gráfico de pizza */
+    min-height: 200px; 
+    background: linear-gradient(135deg, #005A9C 0%, #004070 100%);
+    color: #ffffff;
+}
+
+/* Sobrescreve o min-height de 400px caso a mensagem de erro apareça */
+.relatorio-mensagem-small.indicator-card-placeholder {
+    min-height: 200px;
+}
+
+.indicator-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    opacity: 0.8;
+}
+
+.indicator-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.indicator-desc {
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+    opacity: 0.7;
 }

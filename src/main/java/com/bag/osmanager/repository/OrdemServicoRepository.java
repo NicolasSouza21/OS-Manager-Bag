@@ -72,4 +72,10 @@ public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long
         LocalDateTime inicioPeriodo,
         LocalDateTime fimPeriodo
     );
+    List<OrdemServico> findAllByStatusAndTipoManutencaoAndMaquinaParadaIsTrueAndTerminoBetween(
+        StatusOrdemServico status,
+        TipoManutencao tipo,
+        LocalDateTime inicioPeriodo,
+        LocalDateTime fimPeriodo
+    );
 }
