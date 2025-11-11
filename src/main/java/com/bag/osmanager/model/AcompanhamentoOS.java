@@ -1,3 +1,4 @@
+// Local: src/main/java/com/bag/osmanager/model/AcompanhamentoOS.java
 package com.bag.osmanager.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -34,9 +35,12 @@ public class AcompanhamentoOS {
     @Column(columnDefinition = "TEXT")
     private String motivoPausa; // Por que parou (opcional)
 
-    // ✨ ALTERAÇÃO AQUI: Novo campo para armazenar o tempo de pausa em minutos
     @Column
     private Integer minutosPausa; // Tempo de pausa não produtivo (em minutos)
+
+    // ✨ ALTERAÇÃO AQUI: Novo campo para armazenar o tempo de trabalho
+    @Column
+    private Integer minutosTrabalhados; // Tempo de trabalho produtivo (em minutos)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "funcionario_id", nullable = false)

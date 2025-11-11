@@ -1,3 +1,4 @@
+// Local: src/main/java/com/bag/osmanager/model/PlanoPreventiva.java
 package com.bag.osmanager.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -6,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.time.LocalDate;
+// import java.time.LocalDate; // (Removido pois não é usado)
 
 @Entity
 @Table(name = "planos_preventiva")
@@ -24,7 +25,6 @@ public class PlanoPreventiva {
     @JsonBackReference("equipamento-planos")
     private Equipamento equipamento;
 
-    // ✨ ALTERAÇÃO AQUI: O campo 'frequencia' agora é uma relação com a nova entidade Frequencia.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "frequencia_id", nullable = false)
     private Frequencia frequencia;
@@ -35,6 +35,14 @@ public class PlanoPreventiva {
 
     @Column
     private Integer toleranciaDias;
+
+    @Column(nullable = true)
+    private String tempoPadrao; // Armazena como "HH:mm:ss" ou "00:20:00"
+
+    // ✨✅ CORREÇÃO AQUI: Este campo estava faltando
+    @Column(nullable = true)
+    private String manutentor; // Armazena "Manutenção mecânica", "Manutenção elétrica", etc.
+
 
     // Este campo foi removido, pois a data de início é controlada pela OS e não pelo plano.
     // @Column(nullable = false)

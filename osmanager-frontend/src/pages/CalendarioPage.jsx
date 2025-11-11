@@ -1,35 +1,43 @@
-// ✨ ALTERAÇÃO AQUI: Importa useRef e useReactToPrint
+// Local: osmanager-frontend/src/pages/CalendarioPage.jsx
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { useReactToPrint } from 'react-to-print';
-// ✨ ALTERAÇÃO AQUI: Mais funções importadas do date-fns para construir a grade
-import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, eachDayOfInterval, addDays, isSameMonth } from 'date-fns';
+import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, eachDayOfInterval, addDays, isSameMonth, subMonths, addMonths } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { getOrdensServico, getEquipamentos } from '../services/apiService';
 import './CalendarioPage.css';
 
-// Configurações de localização, mensagens e formatos (sem alterações)
+// Configurações de localização (sem alterações)
 const locales = { 'pt-BR': ptBR };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 const messages = { allDay: 'Dia todo', previous: 'Anterior', next: 'Próximo', today: 'Hoje', month: 'Mês', week: 'Semana', day: 'Dia', agenda: 'Agenda', date: 'Data', time: 'Hora', event: 'Evento', noEventsInRange: 'Não há eventos neste período.', showMore: total => `+ ver mais (${total})`};
 const formats = { dayHeaderFormat: (date, culture, localizer) => localizer.format(date, "EEEE, dd 'de' MMMM", culture), dayRangeHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'dd', culture)} - ${localizer.format(end, "dd 'de' MMMM", culture)}`, agendaHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'dd/MM/yyyy', culture)} - ${localizer.format(end, 'dd/MM/yyyy', culture)}`};
 
+// ✨✅ CORREÇÃO AQUI: A Legenda está correta agora
 const Legenda = () => (
     <div className="legenda-container">
         <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#ffc107' }}></span>Corretiva</div>
-        <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#a2d2ff', border: '1px dashed #003566' }}></span>Preventiva Prevista</div>
-        <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#28a745' }}></span>Preventiva Agendada</div>
-        <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#6c757d' }}></span>Concluída</div>
+        <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#a2d2ff', border: '1px dashed #003566' }}></span>Preventiva (Prevista)</div>
+        <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#28a745' }}></span>Preventiva (Em Andamento)</div>
+        {/* Removido o 'Concluída' */}
     </div>
 );
 
+// ✨✅ CORREÇÃO AQUI: O título do evento reflete o status 'Prevista'
 const CustomEvent = ({ event }) => {
     const os = event.resource;
     const frequenciaObj = os.frequencia;
     
-    const titlePrefix = os.tipoManutencao === 'CORRETIVA' ? 'Corretiva:' : `OS #${os.codigoOs || os.id}`;
+    let titlePrefix = `OS #${os.codigoOs || os.id}`;
+    if (os.tipoManutencao === 'CORRETIVA') {
+        titlePrefix = 'Corretiva:';
+    } else if (os.status === 'ABERTA') {
+        // As OSs 'ABERTA' são as "Previstas"
+        titlePrefix = '(Prevista):';
+    }
 
     return (
         <div className="custom-event">
@@ -41,27 +49,14 @@ const CustomEvent = ({ event }) => {
 
 const CustomToolbar = ({ label, onNavigate, onView, views, view }) => { const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1); const viewNames = { month: 'Mês', week: 'Semana', day: 'Dia', agenda: 'Agenda' }; return ( <div className="rbc-toolbar"> <div className="rbc-btn-group"> <button type="button" onClick={() => onNavigate('TODAY')}>Hoje</button> <button type="button" onClick={() => onNavigate('PREV')}>Anterior</button> <button type="button" onClick={() => onNavigate('NEXT')}>Próximo</button> </div> <span className="rbc-toolbar-label">{label}</span> <div className="rbc-btn-group"> {views.map(viewName => ( <button key={viewName} type="button" className={view === viewName ? 'rbc-active' : ''} onClick={() => onView(viewName)} > {viewNames[viewName] || capitalize(viewName)} </button>))} </div> </div> ); };
 
-const getNextDate = (startDate, frequenciaObj) => {
-    if (!frequenciaObj || !frequenciaObj.unidadeTempo || !frequenciaObj.intervalo) { return null; }
-    const originalDay = new Date(startDate).getDate();
-    const date = new Date(startDate);
-    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-    const { unidadeTempo, intervalo } = frequenciaObj;
-    switch (unidadeTempo) {
-        case 'HORA':
-            date.setHours(date.getHours() + intervalo);
-            if (date.getDate() !== originalDay) { return null; }
-            break;
-        case 'DIA': date.setDate(date.getDate() + intervalo); break;
-        case 'SEMANA': date.setDate(date.getDate() + intervalo * 7); break;
-        case 'MES': date.setMonth(date.getMonth() + intervalo); break;
-        case 'ANO': date.setFullYear(date.getFullYear() + intervalo); break;
-        default: return null;
-    }
-    if (unidadeTempo !== 'HORA' && date.getDay() === 0) { date.setDate(date.getDate() + 1); }
-    return date;
+// Função de range (sem alterações)
+const getRangeForAPI = (targetDate) => {
+    const dataInicio = format(startOfWeek(subMonths(targetDate, 1)), 'yyyy-MM-dd');
+    const dataFim = format(endOfMonth(addMonths(targetDate, 1)), 'yyyy-MM-dd');
+    return { dataInicio, dataFim };
 };
 
+// Componente de impressão (sem alterações)
 const PrintableCalendar = React.forwardRef(({ events, currentDate }, ref) => {
     const monthName = format(currentDate, 'MMMM yyyy', { locale: ptBR });
     const weekDays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -121,6 +116,7 @@ const PrintableCalendar = React.forwardRef(({ events, currentDate }, ref) => {
     );
 });
 
+// Estilos de impressão (sem alterações)
 const printStyles = `
     @page {
         size: landscape;
@@ -197,6 +193,8 @@ function CalendarioPage() {
     const [date, setDate] = useState(new Date());
     const [view, setView] = useState('month');
     
+    const [listaEquipamentos, setListaEquipamentos] = useState(null);
+
     const componentRef = useRef();
     
     const handlePrint = useReactToPrint({
@@ -205,38 +203,63 @@ function CalendarioPage() {
         pageStyle: printStyles
     });
 
-    const fetchEvents = useCallback(async () => {
+    const fetchEvents = useCallback(async (targetDate) => {
         setLoading(true);
+        
+        let equipamentos = listaEquipamentos;
+        if (!equipamentos) {
+            try {
+                const resEquipamentos = await getEquipamentos();
+                equipamentos = resEquipamentos.data || [];
+                setListaEquipamentos(equipamentos); 
+            } catch (e) {
+                console.error("Erro ao buscar equipamentos:", e);
+                equipamentos = []; 
+            }
+        }
+        
+        const { dataInicio, dataFim } = getRangeForAPI(targetDate);
+
         try {
-            const [resOrdens, resEquipamentos] = await Promise.all([ getOrdensServico({ page: 0, size: 500 }), getEquipamentos() ]);
-            const todasAsOrdens = resOrdens.data.content;
-            const listaEquipamentos = resEquipamentos.data;
+            const resOrdens = await getOrdensServico({ 
+                page: 0, 
+                size: 500, 
+                dataInicio: dataInicio,
+                dataFim: dataFim
+            });
+            
+            const todasAsOrdens = resOrdens.data.content || [];
             const formattedEvents = [];
+
+            // ✨✅ CORREÇÃO AQUI: Esta é a lógica que você quer.
+            // "Me mostre TUDO, exceto CONCLUIDA e CANCELADA"
             todasAsOrdens.forEach(os => {
                 const isConcluidaOuCancelada = ['CONCLUIDA', 'CANCELADA'].includes(os.status);
-                if (!isConcluidaOuCancelada || os.tipoManutencao !== 'PREVENTIVA') {
+                
+                // Se NÃO ESTÁ concluída ou cancelada, adicione ao calendário.
+                if (!isConcluidaOuCancelada) { 
                     const eventDateStr = os.tipoManutencao === 'PREVENTIVA' ? os.dataInicioPreventiva : os.dataSolicitacao;
                     if (!eventDateStr) return;
+                    
                     const startDate = new Date(eventDateStr);
-                    const equipamento = listaEquipamentos.find(e => e.id === os.equipamentoId);
+                    // Corrige o fuso horário (problema comum do react-big-calendar)
+                    startDate.setMinutes(startDate.getMinutes() + startDate.getTimezoneOffset());
+
+                    const equipamento = equipamentos.find(e => e.id === os.equipamentoId);
                     const equipamentoNome = equipamento ? equipamento.nome : 'Não encontrado';
-                    formattedEvents.push({ id: os.id, title: `OS #${os.codigoOs || os.id} - ${equipamentoNome}`, start: startDate, end: startDate, allDay: true, resource: os, equipamentoNome: equipamentoNome });
-                }
-                if (os.tipoManutencao === 'PREVENTIVA' && os.frequencia && os.frequencia.nome !== 'UNICA' && os.dataInicioPreventiva) {
-                    let currentDate = new Date(os.dataInicioPreventiva);
-                    const endDateLimit = new Date();
-                    endDateLimit.setFullYear(endDateLimit.getFullYear() + 2);
-                    while (currentDate < endDateLimit) {
-                        const nextDate = getNextDate(currentDate, os.frequencia); 
-                        if (!nextDate || nextDate >= endDateLimit) break;
-                        const virtualId = `${os.id}-virtual-${nextDate.getTime()}`;
-                        const equipamento = listaEquipamentos.find(e => e.id === os.equipamentoId);
-                        const equipamentoNome = equipamento ? equipamento.nome : 'Não encontrado';
-                        formattedEvents.push({ id: virtualId, title: `(Previsto) ${equipamentoNome}`, start: nextDate, end: nextDate, allDay: true, resource: { ...os, status: 'PREVISTO', id: virtualId, tipoManutencao: 'PREVENTIVA' }, equipamentoNome: equipamentoNome });
-                        currentDate = nextDate;
-                    }
+                    
+                    formattedEvents.push({ 
+                        id: os.id, 
+                        title: `OS #${os.codigoOs || os.id} - ${equipamentoNome}`, 
+                        start: startDate, 
+                        end: startDate, 
+                        allDay: true, 
+                        resource: os, 
+                        equipamentoNome: equipamentoNome 
+                    });
                 }
             });
+            
             setEvents(formattedEvents);
         } catch (error) {
             console.error("Erro ao carregar dados do calendário:", error);
@@ -244,11 +267,14 @@ function CalendarioPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [listaEquipamentos]);
 
-    useEffect(() => { fetchEvents(); }, [fetchEvents]);
+    useEffect(() => { 
+        fetchEvents(date); 
+    }, [fetchEvents, date]); 
 
     const handleSelectEvent = (event) => {
+        // Esta verificação 'virtual' não é mais necessária
         if (String(event.id).includes('-virtual-')) {
             alert(`Esta é uma ocorrência futura prevista para ${event.start.toLocaleDateString('pt-BR')}.\n\nA Ordem de Serviço real será criada no sistema assim que a anterior for concluída.`);
             return;
@@ -256,17 +282,32 @@ function CalendarioPage() {
         navigate(`/os/${event.id}`);
     };
 
+    // ✨✅ CORREÇÃO AQUI: Lógica de estilo corrigida para Bater com a Legenda
     const eventStyleGetter = (event) => {
         const os = event.resource;
         let style = { borderRadius: '5px', opacity: 0.9, color: 'white', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'block' };
-        if (os.status === 'PREVISTO') { style.backgroundColor = '#a2d2ff'; style.borderColor = '#6a9fca'; style.color = '#003566'; style.borderStyle = 'dashed'; }
-        else if (os.tipoManutencao === 'CORRETIVA') { style.backgroundColor = '#ffc107'; style.color = '#333'; }
-        else if (os.status === 'CONCLUIDA' || os.status === 'CANCELADA') { style.backgroundColor = '#6c757d'; }
-        else { style.backgroundColor = '#28a745'; }
+        
+        // A lógica de filtro em fetchEvents já removeu Concluída/Cancelada.
+
+        if (os.tipoManutencao === 'CORRETIVA') {
+            style.backgroundColor = '#ffc107'; // 1. Amarelo para Corretiva
+            style.color = '#333';
+        } else if (os.tipoManutencao === 'PREVENTIVA' && os.status === 'ABERTA') {
+            // 2. Azul para Preventiva "ABERTA" (que é a sua "Prevista")
+            style.backgroundColor = '#a2d2ff'; 
+            style.borderColor = '#6a9fca'; 
+            style.color = '#003566'; 
+            style.borderStyle = 'dashed';
+        } else {
+            // 3. Verde para Preventiva (Pendente, Em Execução, Aguardando Verificação)
+            style.backgroundColor = '#28a745'; 
+        }
+        
         return { style };
     };
     
     const dayPropGetter = useCallback(() => ({ style: { overflow: 'hidden' } }), []);
+    
     const onNavigate = useCallback((newDate) => setDate(newDate), [setDate]);
     const onView = useCallback((newView) => setView(newView), [setView]);
 
@@ -274,7 +315,7 @@ function CalendarioPage() {
 
     return (
         <div className="calendario-container">
-            {/* ✨ ALTERAÇÃO AQUI: Nova estrutura do cabeçalho */}
+            {/* Cabeçalho (sem alterações) */}
             <div className="calendario-header">
                 <h1 className="calendario-title">Calendário de Manutenção</h1>
                 <div className="header-controls">
@@ -301,7 +342,7 @@ function CalendarioPage() {
                     dayPropGetter={dayPropGetter}
                     date={date}
                     view={view}
-                    onNavigate={onNavigate}
+                    onNavigate={onNavigate} 
                     onView={onView}
                     components={{ event: CustomEvent, toolbar: CustomToolbar }}
                     formats={formats}

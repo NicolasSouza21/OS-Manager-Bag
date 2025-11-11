@@ -1,4 +1,4 @@
-/* Estilos para o novo AcompanhamentoModal.css */
+/* Local: osmanager-frontend/src/components/AcompanhamentoModal.css */
 
 .acompanhamento-modal {
     max-width: 600px;
@@ -84,6 +84,29 @@
 .historico-descricao strong {
     color: #495057;
 }
+
+/* ✨ ALTERAÇÃO AQUI: Novo estilo para o bloco de tempo trabalhado */
+.historico-trabalho {
+    background-color: #e6f7f2; /* Fundo verde claro */
+    border: 1px solid #b6e9d9;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.historico-trabalho strong {
+    color: #0f5132; /* Verde escuro */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+/* Fim da alteração */
+
 
 .historico-pausa {
     background-color: #fffbeb;

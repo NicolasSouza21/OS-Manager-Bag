@@ -36,12 +36,12 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-// Funções de data (inalteradas)
+// ✨✅ CORREÇÃO AQUI: Função de data simplificada
 const parseSafeDate = (dateString) => {
     if (!dateString) return null;
-    const date = new Date(dateString);
-    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() + userTimezoneOffset);
+    // Apenas cria o objeto Date. O 'toLocaleString' usado depois
+    // vai lidar automaticamente com o fuso horário do navegador.
+    return new Date(dateString);
 };
 
 const groupOrdensByDate = (ordens) => {
@@ -56,7 +56,10 @@ const groupOrdensByDate = (ordens) => {
         const dateString = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva 
             ? os.dataInicioPreventiva 
             : os.dataSolicitacao;
-        const osDate = parseSafeDate(dateString);
+        
+        // ✨✅ CORREÇÃO AQUI: Chamando a nova parseSafeDate
+        const osDate = parseSafeDate(dateString); 
+        
         if (!osDate) {
             if (!groups['Sem Data']) { groups['Sem Data'] = []; }
             groups['Sem Data'].push(os);
@@ -201,9 +204,14 @@ function DashboardPage() {
     
     const renderDataRelevante = (os) => {
         const dateString = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva ? os.dataInicioPreventiva : os.dataSolicitacao;
+        
+        // ✨✅ CORREÇÃO AQUI: Chamando a nova parseSafeDate
         const date = parseSafeDate(dateString);
+
         if (!date) return '—';
         const options = os.tipoManutencao === 'PREVENTIVA' ? { day: '2-digit', month: '2-digit', year: 'numeric' } : { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+        
+        // toLocaleString vai usar o fuso do navegador para exibir a hora correta
         return date.toLocaleString('pt-BR', options);
     };
 

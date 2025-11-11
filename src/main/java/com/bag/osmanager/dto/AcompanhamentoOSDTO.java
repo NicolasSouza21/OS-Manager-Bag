@@ -1,3 +1,4 @@
+// Local: src/main/java/com/bag/osmanager/dto/AcompanhamentoOSDTO.java
 package com.bag.osmanager.dto;
 
 import lombok.Data;
@@ -18,8 +19,14 @@ public class AcompanhamentoOSDTO {
     private String descricao;
     private String motivoPausa;
     
-    // ✨ ALTERAÇÃO AQUI: Novo campo para o tempo de pausa em minutos
+    // Campo existente para o tempo de pausa (não produtivo)
     private Integer minutosPausa;
+
+    // ✨ ALTERAÇÃO AQUI: Novo campo para o tempo produtivo
+    /**
+     * Tempo de trabalho produtivo (em minutos) gasto nesta atividade.
+     */
+    private Integer minutosTrabalhados;
 
     // Usado para exibir quem criou
     private Long funcionarioId;
