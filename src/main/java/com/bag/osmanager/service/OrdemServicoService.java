@@ -9,6 +9,8 @@ import com.bag.osmanager.repository.*;
 // ✨ ALTERAÇÃO AQUI: Importa o novo Mapper
 import com.bag.osmanager.service.mapper.OrdemServicoMapper;
 import com.bag.osmanager.service.specification.OrdemServicoSpecification;
+// ✨ ALTERAÇÃO AQUI: Importa o novo serviço de cálculo de horas
+import com.bag.osmanager.service.HorarioUtilService; 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -40,8 +42,9 @@ public class OrdemServicoService {
     private final TipoServicoRepository tipoServicoRepository;
     private final FrequenciaRepository frequenciaRepository;
     private final HistoricoService historicoService;
-    // ✨ ALTERAÇÃO AQUI: Injeta o Mapper para quebrar a dependência circular
     private final OrdemServicoMapper ordemServicoMapper;
+    // ✨ ALTERAÇÃO AQUI: Injeta o novo serviço de cálculo de horas
+    private final HorarioUtilService horarioUtilService; 
 
     // ... (método getHistoricoPorEquipamento inalterado) ...
     public List<OrdemServicoDTO> getHistoricoPorEquipamento(Long equipamentoId) {
@@ -170,31 +173,66 @@ public class OrdemServicoService {
             throw new IllegalStateException("Ação não permitida: a OS precisa estar com status 'EM EXECUÇÃO' para ser finalizada.");
         }
         
-        // ✨✅ CORREÇÃO: Lógica de executores automática
-        // 1. Busca todos os funcionários que registraram um acompanhamento.
+        // Lógica de executores (mantida da sua versão)
         Set<Funcionario> executoresSet = os.getAcompanhamentos().stream()
-            .map(AcompanhamentoOS::getFuncionario) // Pega o funcionário de cada relatório
-            .filter(Objects::nonNull) // Garante que não há relatórios com funcionário nulo
-            .collect(Collectors.toSet()); // Coleta em um Set para garantir valores únicos
+            .map(AcompanhamentoOS::getFuncionario)
+            .filter(Objects::nonNull) 
+            .collect(Collectors.toSet());
 
-        // 2. Fallback: Se NENHUM relatório foi registrado,
-        //    assume que o mecânico que deu "Ciência" foi o executor.
         if (executoresSet.isEmpty() && os.getMecanicoCiencia() != null) {
             executoresSet.add(os.getMecanicoCiencia());
         }
 
-        // 3. Validação final: Se não há relatórios E não há mecânico de ciência,
-        //    não podemos saber quem executou o serviço.
         if (executoresSet.isEmpty()) {
             throw new IllegalStateException("Não foi possível determinar o executor. " +
                 "Nenhum relatório parcial foi registrado e a OS não possui um 'Mecânico de Ciência' associado.");
         }
         
-        // 4. Associa os executores encontrados à OS.
         os.setExecutores(executoresSet);
         
-        // --- Fim da alteração da lógica de executores ---
-        
+        // ✨ ALTERAÇÃO AQUI: Nova validação de horas úteis
+        // Valida apenas se o usuário está tentando "Concluir" ou "Aguardar Verificação"
+        if (dto.getStatusFinal() == StatusOrdemServico.CONCLUIDA || dto.getStatusFinal() == StatusOrdemServico.AGUARDANDO_VERIFICACAO) {
+            
+            LocalDateTime inicioExec = dto.getInicio();
+            LocalDateTime fimExec = dto.getTermino();
+
+            if (inicioExec == null || fimExec == null) {
+                throw new IllegalArgumentException("As datas de Início e Término da execução são obrigatórias para concluir a OS.");
+            }
+            
+            if (fimExec.isBefore(inicioExec)) {
+                 throw new IllegalArgumentException("A data de Término não pode ser anterior à data de Início da execução.");
+            }
+
+            // Itera sobre cada mecânico que trabalhou na OS
+            for (Funcionario executor : executoresSet) {
+                String nomeMecanico = executor.getNome();
+
+                // 1. Soma o tempo reportado por este mecânico nos relatórios
+                //    (Considera apenas relatórios DENTRO do período de execução)
+                double totalMinutosReportados = os.getAcompanhamentos().stream()
+                    .filter(acomp -> acomp.getFuncionario() != null && 
+                                    nomeMecanico.equals(acomp.getFuncionario().getNome()) &&
+                                    acomp.getMinutosTrabalhados() != null &&
+                                    !acomp.getDataHora().isBefore(inicioExec) && // Filtro de data
+                                    !acomp.getDataHora().isAfter(fimExec))     // Filtro de data
+                    .mapToDouble(AcompanhamentoOS::getMinutosTrabalhados)
+                    .sum();
+
+                // 2. Calcula o tempo útil total disponível para este mecânico no período
+                long totalMinutosUteis = horarioUtilService.calcularMinutosUteis(inicioExec, fimExec, nomeMecanico);
+
+                // 3. Compara (com uma pequena margem de 1 minuto para arredondamento)
+                if (totalMinutosReportados > (double) totalMinutosUteis + 1.0) {
+                    throw new IllegalArgumentException("Erro de Validação: O tempo total reportado (" + 
+                        String.format("%.0f", totalMinutosReportados) + " min) pelo mecânico " + nomeMecanico + 
+                        " é maior do que o tempo útil disponível (" + totalMinutosUteis + " min) no período de execução.");
+                }
+            }
+        }
+        // --- Fim da Validação ---
+
         os.setDataExecucao(LocalDateTime.now());
         os.setAcaoRealizada(dto.getAcaoRealizada());
         os.setTrocaPecas(dto.getTrocaPecas());

@@ -51,24 +51,24 @@ const PrintablePlano = React.forwardRef(({ equipamento, programacao, planosRaw }
         <tbody>
           {/* Itera sobre 'planosRaw' que tem a frequência detalhada */}
           {Array.isArray(planosRaw) && planosRaw.map((plano, index) => {
-              // ✨ ALTERAÇÃO AQUI: Removida a lógica de 'ultimoManutentor'.
-              // Agora usamos 'plano.manutentor' diretamente, que vem do backend.
-              return (
-                <tr key={plano.id}>
-                  {/* Célula do Equipamento (só na primeira linha) */}
-                  {index === 0 && (
-                    <td className="equipamento-cell" rowSpan={planosRaw.length}>
-                      {equipamento?.nome || 'N/A'}
-                    </td>
-                  )}
-                  {/* Células de dados */}
-                  <td>{plano.tipoServicoNome}</td>
-                  <td style={{ textAlign: 'center' }}>{formatFreq(plano.frequencia)}</td>
-                  <td style={{ textAlign: 'center' }}>{formatTempoPadrao(plano.tempoPadrao)}</td>
-                  {/* ✨ ALTERAÇÃO AQUI: Puxa o 'manutentor' do plano */}
-                  <td>{plano.manutentor || 'N/A'}</td>
-                </tr>
-              );
+            // ✨ ALTERAÇÃO AQUI: Removida a lógica de 'ultimoManutentor'.
+            // Agora usamos 'plano.manutentor' diretamente, que vem do backend.
+            return (
+              <tr key={plano.id}>
+                {/* Célula do Equipamento (só na primeira linha) */}
+                {index === 0 && (
+                  <td className="equipamento-cell" rowSpan={planosRaw.length}>
+                    {equipamento?.nome || 'N/A'}
+                  </td>
+                )}
+                {/* Células de dados */}
+                <td>{plano.tipoServicoNome}</td>
+                <td style={{ textAlign: 'center' }}>{formatFreq(plano.frequencia)}</td>
+                <td style={{ textAlign: 'center' }}>{formatTempoPadrao(plano.tempoPadrao)}</td>
+                {/* ✨ ALTERAÇÃO AQUI: Puxa o 'manutentor' do plano */}
+                <td>{plano.manutentor || 'N/A'}</td>
+              </tr>
+            );
           })}
         </tbody>
         <tfoot>
@@ -490,8 +490,7 @@ const ProgramacaoModal = ({ equipamento, onClose }) => {
                                                 >
                                                     <option>Manutenção mecânica</option>
                                                     <option>Manutenção elétrica</option>
-                                                    <option>Lubrificação</option>
-                                                    <option>Geral</option>
+                                                    {/* // ✅ CORREÇÃO: Linhas removidas */}
                                                 </select>
                                             </td>
                                             <td>
@@ -540,7 +539,7 @@ const ProgramacaoModal = ({ equipamento, onClose }) => {
                                             <select name="manutentor" value={formNovoPlano.manutentor} onChange={handleNovoPlanoChange}>
                                                 <option>Manutenção mecânica</option>
                                                 <option>Manutenção elétrica</option>
-
+                                                {/* // ✅ CORREÇÃO: Linhas removidas */}
                                             </select>
                                         </td>
                                         <td>
@@ -557,7 +556,7 @@ const ProgramacaoModal = ({ equipamento, onClose }) => {
                                         </td>
                                     </tr>
                                 </tfoot>
-                            </table>
+                              </table>
                         </div>
                     ) : (
                         /* --- MODO VISUALIZAÇÃO (O que já existia) --- */
