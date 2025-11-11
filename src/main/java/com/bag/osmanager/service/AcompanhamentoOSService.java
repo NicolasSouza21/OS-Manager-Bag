@@ -1,3 +1,4 @@
+// Local: src/main/java/com/bag/osmanager/service/AcompanhamentoOSService.java
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.AcompanhamentoOSDTO;
@@ -14,8 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List; // ✨ ALTERAÇÃO AQUI: Import adicionado
-import java.util.stream.Collectors; // ✨ ALTERAÇÃO AQUI: Import adicionado
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -49,36 +50,38 @@ public class AcompanhamentoOSService {
         acompanhamento.setDescricao(dto.getDescricao());
         acompanhamento.setMotivoPausa(dto.getMotivoPausa());
         
-        // ✨ ALTERAÇÃO AQUI: Salva os minutos de pausa vindos do DTO
+        // Salva os minutos de pausa vindos do DTO
         acompanhamento.setMinutosPausa(dto.getMinutosPausa() != null ? dto.getMinutosPausa() : 0);
+
+        // ✨ ALTERAÇÃO AQUI (Request 1): Salva os minutos trabalhados vindos do DTO
+        acompanhamento.setMinutosTrabalhados(dto.getMinutosTrabalhados() != null ? dto.getMinutosTrabalhados() : 0);
 
         acompanhamento.setOrdemServico(os);
         acompanhamento.setFuncionario(funcionario);
 
         // 4. Salvar o acompanhamento
         AcompanhamentoOS salvo = acompanhamentoRepository.save(acompanhamento);
+
+        // ✨ ALTERAÇÃO AQUI (Request 2): Adiciona o funcionário à lista de executores da OS
+        // Verifica se o funcionário já não está na lista de executores da OS
+        if (os.getExecutores() == null || !os.getExecutores().contains(funcionario)) {
+            os.getExecutores().add(funcionario);
+            osRepository.save(os); // Salva a OS principal com o novo executor
+        }
         
         // 5. Retornar o DTO
         return converterParaDTO(salvo);
     }
 
-    // ✨ ALTERAÇÃO AQUI: Novo método para buscar o histórico de acompanhamentos
-    /**
-     * Busca todos os acompanhamentos de uma OS específica, ordenados do mais recente para o mais antigo.
-     * @param osId ID da Ordem de Serviço.
-     * @return Lista de DTOs de acompanhamento.
-     */
+    // Método para buscar o histórico de acompanhamentos (sem alterações)
     @Transactional(readOnly = true)
     public List<AcompanhamentoOSDTO> getAcompanhamentosPorOS(Long osId) {
-        // 1. Verifica se a OS existe (boa prática)
         if (!osRepository.existsById(osId)) {
             throw new ResourceNotFoundException("Ordem de Serviço com ID " + osId + " não encontrada.");
         }
         
-        // 2. Busca no repositório usando o método que criamos (findByOrdemServicoIdOrderByDataHoraDesc)
         List<AcompanhamentoOS> acompanhamentos = acompanhamentoRepository.findByOrdemServicoIdOrderByDataHoraDesc(osId);
 
-        // 3. Converte a lista de entidades para DTOs
         return acompanhamentos.stream()
             .map(this::converterParaDTO)
             .collect(Collectors.toList());
@@ -87,7 +90,7 @@ public class AcompanhamentoOSService {
 
     private AcompanhamentoOSDTO converterParaDTO(AcompanhamentoOS entidade) {
         AcompanhamentoOSDTO dto = new AcompanhamentoOSDTO();
-        // O BeanUtils já vai copiar o novo campo 'minutosPausa' da entidade para o DTO
+        // O BeanUtils agora copiará 'minutosPausa' E o novo 'minutosTrabalhados'
         BeanUtils.copyProperties(entidade, dto);
         
         if (entidade.getFuncionario() != null) {

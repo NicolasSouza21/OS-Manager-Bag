@@ -13,5 +13,8 @@ public class ProgramacaoManutencaoDTO {
     private String servico;
     private String frequencia;
     private String ultimoManutentor;
+    
+    // ✨ ALTERAÇÃO AQUI: Novo campo adicionado para o Tempo Padrão
+    private String tempoPadrao;
 
 }

@@ -6,7 +6,8 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set; // ✨ ALTERAÇÃO AQUI: Import adicionado
+// ✨ ALTERAÇÃO AQUI: Import do Set não é mais necessário
+// import java.util.Set; 
 
 @Data
 public class ExecucaoDTO {
@@ -31,7 +32,7 @@ public class ExecucaoDTO {
     @NotNull(message = "O status final da OS é obrigatório.")
     private StatusOrdemServico statusFinal; 
 
-    // ✨ ALTERAÇÃO AQUI: Novo campo para receber a lista de IDs dos executores
-    @NotNull(message = "A lista de executores não pode ser nula.")
-    private Set<Long> executoresIds; 
+    // ✨ ALTERAÇÃO AQUI: Campo removido. Não vamos mais receber os IDs do frontend.
+    // @NotNull(message = "A lista de executores não pode ser nula.")
+    // private Set<Long> executoresIds; 
 }

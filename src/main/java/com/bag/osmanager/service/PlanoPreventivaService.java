@@ -46,7 +46,12 @@ public class PlanoPreventivaService {
         return planos.stream().map(plano -> {
             String servico = plano.getTipoServico() != null ? plano.getTipoServico().getNome() : "N/A";
             String frequencia = plano.getFrequencia() != null ? plano.getFrequencia().getNome() : "N/A";
+            String tempoPadrao = plano.getTempoPadrao(); // Pode ser nulo
+            
+            // ✨ ALTERAÇÃO AQUI: Busca o manutentor do PLANO, não do histórico
+            String manutentor = plano.getManutentor() != null ? plano.getManutentor() : "N/A";
 
+            /* LÓGICA ANTIGA (REMOVIDA)
             // Busca a última OS concluída para este serviço e equipamento
             Optional<OrdemServico> ultimaOsConcluida = ordemServicoRepository
                     .findAll((root, query, cb) -> {
@@ -59,21 +64,20 @@ public class PlanoPreventivaService {
                     }, Sort.by(Sort.Direction.DESC, "dataExecucao"))
                     .stream().findFirst();
 
-            // ✨ CORREÇÃO AQUI: A OS agora tem uma LISTA de executores, não um só.
-            // Trocamos 'getExecutadoPor()' por 'getExecutores()'
             String ultimoManutentor = ultimaOsConcluida
                     .map(os -> {
                         if (os.getExecutores() == null || os.getExecutores().isEmpty()) {
                             return "Não informado";
                         }
-                        // Mapeia a lista de funcionários para uma string de nomes separados por vírgula
                         return os.getExecutores().stream()
                                 .map(Funcionario::getNome)
                                 .collect(Collectors.joining(", "));
                     })
                     .orElse("Nenhuma execução anterior");
-
-            return new ProgramacaoManutencaoDTO(servico, frequencia, ultimoManutentor);
+            */
+            
+            // ✨ ALTERAÇÃO AQUI: Passa o 'manutentor' do plano (não 'ultimoManutentor')
+            return new ProgramacaoManutencaoDTO(servico, frequencia, manutentor, tempoPadrao);
         }).collect(Collectors.toList());
     }
 
@@ -100,6 +104,10 @@ public class PlanoPreventivaService {
         plano.setTipoServico(tipoServico);
         plano.setFrequencia(frequencia);
         plano.setToleranciaDias(dto.getToleranciaDias());
+        plano.setTempoPadrao(dto.getTempoPadrao());
+        
+        // ✨ ALTERAÇÃO AQUI: Salva o novo campo 'manutentor'
+        plano.setManutentor(dto.getManutentor());
 
         PlanoPreventiva planoSalvo = planoRepository.save(plano);
         return converteParaDTO(planoSalvo);
@@ -119,6 +127,10 @@ public class PlanoPreventivaService {
         plano.setTipoServico(tipoServico);
         plano.setFrequencia(frequencia);
         plano.setToleranciaDias(dto.getToleranciaDias());
+        plano.setTempoPadrao(dto.getTempoPadrao());
+        
+        // ✨ ALTERAÇÃO AQUI: Atualiza o novo campo 'manutentor'
+        plano.setManutentor(dto.getManutentor());
         
         PlanoPreventiva planoAtualizado = planoRepository.save(plano);
         return converteParaDTO(planoAtualizado);
@@ -133,6 +145,8 @@ public class PlanoPreventivaService {
 
     private PlanoPreventivaDTO converteParaDTO(PlanoPreventiva plano) {
         PlanoPreventivaDTO dto = new PlanoPreventivaDTO();
+        
+        // ✨ ALTERAÇÃO AQUI: Copia todos os campos, incluindo 'tempoPadrao' e 'manutentor'
         BeanUtils.copyProperties(plano, dto, "tipoServico", "frequencia");
 
         if (plano.getEquipamento() != null) {

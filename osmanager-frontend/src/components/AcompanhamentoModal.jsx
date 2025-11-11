@@ -1,5 +1,6 @@
+// Local: osmanager-frontend/src/components/AcompanhamentoModal.jsx
 import React from 'react';
-import './AcompanhamentoModal.css'; // Criaremos este CSS no próximo passo
+import './AcompanhamentoModal.css';
 
 /**
  * Formata uma data/hora ISO para o padrão local (ex: 20/10/2025 14:30)
@@ -55,6 +56,15 @@ function AcompanhamentoModal({ isOpen, onClose, acompanhamentos, osCodigo }) {
                                         <p className="historico-descricao">
                                             <strong>Relato:</strong> {item.descricao}
                                         </p>
+                                    )}
+
+                                    {/* ✨ ALTERAÇÃO AQUI: Exibe os minutos trabalhados */}
+                                    {item.minutosTrabalhados > 0 && (
+                                        <div className="historico-trabalho">
+                                            {/* (Assume que você tem FontAwesome, igual ao ícone de pausa) */}
+                                            <strong><i className="fas fa-clock"></i> Tempo Trabalhado</strong>
+                                            <span><strong>Duração:</strong> {item.minutosTrabalhados} min.</span>
+                                        </div>
                                     )}
                                     
                                     {/* Pausa */}

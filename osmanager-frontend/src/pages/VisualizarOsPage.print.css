@@ -220,4 +220,48 @@
           font-size: 8pt !important;
           padding-left: 10px !important;
       }
+
+      /* ✨ ====================================================== */
+      /* ✨ ALTERAÇÃO AQUI: Estilos para o Log de Atividades */
+      /* ✨ ====================================================== */
+
+      /* Garante que a célula do log use todo o espaço */
+      .log-atividades-cell {
+          padding: 0 !important;
+          vertical-align: top;
+      }
+
+      /* Tabela interna do Log */
+      .log-table {
+          width: 100%;
+          border: none; /* Remove borda da tabela em si */
+          font-size: 8pt; /* Fonte menor para caber mais dados */
+      }
+
+      /* Cabeçalho da tabela de log */
+      .log-table th {
+          border: 1px solid #999 !important; /* Borda mais fina que a principal */
+          background-color: #f0f0f0 !important; /* Fundo cinza claro */
+          font-weight: bold;
+          padding: 4px;
+          text-align: center;
+          vertical-align: middle;
+          white-space: nowrap;
+      }
+      
+      /* Células da tabela de log */
+      .log-table td {
+          border: 1px solid #ccc !important; /* Borda cinza claro */
+          padding: 4px;
+          vertical-align: top;
+          font-family: 'Arial', sans-serif;
+          line-height: 1.3;
+      }
+
+      /* Estilo para a descrição da pausa (itálico e menor) */
+      .log-table em {
+          font-style: italic;
+          font-size: 7pt;
+          color: #333;
+      }
   }

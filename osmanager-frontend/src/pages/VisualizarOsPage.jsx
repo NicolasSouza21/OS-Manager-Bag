@@ -48,6 +48,21 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
         }
     };
 
+    // ✨ ALTERAÇÃO AQUI: Nova função para formatar data/hora dos logs
+    const formatAcompanhamentoDateTime = (dateTimeString) => {
+        if (!dateTimeString) return '__/__ __:__';
+        try {
+            const date = new Date(dateTimeString);
+            if (isNaN(date.getTime())) return 'Inválido';
+            // Formato "dd/MM HH:mm"
+            return date.toLocaleString('pt-BR', {
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+            });
+        } catch (e) {
+            return 'Erro';
+        }
+    };
+
     const capitalize = (text) => {
         if (!text || typeof text !== 'string') return '';
         const lower = text.toLowerCase().replace(/_/g, ' ');
@@ -115,7 +130,9 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
         executores, pecasSubstituidas, acaoRealizada,
         prioridade,
         // ✨ NOVO AQUI: Campos de verificação
-        verificadoPorNome, statusVerificacao, comentarioVerificacao
+        verificadoPorNome, statusVerificacao, comentarioVerificacao,
+        // ✨ ALTERAÇÃO AQUI: Pega a lista de acompanhamentos
+        acompanhamentos
     } = os ?? {};
 
     const dataSolicitacaoFormatada = formatDateTime(dataInicioPreventiva || dataSolicitacao);
@@ -248,6 +265,46 @@ const PrintableOs = React.forwardRef(({ os, equipamento }, ref) => {
                             </table>
                         </td>
                     </tr>
+                    
+                    {/* ✨ ALTERAÇÃO AQUI: Nova Seção de Acompanhamentos */}
+                    <tr className="section-header">
+                        <td colSpan="3">Log de Atividades (Acompanhamentos)</td>
+                    </tr>
+                    <tr>
+                        <td colSpan="3" className="no-padding log-atividades-cell">
+                            {(!acompanhamentos || acompanhamentos.length === 0) ? (
+                                <p style={{ padding: '5px', fontStyle: 'italic', textAlign: 'center' }}>Nenhum acompanhamento registrado.</p>
+                            ) : (
+                                <table className="info-table log-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Data/Hora</th>
+                                            <th>Mecânico</th>
+                                            <th>Min. Trab.</th>
+                                            <th>Min. Pausa</th>
+                                            <th>Relatório / Motivo da Pausa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {acompanhamentos.map(log => (
+                                            <tr key={log.id}>
+                                                <td style={{ width: '15%' }}>{formatAcompanhamentoDateTime(log.dataHora)}</td>
+                                                <td style={{ width: '20%' }}>{log.funcionarioNome || 'N/A'}</td>
+                                                <td style={{ width: '10%', textAlign: 'center' }}>{log.minutosTrabalhados || 0}m</td>
+                                                <td style={{ width: '10%', textAlign: 'center' }}>{log.minutosPausa || 0}m</td>
+                                                <td style={{ whiteSpace: 'normal' }}>
+                                                    {log.descricao}
+                                                    {log.motivoPausa && <em style={{ display: 'block', marginTop: '3px' }}><strong>Pausa:</strong> {log.motivoPausa}</em>}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </td>
+                    </tr>
+                    {/* Fim da Alteração */}
+
                     {/* ✨ CORREÇÃO AQUI: Seção de Aprovação/Reprovação dinâmica */}
                     <tr>
                         <td colSpan="3" className="no-padding">

@@ -2,7 +2,7 @@
    1. FUNDO E CONTAINER DO MODAL
    ========================================================================== */
 
-   .modal-overlay {
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -14,39 +14,47 @@
     align-items: center;
     z-index: 1000;
     backdrop-filter: blur(2px); /* Efeito de desfoque no fundo */
-  }
-  
-  .modal-content {
+}
+
+.modal-content {
     background-color: #ffffff;
     border-radius: 12px; /* Bordas mais suaves */
     width: 90%;
-    max-width: 650px; /* Um pouco mais de espaço */
+    max-width: 900px; /* ✨ ALTERAÇÃO AQUI: Aumentado para 900px */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
     overflow: hidden; /* Garante que o conteúdo não vaze das bordas arredondadas */
-  }
-  
-  /* ==========================================================================
-     2. CABEÇALHO, CORPO E RODAPÉ
-     ========================================================================== */
-  
-  .modal-content h2 {
+}
+
+/* ✨ ALTERAÇÃO DE DEBUG: Esta regra é mais específica e usa !important para forçar a mudança */
+/* Se isto funcionar, o modal ficará com uma borda VERDE */
+.modal-overlay .modal-content {
+    max-width: 900px !important;
+    border: 3px solid green !important;
+}
+
+
+/* ==========================================================================
+   2. CABEÇALHO, CORPO E RODAPÉ
+   ========================================================================== */
+
+.modal-content h2 {
     margin: 0;
     padding: 1.25rem 1.75rem;
     font-size: 1.4rem;
     color: #212529;
     background-color: #f8f9fa; /* Fundo sutil para o título */
     border-bottom: 1px solid #dee2e6;
-  }
-  
-  .form-container {
+}
+
+.form-container {
     padding: 1.75rem;
     max-height: 70vh; /* Altura máxima para permitir rolagem em telas pequenas */
     overflow-y: auto; /* Adiciona barra de rolagem se o conteúdo for grande */
-  }
-  
-  .modal-actions {
+}
+
+.modal-actions {
     margin-top: 1.5rem;
     padding: 1.25rem 1.75rem;
     display: flex;
@@ -54,28 +62,27 @@
     gap: 0.75rem;
     background-color: #f8f9fa;
     border-top: 1px solid #dee2e6;
-  }
-  
-  /* ==========================================================================
-     3. CAMPOS DO FORMULÁRIO (INPUTS, TEXTAREA, LABELS)
-     ========================================================================== */
-  
-  .form-group {
+}
+
+/* ==========================================================================
+   3. CAMPOS DO FORMULÁRIO (INPUTS, TEXTAREA, LABELS)
+   ========================================================================== */
+
+.form-group {
     margin-bottom: 1.25rem;
-  }
-  
-  .form-group label {
+}
+
+.form-group label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600; /* Destaque para os rótulos */
     font-size: 0.9rem;
     color: #495057;
-  }
-  
-  /* ✨ ALTERAÇÃO AQUI: Adicionado input[type="number"] ao seletor */
-  .form-group input[type="datetime-local"],
-  .form-group input[type="number"],
-  .form-group textarea {
+}
+
+.form-group input[type="datetime-local"],
+.form-group input[type="number"],
+.form-group textarea {
     width: 100%;
     padding: 0.8rem 1rem;
     border: 1px solid #ced4da;
@@ -83,81 +90,78 @@
     box-sizing: border-box;
     font-size: 1rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  /* Efeito de foco para guiar o usuário */
-  /* ✨ ALTERAÇÃO AQUI: Adicionado input[type="number"]:focus ao seletor */
-  .form-group input[type="datetime-local"]:focus,
-  .form-group input[type="number"]:focus,
-  .form-group textarea:focus {
+}
+
+.form-group input[type="datetime-local"]:focus,
+.form-group input[type="number"]:focus,
+.form-group textarea:focus {
     outline: none;
     border-color: #80bdff;
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-  }
-  
-  .form-group-inline {
+}
+
+.form-group-inline {
     display: flex;
     gap: 1.5rem;
-    /* ✨ ALTERAÇÃO AQUI: Garante alinhamento dos labels quando os inputs têm alturas diferentes */
     align-items: flex-start;
-  }
-  .form-group-inline .form-group {
+}
+.form-group-inline .form-group {
     flex: 1;
-  }
-  
-  /* ==========================================================================
-     4. CHECKBOXES E SEÇÃO DE PEÇAS
-     ========================================================================== */
-  
-  .checkbox-group {
+}
+
+/* ==========================================================================
+   4. CHECKBOXES E SEÇÃO DE PEÇAS
+   ========================================================================== */
+
+.checkbox-group {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding: 0.5rem;
-  }
-  .checkbox-group input {
+}
+.checkbox-group input {
     width: 1.2em;
     height: 1.2em;
     cursor: pointer;
-  }
-  .checkbox-group label {
+}
+.checkbox-group label {
     margin-bottom: 0;
     font-weight: normal;
     cursor: pointer;
-  }
-  
-  .pecas-section {
+}
+
+.pecas-section {
     border-top: 1px solid #e9ecef;
     margin-top: 1.5rem;
     padding-top: 1.5rem;
     background-color: #f8f9fa; /* Fundo sutil para destacar a seção */
     padding: 1rem;
     border-radius: 8px;
-  }
-  .pecas-section h4 {
+}
+.pecas-section h4 {
     margin-top: 0;
     margin-bottom: 1rem;
     color: #343a40;
-  }
-  
-  .peca-item {
+}
+
+.peca-item {
     display: flex;
     gap: 0.75rem;
     margin-bottom: 0.75rem;
     align-items: center;
-  }
-  .peca-item input[type="text"] {
+}
+.peca-item input[type="text"] {
     flex: 3;
-  }
-  .peca-item input[type="number"] {
+}
+.peca-item input[type="number"] {
     flex: 1;
-  }
-  .peca-item input {
+}
+.peca-item input {
     padding: 0.6rem;
     font-size: 0.9rem;
-  }
-  
-  .add-peca-btn {
+}
+
+.add-peca-btn {
     background-color: #e9ecef;
     border: none;
     color: #495057;
@@ -166,16 +170,16 @@
     cursor: pointer;
     font-weight: 600;
     transition: background-color 0.2s ease;
-  }
-  .add-peca-btn:hover {
+}
+.add-peca-btn:hover {
     background-color: #ced4da;
-  }
-  
-  /* ==========================================================================
-     5. BOTÕES DE AÇÃO NO RODAPÉ
-     ========================================================================== */
-  
-  .action-button-modal {
+}
+
+/* ==========================================================================
+   5. BOTÕES DE AÇÃO NO RODAPÉ
+   ========================================================================== */
+
+.action-button-modal {
     padding: 0.7rem 1.4rem;
     border-radius: 6px;
     font-size: 1rem;
@@ -183,42 +187,42 @@
     cursor: pointer;
     border: none;
     transition: background-color 0.2s ease, transform 0.1s ease;
-  }
-  .action-button-modal:active {
+}
+.action-button-modal:active {
     transform: translateY(1px); /* Efeito de clique */
-  }
-  .action-button-modal:disabled {
+}
+.action-button-modal:disabled {
     background-color: #adb5bd;
     cursor: not-allowed;
-  }
-  
-  /* Botão "Voltar" (secundário) */
-  .cancel-btn {
+}
+
+/* Botão "Voltar" (secundário) */
+.cancel-btn {
     background-color: #ffffff;
     color: #6c757d;
     border: 1px solid #6c757d;
-  }
-  .cancel-btn:hover:not(:disabled) {
+}
+.cancel-btn:hover:not(:disabled) {
     background-color: #f8f9fa;
-  }
-  
-  /* Botão "Concluir OS" (sucesso) */
-  .success-btn {
+}
+
+/* Botão "Concluir OS" (sucesso) */
+.success-btn {
     background-color: #28a745;
     color: white;
-  }
-  .success-btn:hover:not(:disabled) {
+}
+.success-btn:hover:not(:disabled) {
     background-color: #218838;
-  }
-  
-  /* Botão "Cancelar OS" (perigo) */
-  .danger-btn {
+}
+
+/* Botão "Cancelar OS" (perigo) */
+.danger-btn {
     background-color: #dc3545;
     color: white;
-  }
-  .danger-btn:hover:not(:disabled) {
+}
+.danger-btn:hover:not(:disabled) {
     background-color: #c82333;
-  }
+}
 
 /* CHECKLIST DE SERVIÇOS DA PREVENTIVA */
 .servico-checklist-container {
@@ -323,32 +327,83 @@
     font-weight: 500;
 }
 
-.relatorio-parcial-section {
+/* ✨ ALTERAÇÃO AQUI: Substitui o .relatorio-parcial-section pelo container flex */
+/* Container principal que divide em 2 colunas */
+.acompanhamento-container {
     margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 2px dashed #ced4da;
+    display: flex;
+    gap: 1.5rem; /* Espaçamento entre as colunas */
 }
-.relatorio-parcial-section h3 {
+
+/* Coluna da Esquerda (Relatório) */
+.relatorio-trabalho-section {
+    flex: 1; /* Ocupa 50% */
+    display: flex;
+    flex-direction: column;
+    padding: 1rem; 
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+/* Coluna da Direita (Pausa) */
+.relatorio-pausa-section {
+    flex: 1; /* Ocupa 50% */
+    display: flex;
+    flex-direction: column;
+    padding: 1rem; 
+    background-color: #fffaf0; /* Fundo levemente alaranjado para pausas */
+    border: 1px solid #ffeeba;
+    border-radius: 8px;
+}
+
+/* Títulos das colunas */
+.acompanhamento-container h3 {
     margin-top: 0;
     margin-bottom: 0.25rem;
-    color: #0056b3; /* Um azul para destacar */
+    color: #0056b3; 
+    font-size: 1.2rem;
 }
-.relatorio-parcial-section p {
+
+/* Título da coluna de Pausa */
+.relatorio-pausa-section h3 {
+    color: #856404; /* Laranja escuro */
+}
+
+/* Texto de parágrafo (para alinhamento) */
+.acompanhamento-container p {
     font-size: 0.9rem;
     color: #6c757d;
     margin-top: 0;
     margin-bottom: 1.5rem;
+    flex-grow: 1; /* Empurra o botão para o final do card */
 }
-/* Botão de salvar relatório parcial */
+
+/* Botão de salvar relatório (Azul) */
 .report-btn {
-    background-color: #007bff; /* Azul padrão (primário) */
+    background-color: #007bff;
     color: white;
     width: 100%;
-    margin-top: 0.5rem;
+    margin-top: 0.5rem; /* Desencosta do input */
 }
 .report-btn:hover:not(:disabled) {
     background-color: #0056b3;
 }
+
+/* Botão de salvar pausa (Laranja) */
+.pausa-btn {
+    background-color: #ffc107;
+    color: #212529;
+    width: 100%;
+    margin-top: 0.5rem; /* Desencosta do input */
+}
+.pausa-btn:hover:not(:disabled) {
+    background-color: #e0a800;
+}
+/* Fim da alteração */
+
+
 .executor-list-container {
     border: 1px solid #dee2e6;
     border-radius: 8px;
@@ -385,4 +440,16 @@
     width: 1.2em;
     height: 1.2em;
     cursor: pointer;
+}
+
+/* ✨ ALTERAÇÃO AQUI: Media query para empilhar as colunas em telas pequenas */
+@media (max-width: 768px) {
+    .acompanhamento-container {
+        flex-direction: column; /* Empilha as seções */
+    }
+
+    .form-group-inline {
+        flex-direction: column; /* Empilha Início/Término */
+        gap: 0;
+    }
 }
