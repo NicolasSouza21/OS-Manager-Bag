@@ -163,7 +163,7 @@ public class OrdemServicoService {
         return ordemServicoMapper.converteParaDTO(osAtualizada);
     }
 
-    // ✨✅ ALTERAÇÃO AQUI: Lógica de `registrarExecucao` modificada
+    // ... (registrarExecucao) ...
     @Transactional
     public OrdemServicoDTO registrarExecucao(Long osId, ExecucaoDTO dto) {
         OrdemServico os = osRepository.findById(osId)
@@ -190,8 +190,7 @@ public class OrdemServicoService {
         
         os.setExecutores(executoresSet);
         
-        // ✨ ALTERAÇÃO AQUI: Nova validação de horas úteis
-        // Valida apenas se o usuário está tentando "Concluir" ou "Aguardar Verificação"
+        // Validação de horas úteis (mantida da sua versão)
         if (dto.getStatusFinal() == StatusOrdemServico.CONCLUIDA || dto.getStatusFinal() == StatusOrdemServico.AGUARDANDO_VERIFICACAO) {
             
             LocalDateTime inicioExec = dto.getInicio();
@@ -205,25 +204,20 @@ public class OrdemServicoService {
                  throw new IllegalArgumentException("A data de Término não pode ser anterior à data de Início da execução.");
             }
 
-            // Itera sobre cada mecânico que trabalhou na OS
             for (Funcionario executor : executoresSet) {
                 String nomeMecanico = executor.getNome();
 
-                // 1. Soma o tempo reportado por este mecânico nos relatórios
-                //    (Considera apenas relatórios DENTRO do período de execução)
                 double totalMinutosReportados = os.getAcompanhamentos().stream()
                     .filter(acomp -> acomp.getFuncionario() != null && 
                                     nomeMecanico.equals(acomp.getFuncionario().getNome()) &&
                                     acomp.getMinutosTrabalhados() != null &&
-                                    !acomp.getDataHora().isBefore(inicioExec) && // Filtro de data
-                                    !acomp.getDataHora().isAfter(fimExec))     // Filtro de data
+                                    !acomp.getDataHora().isBefore(inicioExec) && 
+                                    !acomp.getDataHora().isAfter(fimExec))
                     .mapToDouble(AcompanhamentoOS::getMinutosTrabalhados)
                     .sum();
 
-                // 2. Calcula o tempo útil total disponível para este mecânico no período
                 long totalMinutosUteis = horarioUtilService.calcularMinutosUteis(inicioExec, fimExec, nomeMecanico);
 
-                // 3. Compara (com uma pequena margem de 1 minuto para arredondamento)
                 if (totalMinutosReportados > (double) totalMinutosUteis + 1.0) {
                     throw new IllegalArgumentException("Erro de Validação: O tempo total reportado (" + 
                         String.format("%.0f", totalMinutosReportados) + " min) pelo mecânico " + nomeMecanico + 
@@ -231,7 +225,6 @@ public class OrdemServicoService {
                 }
             }
         }
-        // --- Fim da Validação ---
 
         os.setDataExecucao(LocalDateTime.now());
         os.setAcaoRealizada(dto.getAcaoRealizada());
@@ -266,13 +259,22 @@ public class OrdemServicoService {
             }
         }
         
-        if (os.getTipoManutencao() == TipoManutencao.PREVENTIVA && dto.getStatusFinal() == StatusOrdemServico.CONCLUIDA) {
+        // ✨ ALTERAÇÃO AQUI: A condição foi modificada
+        // Agora, se a OS for PREVENTIVA *OU* CORRETIVA, e o status final for CONCLUIDA,
+        // ela deve ir para AGUARDANDO_VERIFICACAO.
+        if ((os.getTipoManutencao() == TipoManutencao.PREVENTIVA || os.getTipoManutencao() == TipoManutencao.CORRETIVA) 
+            && dto.getStatusFinal() == StatusOrdemServico.CONCLUIDA) {
+            
             os.setStatus(StatusOrdemServico.AGUARDANDO_VERIFICACAO);
             os.setStatusVerificacao(StatusVerificacao.PENDENTE);
+        
         } else {
+            // Este bloco agora só será usado se o status final não for "CONCLUIDA" 
+            // (por exemplo, se implementarmos um botão "Cancelar Execução" no futuro)
             os.setStatus(dto.getStatusFinal());
             os.setStatusVerificacao(StatusVerificacao.NAO_APLICAVEL);
         }
+        // --- Fim da Alteração ---
 
         OrdemServico osAtualizada = osRepository.save(os);
         return ordemServicoMapper.converteParaDTO(osAtualizada);
@@ -306,7 +308,10 @@ public class OrdemServicoService {
         if (dto.getAprovado()) {
             osConcluida.setStatus(StatusOrdemServico.CONCLUIDA);
             osConcluida.setStatusVerificacao(StatusVerificacao.APROVADO);
-            agendarProximaPreventiva(osConcluida);
+            // Só agenda a próxima se for PREVENTIVA
+            if (osConcluida.getTipoManutencao() == TipoManutencao.PREVENTIVA) {
+                agendarProximaPreventiva(osConcluida);
+            }
         } else {
             osConcluida.setStatus(StatusOrdemServico.EM_EXECUCAO);
             osConcluida.setStatusVerificacao(StatusVerificacao.REPROVADO);

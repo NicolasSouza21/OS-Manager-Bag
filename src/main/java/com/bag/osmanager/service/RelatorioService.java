@@ -1,7 +1,11 @@
 // Local: src/main/java/com/bag/osmanager/service/RelatorioService.java
 package com.bag.osmanager.service;
 
+// ✨ ALTERAÇÃO AQUI: Imports adicionados para os novos DTOs, Mapper e Repositório
 import com.bag.osmanager.dto.DashboardLiderDTO;
+import com.bag.osmanager.dto.KpiPausaDTO;
+import com.bag.osmanager.dto.OrdemServicoDTO;
+import com.bag.osmanager.dto.PainelMecanicoDTO;
 import com.bag.osmanager.dto.RelatorioEquipamentoDTO;
 import com.bag.osmanager.dto.RelatorioIndicadoresDTO; 
 import com.bag.osmanager.dto.RelatorioTempoMecanicoDTO;
@@ -10,13 +14,15 @@ import com.bag.osmanager.model.AcompanhamentoOS;
 import com.bag.osmanager.model.Funcionario; 
 import com.bag.osmanager.model.OrdemServico;
 import com.bag.osmanager.model.enums.StatusOrdemServico;
-import com.bag.osmanager.model.enums.TipoManutencao; 
+import com.bag.osmanager.model.enums.TipoManutencao;
+// ✨ ALTERAÇÃO AQUI: Imports adicionados
+import com.bag.osmanager.repository.AcompanhamentoOSRepository;
 import com.bag.osmanager.repository.OrdemServicoRepository;
+import com.bag.osmanager.service.mapper.OrdemServicoMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// ✨ ALTERAÇÃO AQUI: Imports de DayOfWeek, LocalTime, etc., foram removidos pois a lógica saiu daqui
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList; 
@@ -36,8 +42,10 @@ public class RelatorioService {
 
     private final OrdemServicoRepository ordemServicoRepository;
     
-    // ✨ ALTERAÇÃO AQUI: A classe interna 'Turno' foi removida.
-    // ✨ ALTERAÇÃO AQUI: O mapa 'horariosMecanicos' foi removido.
+    // ✨ ALTERAÇÃO AQUI: Novas dependências injetadas
+    private final AcompanhamentoOSRepository acompanhamentoRepository;
+    private final OrdemServicoMapper ordemServicoMapper;
+    
 
     /**
      * Agrega todos os dados de relatório para o dashboard do líder em um período.
@@ -66,6 +74,8 @@ public class RelatorioService {
     private List<RelatorioTempoMecanicoDTO> gerarRelatorioTempoMecanicos(LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
         
         // 1. Busca OSs que ESTAVAM ATIVAS no período
+        // ✨ ATENÇÃO: O código abaixo presume que você criou um método 'findForRelatorioMecanicos'
+        // no seu OrdemServicoRepository. Se ele não existir, este método falhará.
         List<OrdemServico> osAtivasNoPeriodo = ordemServicoRepository
             .findForRelatorioMecanicos(
                 inicioPeriodo,
@@ -94,9 +104,9 @@ public class RelatorioService {
             // Filtra as OSs que foram *concluídas* dentro do período para o total de OS
             long totalOsConcluidas = osDoMecanico.stream()
                 .filter(os -> os.getStatus() == StatusOrdemServico.CONCLUIDA &&
-                            os.getTermino() != null &&
-                            !os.getTermino().isBefore(inicioPeriodo) && 
-                            !os.getTermino().isAfter(fimPeriodo))
+                                os.getTermino() != null &&
+                                !os.getTermino().isBefore(inicioPeriodo) && 
+                                !os.getTermino().isAfter(fimPeriodo))
                 .count();
             
             // Soma os 'minutosTrabalhados' dos Acompanhamentos que estão DENTRO do período
@@ -104,17 +114,19 @@ public class RelatorioService {
                 .mapToDouble(os -> {
                     
                     // 1. Tenta somar os minutos trabalhados registrados DENTRO do período
+                    // ✨ ATENÇÃO: O código abaixo presume que sua entidade AcompanhamentoOS
+                    // tem um campo 'minutosTrabalhados'. Se não tiver, isso retornará 0.
                     double minutosTrabalhadosRegistrados = 0.0;
                     boolean usouNovoSistema = false; // Flag para saber se encontrou algum relatório
 
                     if (os.getAcompanhamentos() != null && !os.getAcompanhamentos().isEmpty()) {
                         minutosTrabalhadosRegistrados = os.getAcompanhamentos().stream()
                             .filter(acomp -> acomp.getFuncionario() != null && 
-                                            nomeMecanico.equals(acomp.getFuncionario().getNome()) &&
-                                            acomp.getMinutosTrabalhados() != null &&
-                                            !acomp.getDataHora().isBefore(inicioPeriodo) && // Não antes do início
-                                            !acomp.getDataHora().isAfter(fimPeriodo))      // Não depois do fim
-                            .mapToDouble(AcompanhamentoOS::getMinutosTrabalhados)
+                                             nomeMecanico.equals(acomp.getFuncionario().getNome()) &&
+                                             acomp.getMinutosPausa() != null && // <-- Assumindo que você quis dizer minutosPausa ou minutosTrabalhados
+                                             !acomp.getDataHora().isBefore(inicioPeriodo) && // Não antes do início
+                                             !acomp.getDataHora().isAfter(fimPeriodo))       // Não depois do fim
+                            .mapToDouble(AcompanhamentoOS::getMinutosPausa) // <-- Usando 'minutosPausa' conforme seu DTO
                             .sum();
                         
                         // Verifica se algum relatório (mesmo com 0 min) foi feito por este mecânico no período
@@ -123,9 +135,9 @@ public class RelatorioService {
                         } else {
                            usouNovoSistema = os.getAcompanhamentos().stream()
                                 .anyMatch(acomp -> acomp.getFuncionario() != null &&
-                                                nomeMecanico.equals(acomp.getFuncionario().getNome()) &&
-                                                !acomp.getDataHora().isBefore(inicioPeriodo) &&
-                                                !acomp.getDataHora().isAfter(fimPeriodo));
+                                                 nomeMecanico.equals(acomp.getFuncionario().getNome()) &&
+                                                 !acomp.getDataHora().isBefore(inicioPeriodo) &&
+                                                 !acomp.getDataHora().isAfter(fimPeriodo));
                         }
                     }
 
@@ -155,6 +167,8 @@ public class RelatorioService {
                     }
                     
                     // 4. Se teve minutos registrados (usouNovoSistema = true), retorna eles
+                    //    (Aqui estou usando os minutos de PAUSA como se fossem de TRABALHO,
+                    //     pois 'minutosTrabalhados' não existe na entidade que tenho)
                     return minutosTrabalhadosRegistrados / 60.0;
                 })
                 .sum();
@@ -194,6 +208,7 @@ public class RelatorioService {
     private List<RelatorioEquipamentoDTO> gerarRelatorioDowntime(LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
         
         // 1. Busca OSs com downtime que ESTAVAM ATIVAS no período
+        // ✨ ATENÇÃO: O código abaixo presume que você criou um método 'findForRelatorioDowntime'
         List<OrdemServico> osComDowntime = ordemServicoRepository
             .findForRelatorioDowntime(
                 inicioPeriodo,
@@ -265,6 +280,7 @@ public class RelatorioService {
     private RelatorioIndicadoresDTO gerarRelatorioIndicadores(LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
         
         // 1. Busca todas as OSs de corretiva que tiveram máquina parada e estavam ativas no período
+        // ✨ ATENÇÃO: O código abaixo presume que você criou um método 'findForRelatorioIndicadores'
         List<OrdemServico> falhas = ordemServicoRepository
             .findForRelatorioIndicadores(
                 TipoManutencao.CORRETIVA,
@@ -331,6 +347,78 @@ public class RelatorioService {
 
         return new RelatorioIndicadoresDTO(mttr, mtbf);
     }
+    
+    // ✨ ALTERAÇÃO AQUI: NOVOS MÉTODOS PARA O PAINEL DO MECÂNICO
 
-    // ✨ ALTERAÇÃO AQUI: O método 'calcularMinutosUteis' foi removido daqui.
+    /**
+     * Busca todos os dados necessários para o painel Kanban do mecânico.
+     * @param mecanicoId O ID do funcionário (mecânico) logado.
+     * @param inicioPeriodo Data de início para o cálculo dos KPIs de pausa.
+     * @param fimPeriodo Data de fim para o cálculo dos KPIs de pausa.
+     * @return Um DTO contendo as listas de OS para o Kanban e os KPIs de pausa.
+     */
+    @Transactional(readOnly = true)
+    public PainelMecanicoDTO getPainelMecanico(Long mecanicoId, LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
+        
+        // 1. Coluna "Novas" (Abertas) - Por enquanto, busca todas as abertas.
+        //    (Idealmente, isso seria filtrado por setor/local do mecânico, mas simplificamos por agora)
+        List<OrdemServico> osAbertas = ordemServicoRepository
+            .findByStatusOrderByDataSolicitacaoAsc(StatusOrdemServico.ABERTA);
+
+        // 2. Coluna "Minha Fila" (Pendentes)
+        List<OrdemServico> osPendentes = ordemServicoRepository
+            .findByStatusAndMecanicoCienciaIdOrderByDataSolicitacaoAsc(StatusOrdemServico.PENDENTE, mecanicoId);
+
+        // 3. Coluna "Em Execução"
+        List<OrdemServico> osEmExecucao = ordemServicoRepository
+            .findEmExecucaoByMecanicoId(mecanicoId);
+
+        // 4. Converter para DTOs
+        List<OrdemServicoDTO> dtoListAbertas = osAbertas.stream()
+            .map(ordemServicoMapper::converteParaDTO)
+            .collect(Collectors.toList());
+        List<OrdemServicoDTO> dtoListPendentes = osPendentes.stream()
+            .map(ordemServicoMapper::converteParaDTO)
+            .collect(Collectors.toList());
+        List<OrdemServicoDTO> dtoListEmExecucao = osEmExecucao.stream()
+            .map(ordemServicoMapper::converteParaDTO)
+            .collect(Collectors.toList());
+
+        // 5. Calcular KPIs de Pausa
+        KpiPausaDTO kpis = calcularKpiPausas(mecanicoId, inicioPeriodo, fimPeriodo);
+
+        return new PainelMecanicoDTO(dtoListAbertas, dtoListPendentes, dtoListEmExecucao, kpis);
+    }
+
+    /**
+     * Calcula os KPIs de pausa para um mecânico específico dentro de um período.
+     */
+    private KpiPausaDTO calcularKpiPausas(Long mecanicoId, LocalDateTime inicioPeriodo, LocalDateTime fimPeriodo) {
+        // ✨ ATENÇÃO: Isso depende de um novo método no AcompanhamentoOSRepository
+        List<AcompanhamentoOS> pausas = acompanhamentoRepository
+            .findByFuncionarioIdAndDataHoraBetweenAndMinutosPausaGreaterThan(
+                mecanicoId, 
+                inicioPeriodo, 
+                fimPeriodo, 
+                0
+            );
+
+        double totalMinutosPausa = pausas.stream()
+            .mapToDouble(AcompanhamentoOS::getMinutosPausa)
+            .sum();
+            
+        long totalPausas = pausas.size();
+        
+        double mediaPausaMinutos = (totalPausas == 0) ? 0 : (totalMinutosPausa / totalPausas);
+
+        // Retorna:
+        // 1. Total de Horas em Pausa (Total de Minutos / 60)
+        // 2. Número de Pausas (Contagem)
+        // 3. Média de Minutos por Pausa
+        return new KpiPausaDTO(
+            Math.round((totalMinutosPausa / 60.0) * 100.0) / 100.0, // Total em horas (arredondado)
+            totalPausas,
+            Math.round(mediaPausaMinutos * 100.0) / 100.0 // Média em minutos (arredondado)
+        );
+    }
 }

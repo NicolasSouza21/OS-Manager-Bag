@@ -7,19 +7,20 @@
     align-items: center;
     justify-content: space-between; /* Espaça os itens: [brand+nav] ... [user] */
     padding: 0 30px; /* Espaçamento interno */
-    height: 70px;
+    height: 100px;
     background-color: #2c3e50; /* Azul escuro */
     color: #ffffff;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Sombra para profundidade */
     font-family: 'Poppins', sans-serif; /* Aplica a fonte importada */
     margin-left: -8px;
     margin-top: -8px;
+    font-size: 1em;
 }
 
 .navbar-brand a {
     color: #ffffff;
     text-decoration: none;
-    font-size: 1.8em;
+    font-size: 1.6em;
     font-weight: 600;
 }
 

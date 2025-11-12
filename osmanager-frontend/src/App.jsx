@@ -19,6 +19,9 @@ import CriarOsPage from './pages/CriarOsPage';
 // ✨ ALTERAÇÃO AQUI: Importar a nova página de Relatórios
 import RelatoriosPage from './pages/RelatoriosPage';
 
+// ✨ ALTERAÇÃO AQUI: Importar a nova página do Mecânico
+import PainelMecanicoPage from './pages/PainelMecanicoPage';
+
 // Páginas de Administração
 import GerenciarFuncionariosPage from './pages/admin/GerenciarFuncionariosPage';
 import CadastroUsuarioPage from './pages/admin/CadastroUsuarioPage';
@@ -56,20 +59,28 @@ function App() {
         <Route element={<AppLayout />}>
           
           {/* --- Rotas Comuns (Todos logados) --- */}
-          <Route path="/dashboard" element={<DashboardPage />} />
+          {/* ✨ ALTERAÇÃO AQUI: Rota /dashboard movida para baixo */}
           <Route path="/os/:id" element={<VisualizarOsPage />} />
           <Route path="/calendario" element={<CalendarioPage />} />
           <Route path="/criar-os" element={<CriarOsPage />} />
 
+          {/* --- ✨ ALTERAÇÃO AQUI: Nova Rota para o Painel do Mecânico --- */}
+          {/* Acessível por Mecânicos, Líderes e Admins */}
+          <Route element={<RoleProtectedRoute allowedRoles={['ADMIN', 'LIDER', 'MECANICO']} />}>
+            <Route path="/meu-painel" element={<PainelMecanicoPage />} />
+          </Route>
+
           {/* --- Rotas de Relatórios (ADMIN, LIDER) --- */}
-          {/* ✨ ALTERAÇÃO AQUI: Nova rota de relatório protegida por cargo */}
           <Route element={<RoleProtectedRoute allowedRoles={['ADMIN', 'LIDER']} />}>
             <Route path="/relatorios" element={<RelatoriosPage />} />
           </Route>
 
-          {/* --- Rotas de Admin (ADMIN, LIDER, ENCARREGADO) --- */}
-          {/* ✅ CORREÇÃO: Protegendo as rotas de admin (Gestores) */}
-          <Route element={<RoleProtectedRoute allowedRoles={['ADMIN', 'LIDER', 'ENCARREGADO']} />}>
+          {/* --- Rotas de Admin (ADMIN, LIDER, ENCARREGADO, ANALISTA_CQ) --- */}
+          {/* ✨ ALTERAÇÃO AQUI: Adicionado ANALISTA_CQ e movido o /dashboard para cá */}
+          <Route element={<RoleProtectedRoute allowedRoles={['ADMIN', 'LIDER', 'ENCARREGADO', 'ANALISTA_CQ']} />}>
+            {/* O Dashboard geral (antigo) agora é para gestores */}
+            <Route path="/dashboard" element={<DashboardPage />} /> 
+            
             <Route path="/admin/equipamentos" element={<EquipamentoMenuPage />} />
             <Route path="/admin/equipamentos/gerenciar" element={<GerenciarEquipamentosPage />} />
             <Route path="/admin/equipamentos/servicos" element={<GerenciarTiposServicoPage />} />

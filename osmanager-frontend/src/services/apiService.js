@@ -104,5 +104,16 @@ export const getDashboardLider = (dataInicio, dataFim) => {
     });
 };
 
+// ✨ ALTERAÇÃO AQUI: Nova função para o painel do mecânico
+export const getPainelMecanico = (dataInicio, dataFim) => {
+    // Chama o novo endpoint /painel-mecanico
+    return api.get('/relatorios/painel-mecanico', {
+        params: {
+            dataInicio: dataInicio, // ex: "2025-11-01"
+            dataFim: dataFim        // ex: "2025-11-30"
+        }
+    });
+};
+
 
 export default api;

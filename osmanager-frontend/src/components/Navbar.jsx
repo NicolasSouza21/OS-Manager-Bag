@@ -20,10 +20,21 @@ function Navbar() {
     const isEncarregado = normalizedRole === 'ENCARREGADO';
     // ✨ ALTERAÇÃO AQUI: Adiciona a verificação para Analista de Qualidade
     const isAnalistaCQ = normalizedRole === 'ANALISTA_CQ';
+    // ✨ ALTERAÇÃO AQUI: Adiciona a verificação para Mecânico
+    const isMecanico = normalizedRole === 'MECANICO';
 
     // Usuários com permissão para acessar áreas de gestão
-    // ✨ ALTERAÇÃO AQUI: Inclui isAnalistaCQ na condição
     const podeGerenciarEquipamentos = isAdmin || isLider || isEncarregado || isAnalistaCQ;
+
+    // ✨ ALTERAÇÃO AQUI: Lógica de visibilidade dos painéis
+    // O Dashboard de gestão é para todos, exceto Mecânico e Solicitante (que não estão na lista)
+    const podeVerDashboardGestao = isAdmin || isLider || isEncarregado || isAnalistaCQ;
+    // O Painel do Mecânico é para quem executa OS
+    const podeVerMeuPainel = isAdmin || isLider || isMecanico;
+    
+    // O link principal da logo: Mecânico vai para 'meu-painel', os outros para 'dashboard'
+    const homeLink = isMecanico ? '/meu-painel' : '/dashboard';
+
 
     const handleLogout = () => {
         logout();
@@ -34,18 +45,32 @@ function Navbar() {
         // A classe principal "navbar" é a mesma do CSS sugerido
         <nav className="navbar">
             <div className="navbar-brand">
-                {/* O link da marca não precisa ser um NavLink */}
-                <NavLink to="/dashboard">Gerenciador de OS</NavLink>
+                {/* ✨ ALTERAÇÃO AQUI: O link da logo agora é dinâmico */}
+                <NavLink to={homeLink}>Gerenciador de OS</NavLink>
             </div>
 
             {/* ✨ ALTERAÇÃO: Usando a classe "navbar-nav" para a lista de links */}
             <ul className="navbar-nav">
-                <li className="nav-item">
-                    <NavLink to="/dashboard" className="nav-link">
-                        <i className="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </NavLink>
-                </li>
+
+                {/* ✨ ALTERAÇÃO AQUI: Link "Meu Painel" para Mecânicos/Líderes/Admin */}
+                {podeVerMeuPainel && (
+                    <li className="nav-item">
+                        <NavLink to="/meu-painel" className="nav-link">
+                            <i className="fas fa-clipboard-user"></i>
+                            <span>Meu Painel</span>
+                        </NavLink>
+                    </li>
+                )}
+
+                {/* ✨ ALTERAÇÃO AQUI: Link "Dashboard" (Gestão) condicional */}
+                {podeVerDashboardGestao && (
+                    <li className="nav-item">
+                        <NavLink to="/dashboard" className="nav-link">
+                            <i className="fas fa-tachometer-alt"></i>
+                            <span>Dashboard Gestão</span>
+                        </NavLink>
+                    </li>
+                )}
                 
                 <li className="nav-item">
                     <NavLink to="/calendario" className="nav-link">
@@ -83,7 +108,6 @@ function Navbar() {
                 )}
 
                 {/* Link para "Gerenciar Equipamentos" - Agora inclui Analista CQ */}
-                {/* ✨ ALTERAÇÃO AQUI: Usa a nova variável 'podeGerenciarEquipamentos' */}
                 {podeGerenciarEquipamentos && (
                     <li className="nav-item">
                         <NavLink to="/admin/equipamentos" className="nav-link">
