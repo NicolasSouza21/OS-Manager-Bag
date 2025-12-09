@@ -333,7 +333,6 @@ function VisualizarOsPage() {
     if (!ordemServico || typeof ordemServico !== 'object') return <div className="no-data-details">Dados da Ordem de Serviço indisponíveis ou inválidos.</div>;
 
     const podeExcluir = userRole && (userRole.includes('ADMIN') || userRole.includes('LIDER'));
-
     // JSX Principal (sem alterações significativas, pois a lógica está no PrintableOs)
     return (
         <>

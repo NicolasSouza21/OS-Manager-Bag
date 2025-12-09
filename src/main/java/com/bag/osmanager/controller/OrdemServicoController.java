@@ -97,7 +97,8 @@ public class OrdemServicoController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    // ✅ CORREÇÃO: Alterado de 'hasAuthority' para 'hasAnyRole' e incluído 'ANALISTA_CQ' e 'LIDER'
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIDER', 'ANALISTA_CQ')")
     public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
         osService.deletarOrdemServico(id);
         return ResponseEntity.noContent().build();

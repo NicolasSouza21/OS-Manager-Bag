@@ -5,7 +5,11 @@ import com.bag.osmanager.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+<<<<<<< Updated upstream
 import org.springframework.http.HttpMethod;
+=======
+import org.springframework.http.HttpMethod; 
+>>>>>>> Stashed changes
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -35,7 +39,6 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
-    // ... (Beans passwordEncoder, authenticationProvider, authenticationManager, corsConfigurationSource permanecem os mesmos) ...
      @Bean
      public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
@@ -55,7 +58,8 @@ public class SecurityConfig {
      @Bean
      public CorsConfigurationSource corsConfigurationSource() {
          CorsConfiguration configuration = new CorsConfiguration();
-         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://192.168.0.11:5173", "http://192.168.56.1:5173"));
+         // ✨ ALTERAÇÃO: Ao rodar tudo junto no .jar, a origem é a mesma, mas mantemos localhost para dev
+         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://192.168.0.11:5173", "http://192.168.56.1:5173", "http://localhost:8080"));
          configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
          configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
          configuration.setAllowCredentials(true);
@@ -76,21 +80,64 @@ public class SecurityConfig {
                 // 0. Permite todas as requisições de verificação (preflight) OPTIONS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // 1. Rotas Públicas
+                // ✨ ALTERAÇÃO AQUI: Permissões para Arquivos Estáticos do Frontend (React build)
+                // Isso permite que o navegador baixe o HTML/JS/CSS antes de logar
+                .requestMatchers(
+                    "/", 
+                    "/index.html", 
+                    "/assets/**", 
+                    "/*.ico", 
+                    "/*.png", 
+                    "/*.svg", 
+                    "/*.json", 
+                    "/*.js", 
+                    "/*.css"
+                ).permitAll()
+
+                // ✨ ALTERAÇÃO AQUI: Permite que rotas do React (SPA) sejam acessadas sem token inicial
+                // (O React vai checar o token internamente e redirecionar para login se necessário)
+                .requestMatchers(
+                    "/login", 
+                    "/dashboard", 
+                    "/calendario", 
+                    "/criar-os", 
+                    "/relatorios",
+                    "/os/**",      // Visualização de OS
+                    "/admin/**"    // Rotas administrativas (Frontend)
+                ).permitAll()
+
+                // 1. Rotas Públicas da API
                 .requestMatchers("/api/auth/**", "/error").permitAll()
 
+<<<<<<< Updated upstream
                 // 2. Gerenciamento de Funcionários: Apenas ADMIN
                 .requestMatchers("/api/funcionarios/**").hasRole("ADMIN")
 
                 // 3. Verificação de OS: Apenas Encarregado e Admin
                 .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar").hasAnyRole("ADMIN", "ENCARREGADO")
+=======
+                // 2a. Gerenciamento de Funcionários (VISUALIZAÇÃO)
+                .requestMatchers(HttpMethod.GET, "/api/funcionarios", "/api/funcionarios/**")
+                    .hasAnyRole("ADMIN", "LIDER", "MECANICO", "ENCARREGADO")
 
-                // 4. Gerenciamento de OS (mantido)
+                // 2b. Gerenciamento de Funcionários (MODIFICAÇÃO)
+                .requestMatchers("/api/funcionarios/**").hasRole("ADMIN")
+
+                // 3. Verificação de OS:
+                .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar")
+                    .hasAnyRole("ADMIN", "ENCARREGADO", "LIDER", "ANALISTA_CQ")
+>>>>>>> Stashed changes
+
+                // 4. Gerenciamento de OS
                 .requestMatchers("/api/ordens-servico/aprovar/**", "/api/ordens-servico/finalizar/**").hasAnyRole("ADMIN", "LIDER", "ENCARREGADO")
                 .requestMatchers("/api/ordens-servico/cq/**").hasAnyRole("ADMIN", "LIDER", "ENCARREGADO", "ANALISTA_CQ")
 
+<<<<<<< Updated upstream
                 // 5. Gerenciamento de Equipamentos, Locais, Setores, Frequências, Tipos de Serviço e Planos Preventiva
                 // ✨ ALTERAÇÃO AQUI: Permite GET para qualquer autenticado (já estava)
+=======
+                // 5. Gerenciamento de Equipamentos, Locais, etc.
+>>>>>>> Stashed changes
                 .requestMatchers(HttpMethod.GET,
                     "/api/equipamentos/**",
                     "/api/locais/**",

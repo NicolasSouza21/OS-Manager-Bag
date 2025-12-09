@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Endereço do backend
-const API_URL = 'http://192.168.0.11:8080/api';
+// ✨ ALTERAÇÃO AQUI: Usar caminho relativo ('/api') em vez de IP fixo.
+// Isso faz com que o site funcione em qualquer IP (localhost, 192.168.x.x, etc)
+// automaticamente, tanto em desenvolvimento (via proxy) quanto em produção (no .jar).
+const API_URL = '/api';
 
 const api = axios.create({
     baseURL: API_URL,
