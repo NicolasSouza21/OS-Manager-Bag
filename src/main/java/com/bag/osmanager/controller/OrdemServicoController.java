@@ -17,11 +17,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication; // Mantemos o import para os outros métodos
+import org.springframework.security.core.Authentication; 
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List; // ✨ ALTERAÇÃO AQUI
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/ordens-servico")
@@ -30,7 +30,6 @@ public class OrdemServicoController {
 
     private final OrdemServicoService osService;
 
-    // ✨ ALTERAÇÃO AQUI: Novo endpoint para buscar o histórico do equipamento
     @GetMapping("/historico/equipamento/{equipamentoId}")
     public ResponseEntity<List<OrdemServicoDTO>> getHistoricoPorEquipamento(@PathVariable Long equipamentoId) {
         List<OrdemServicoDTO> historico = osService.getHistoricoPorEquipamento(equipamentoId);
@@ -76,22 +75,21 @@ public class OrdemServicoController {
         return ResponseEntity.ok(osService.registrarCiencia(id, funcionarioId));
     }
 
+    // ✨ ALTERAÇÃO AQUI: Agora recebe Authentication para saber quem está iniciando
     @PutMapping("/{id}/iniciar-execucao")
-    public ResponseEntity<OrdemServicoDTO> iniciarExecucao(@PathVariable Long id) {
-        return ResponseEntity.ok(osService.iniciarExecucao(id));
+    public ResponseEntity<OrdemServicoDTO> iniciarExecucao(@PathVariable Long id, Authentication authentication) {
+        Funcionario userDetails = (Funcionario) authentication.getPrincipal();
+        // Passamos o ID do funcionário para o serviço vincular a execução
+        return ResponseEntity.ok(osService.iniciarExecucao(id, userDetails.getId()));
     }
 
-    // ✨ ALTERAÇÃO AQUI: Método de execução modificado
+    // ✨ ALTERAÇÃO AQUI: Mantida a autenticação para garantir segurança na finalização
     @PutMapping("/{id}/execucao")
-    // 1. Remove 'Authentication authentication'
-    public ResponseEntity<OrdemServicoDTO> registrarExecucao(@PathVariable Long id, @Valid @RequestBody ExecucaoDTO dto) {
-        
-        // 2. Remove a lógica que pegava o ID do usuário logado
-        // Funcionario userDetails = (Funcionario) authentication.getPrincipal();
-        // Long executanteId = userDetails.getId();
-        
-        // 3. Chama o novo método do serviço, que não precisa mais do executanteId
-        return ResponseEntity.ok(osService.registrarExecucao(id, dto));
+    public ResponseEntity<OrdemServicoDTO> registrarExecucao(@PathVariable Long id, @Valid @RequestBody ExecucaoDTO dto, Authentication authentication) {
+        Funcionario userDetails = (Funcionario) authentication.getPrincipal();
+        Long executanteId = userDetails.getId();
+        // Chama o serviço passando o ID de quem está finalizando
+        return ResponseEntity.ok(osService.registrarExecucao(id, executanteId, dto));
     }
 
     @PostMapping("/{id}/verificar")
@@ -103,7 +101,7 @@ public class OrdemServicoController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIDER', 'ANALISTA_CQ')")
     public ResponseEntity<Void> deletarOrdemServico(@PathVariable Long id) {
         osService.deletarOrdemServico(id);
         return ResponseEntity.noContent().build();

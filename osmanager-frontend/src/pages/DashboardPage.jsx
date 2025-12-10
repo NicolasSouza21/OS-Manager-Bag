@@ -10,15 +10,15 @@ import {
     iniciarExecucao,
     registrarExecucao,
     verificarOS,
-    // ✨ ALTERAÇÃO AQUI: Importa a nova função 'criarAcompanhamento'
+    // ✨ Importa a nova função 'criarAcompanhamento'
     criarAcompanhamento
 } from '../services/apiService';
 import ExecucaoModal from '../components/ExecucaoModal';
 import VerificacaoModal from '../components/VerificacaoModal';
-// ✨ ALTERAÇÃO AQUI: Importa o novo modal de acompanhamento
+// ✨ Importa o novo modal de acompanhamento
 import AcompanhamentoModal from '../components/AcompanhamentoModal'; 
 import { jwtDecode } from 'jwt-decode';
-// ✨ ALTERAÇÃO AQUI: Importa o ícone da prancheta (FaClipboardList)
+// ✨ Importa o ícone da prancheta (FaClipboardList)
 import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck, FaClipboardList } from 'react-icons/fa';
 import './DashBoardPage.css';
 
@@ -36,7 +36,7 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-// ✨✅ CORREÇÃO AQUI: Função de data simplificada
+// ✨ Função de data simplificada
 const parseSafeDate = (dateString) => {
     if (!dateString) return null;
     // Apenas cria o objeto Date. O 'toLocaleString' usado depois
@@ -57,7 +57,6 @@ const groupOrdensByDate = (ordens) => {
             ? os.dataInicioPreventiva 
             : os.dataSolicitacao;
         
-        // ✨✅ CORREÇÃO AQUI: Chamando a nova parseSafeDate
         const osDate = parseSafeDate(dateString); 
         
         if (!osDate) {
@@ -91,7 +90,7 @@ function DashboardPage() {
     const [equipamentos, setEquipamentos] = useState([]);
     const [locais, setLocais] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedOs, setSelectedOs] = useState(null); // Usado pelos modais antigos
+    const [selectedOs, setSelectedOs] = useState(null); 
     const [userRole, setUserRole] = useState('');
     const [userId, setUserId] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
@@ -102,12 +101,13 @@ function DashboardPage() {
     const [isAcompanhamentoModalOpen, setIsAcompanhamentoModalOpen] = useState(false);
     const [osParaAcompanhamento, setOsParaAcompanhamento] = useState(null);
     
-    // ✨ ALTERAÇÃO AQUI: Novo estado para o loading do relatório parcial
+    // Novo estado para o loading do relatório parcial
     const [isReportLoading, setIsReportLoading] = useState(false);
     
+    // ✨ ALTERAÇÃO AQUI: Removido 'minhasTarefas' do estado inicial
     const [filtros, setFiltros] = useState({
         keyword: '', status: '', equipamentoId: '', localId: '',
-        tipoManutencao: '', minhasTarefas: false, aguardandoVerificacao: false,
+        tipoManutencao: '', aguardandoVerificacao: false,
         dataInicio: '', dataFim: '',
     });
     
@@ -122,7 +122,6 @@ function DashboardPage() {
         { label: 'Cancelada', value: 'CANCELADA' }
     ];
 
-    // ... (fetchData e useEffects permanecem os mesmos) ...
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -133,7 +132,8 @@ function DashboardPage() {
                 tipoManutencao: debouncedFiltros.tipoManutencao,
                 equipamentoId: debouncedFiltros.equipamentoId, 
                 localId: debouncedFiltros.localId,
-                mecanicoId: debouncedFiltros.minhasTarefas ? userId : null,
+                // ✨ ALTERAÇÃO AQUI: Removemos o filtro 'mecanicoId'. Agora busca SEMPRE todas.
+                // mecanicoId: debouncedFiltros.minhasTarefas ? userId : null, <-- REMOVIDO
                 dataInicio: debouncedFiltros.dataInicio,
                 dataFim: debouncedFiltros.dataFim,
             };
@@ -147,7 +147,7 @@ function DashboardPage() {
         } finally {
             setLoading(false);
         }
-    }, [debouncedFiltros, userId]);
+    }, [debouncedFiltros]); // ✨ Dependência 'userId' removida pois não filtramos mais por ele
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -180,19 +180,18 @@ function DashboardPage() {
         }
     }, [fetchData, userId]);
     
-    // ... (handleFilterChange e handleToggleFilter permanecem os mesmos) ...
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         setFiltros(prev => ({ ...prev, [name]: value }));
     };
 
+    // ✨ ALTERAÇÃO AQUI: Simplificado para lidar apenas com 'aguardandoVerificacao'
     const handleToggleFilter = (filterName) => {
         const newFilters = { 
             ...filtros, 
-            minhasTarefas: false, 
-            aguardandoVerificacao: false, 
             [filterName]: !filtros[filterName] 
         };
+        // Se ativou o filtro de verificação, limpa o status genérico para não conflitar
         if (newFilters.aguardandoVerificacao) {
             newFilters.status = '';
         }
@@ -205,17 +204,14 @@ function DashboardPage() {
     const renderDataRelevante = (os) => {
         const dateString = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva ? os.dataInicioPreventiva : os.dataSolicitacao;
         
-        // ✨✅ CORREÇÃO AQUI: Chamando a nova parseSafeDate
         const date = parseSafeDate(dateString);
 
         if (!date) return '—';
         const options = os.tipoManutencao === 'PREVENTIVA' ? { day: '2-digit', month: '2-digit', year: 'numeric' } : { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
         
-        // toLocaleString vai usar o fuso do navegador para exibir a hora correta
         return date.toLocaleString('pt-BR', options);
     };
 
-    // ✨ ALTERAÇÃO AQUI: Renomeado de 'handleExecucaoSubmit' para 'handleFinalizacaoSubmit'
     const handleFinalizacaoSubmit = async (dadosExecucao) => {
         if (!selectedOs) return;
         setActionLoading(true);
@@ -232,19 +228,15 @@ function DashboardPage() {
         }
     };
 
-    // ✨ ALTERAÇÃO AQUI: Nova função para salvar o relatório parcial
     const handleSalvarRelatorio = async (dadosRelatorio, onSuccessCallback) => {
         setIsReportLoading(true);
         try {
-            // Chama a API para criar o acompanhamento
             await criarAcompanhamento(dadosRelatorio);
             alert('Acompanhamento salvo com sucesso!');
             
-            // Chama o callback para limpar os campos no modal
             if (onSuccessCallback) {
                 onSuccessCallback();
             }
-            // Atualiza os dados da dashboard (para mostrar o ícone da prancheta)
             fetchData(); 
         } catch (error) {
             console.error("Erro ao salvar acompanhamento:", error);
@@ -271,21 +263,17 @@ function DashboardPage() {
         }
     };
     
-    // ✨ CORREÇÃO AQUI: Função `renderAcoes` atualizada
     const renderAcoes = (os) => {
         const cargosDeAcao = ['ADMIN', 'LIDER', 'MECANICO'];
         const podeExecutarAcao = cargosDeAcao.some(cargo => userRole.includes(cargo));
         
-        // ✨ CORREÇÃO AQUI: Lógica de permissão de verificação atualizada
-        // Inclui ADMIN, ENCARREGADO, LIDER, ANALISTA_CQ
         const podeVerificar = 
             userRole.includes('ADMIN') || 
             userRole.includes('ENCARREGADO') || 
             userRole.includes('LIDER') || 
             userRole.includes('ANALISTA_CQ');
-        // --- Fim da correção ---
 
-        // ✨ Verifica se a OS tem relatórios parciais. 
+        // Verifica se a OS tem relatórios parciais. 
         const hasAcompanhamentos = os.acompanhamentos && os.acompanhamentos.length > 0;
 
         return (
@@ -309,7 +297,6 @@ function DashboardPage() {
                         </button>
                     )}
                     
-                    {/* ✨ CORREÇÃO AQUI: Usa a nova variável 'podeVerificar' */}
                     {podeVerificar && os.status === 'AGUARDANDO_VERIFICACAO' && (
                         <button title="Verificar OS" className="action-button-circle verificar-btn" onClick={() => { setSelectedOs(os); setIsVerificacaoModalOpen(true); }}>
                             <FaClipboardCheck />
@@ -317,14 +304,13 @@ function DashboardPage() {
                     )}
                 </div>
 
-                {/* ✨ ALTERAÇÃO AQUI: Novo botão de Prancheta/Relatórios */}
                 {hasAcompanhamentos && (
                     <button 
                         title="Ver Relatórios Parciais" 
-                        className="view-button-report" // Usaremos uma classe nova para estilizar
+                        className="view-button-report"
                         onClick={() => {
-                            setOsParaAcompanhamento(os); // Guarda a OS selecionada
-                            setIsAcompanhamentoModalOpen(true); // Abre o novo modal
+                            setOsParaAcompanhamento(os); 
+                            setIsAcompanhamentoModalOpen(true);
                         }}
                     >
                         <FaClipboardList />
@@ -355,7 +341,6 @@ function DashboardPage() {
         return dateB.localeCompare(dateA);
     });
 
-    // ✨ CORREÇÃO AQUI: Lógica do botão de filtro rápido
     const podeVerificarFiltro = 
         userRole.includes('ADMIN') || 
         userRole.includes('ENCARREGADO') || 
@@ -389,9 +374,9 @@ function DashboardPage() {
                         <option value="">Equipamento (Todos)</option>
                         {equipamentos.map(e => (<option key={e.id} value={e.id}>{e.nome}</option>))}
                     </select>
-                    <button className={`filtro-btn-rapido ${filtros.minhasTarefas ? 'ativo' : ''}`} onClick={() => handleToggleFilter('minhasTarefas')}>Minhas Tarefas</button>
                     
-                    {/* ✨ CORREÇÃO AQUI: Usa a nova variável 'podeVerificarFiltro' */}
+                    {/* ✨ ALTERAÇÃO AQUI: Botão 'Minhas Tarefas' REMOVIDO para garantir visão global */}
+                    
                     {podeVerificarFiltro && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
                 </div>
                 <div className="os-list-container">
@@ -424,8 +409,8 @@ function DashboardPage() {
                                                     <td>{getEquipamentoNome(os.equipamentoId)}</td>
                                                     <td>{os.solicitante || 'N/A'}</td>
                                                     <td>{os.liderCienciaNome || 'Pendente'}</td>
-                                                    {/* ✨ ALTERAÇÃO AQUI: Mostra o nome do primeiro executor ou 'Pendente' */}
-                                                    <td>{os.executores && os.executores.length > 0 ? os.executores[0].nome : 'Pendente'}</td>
+                                                    {/* ✨ Ajuste: Usando executadoPorNome padrão do DTO */}
+                                                    <td>{os.executadoPorNome || 'Pendente'}</td>
                                                     <td>{renderAcoes(os)}</td>
                                                 </tr>
                                             ))}
@@ -439,21 +424,19 @@ function DashboardPage() {
                     )}
                 </div>
             </main>
-            {/* Modal de Execução (Existente) */}
+            {/* Modal de Execução */}
             {isExecucaoModalOpen && selectedOs && (
                 <ExecucaoModal 
                     isOpen={isExecucaoModalOpen}
                     onClose={() => setIsExecucaoModalOpen(false)}
-                    // ✨ ALTERAÇÃO AQUI: Passando as props corretas
-                    onFinalizar={handleFinalizacaoSubmit}
+                    onSubmit={handleFinalizacaoSubmit}
                     onSalvarRelatorio={handleSalvarRelatorio}
                     os={selectedOs}
                     actionLoading={actionLoading}
-                    // ✨ ALTERAÇÃO AQUI: Passando o novo estado de loading
                     isReportLoading={isReportLoading}
                 />
             )}
-            {/* Modal de Verificação (Existente) */}
+            {/* Modal de Verificação */}
             {isVerificacaoModalOpen && selectedOs && (
                 <VerificacaoModal
                     isOpen={isVerificacaoModalOpen}
@@ -463,13 +446,12 @@ function DashboardPage() {
                     actionLoading={actionLoading}
                 />
             )}
-            {/* ✨ ALTERAÇÃO AQUI: Renderização do novo Modal de Acompanhamento */}
+            {/* ✨ Modal de Acompanhamento */}
             {isAcompanhamentoModalOpen && osParaAcompanhamento && (
                 <AcompanhamentoModal
                     isOpen={isAcompanhamentoModalOpen}
                     onClose={() => setIsAcompanhamentoModalOpen(false)}
                     osCodigo={osParaAcompanhamento.codigoOs}
-                    // Passa a lista de acompanhamentos que já veio no objeto 'os'
                     acompanhamentos={osParaAcompanhamento.acompanhamentos || []} 
                 />
             )}

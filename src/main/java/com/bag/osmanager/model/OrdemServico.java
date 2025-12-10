@@ -9,10 +9,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-// ✨ CORREÇÃO AQUI: Imports que estavam faltando
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.util.ArrayList;
-// --- Fim da Correção ---
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -95,7 +93,13 @@ public class OrdemServico {
     @OneToMany(mappedBy = "ordemServico", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PecaSubstituida> pecasSubstituidas;
 
-    // Relação ManyToMany com os executores (mecânicos/equipe)
+    // ✅ CORREÇÃO AQUI: Adicionado o campo 'executadoPor' para o executor principal
+    @ManyToOne
+    @JoinColumn(name = "executado_por_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private Funcionario executadoPor;
+
+    // Relação ManyToMany com os executores (para múltiplos mecânicos, se necessário no futuro)
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "os_executores", 
