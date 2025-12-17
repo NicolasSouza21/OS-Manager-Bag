@@ -5,11 +5,8 @@ import com.bag.osmanager.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-<<<<<<< Updated upstream
 import org.springframework.http.HttpMethod;
-=======
 import org.springframework.http.HttpMethod; 
->>>>>>> Stashed changes
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -109,13 +106,12 @@ public class SecurityConfig {
                 // 1. Rotas Públicas da API
                 .requestMatchers("/api/auth/**", "/error").permitAll()
 
-<<<<<<< Updated upstream
                 // 2. Gerenciamento de Funcionários: Apenas ADMIN
                 .requestMatchers("/api/funcionarios/**").hasRole("ADMIN")
 
                 // 3. Verificação de OS: Apenas Encarregado e Admin
                 .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar").hasAnyRole("ADMIN", "ENCARREGADO")
-=======
+
                 // 2a. Gerenciamento de Funcionários (VISUALIZAÇÃO)
                 .requestMatchers(HttpMethod.GET, "/api/funcionarios", "/api/funcionarios/**")
                     .hasAnyRole("ADMIN", "LIDER", "MECANICO", "ENCARREGADO")
@@ -126,18 +122,13 @@ public class SecurityConfig {
                 // 3. Verificação de OS:
                 .requestMatchers(HttpMethod.POST, "/api/ordens-servico/*/verificar")
                     .hasAnyRole("ADMIN", "ENCARREGADO", "LIDER", "ANALISTA_CQ")
->>>>>>> Stashed changes
 
                 // 4. Gerenciamento de OS
                 .requestMatchers("/api/ordens-servico/aprovar/**", "/api/ordens-servico/finalizar/**").hasAnyRole("ADMIN", "LIDER", "ENCARREGADO")
                 .requestMatchers("/api/ordens-servico/cq/**").hasAnyRole("ADMIN", "LIDER", "ENCARREGADO", "ANALISTA_CQ")
 
-<<<<<<< Updated upstream
                 // 5. Gerenciamento de Equipamentos, Locais, Setores, Frequências, Tipos de Serviço e Planos Preventiva
                 // ✨ ALTERAÇÃO AQUI: Permite GET para qualquer autenticado (já estava)
-=======
-                // 5. Gerenciamento de Equipamentos, Locais, etc.
->>>>>>> Stashed changes
                 .requestMatchers(HttpMethod.GET,
                     "/api/equipamentos/**",
                     "/api/locais/**",

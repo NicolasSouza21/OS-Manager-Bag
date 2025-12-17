@@ -19,10 +19,13 @@ public class TipoServico {
     private Long id;
 
     // O nome do serviço. Ex: "Limpeza Externa", "Verificar Nível do Óleo"
-    @Column(nullable = false, unique = true) // O nome do serviço deve ser único
+    // ✨ ALTERAÇÃO AQUI: Adicionado 'length = 1000' para suportar nomes longos como checklists
+    @Column(nullable = false, unique = true, length = 1000) 
     private String nome;
 
     // Uma descrição opcional sobre o que envolve o serviço.
+    // ✨ ALTERAÇÃO AQUI: Adicionado 'columnDefinition = "TEXT"' para suportar descrições ilimitadas
+    @Column(columnDefinition = "TEXT")
     private String descricao;
 
     // ✅ NOVA RELAÇÃO: Um tipo de serviço pode estar associado a muitos equipamentos.

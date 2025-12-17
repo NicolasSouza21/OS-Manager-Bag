@@ -13,7 +13,6 @@ function CriarOsPage() {
     const navigate = useNavigate();
     const [tipoManutencao, setTipoManutencao] = useState('CORRETIVA');
 
-    // ✨ ALTERAÇÃO AQUI: 'turno' foi removido do estado inicial.
     const [formData, setFormData] = useState({
         equipamentoId: '',
         localId: '',
@@ -42,7 +41,25 @@ function CriarOsPage() {
             const [resEquipamentos, resLocais, resFrequencias, resSetores] = await Promise.all([
                 getEquipamentos(), getLocais(), getFrequencias(), getSetores()
             ]);
-            setListaEquipamentos(resEquipamentos.data);
+            
+            // ✨ ALTERAÇÃO AQUI: Processamento Prévio (Pre-processing)
+            // Criamos um campo 'nomeExibicao' fixo para cada item assim que ele chega da API.
+            const equipamentosFormatados = resEquipamentos.data.map(equip => {
+                let sufixo = `(ID: ${equip.id})`; // Padrão se não tiver tag
+                
+                if (equip.tag && String(equip.tag).trim().length > 0) {
+                    sufixo = `- ${equip.tag}`;
+                }
+
+                return {
+                    ...equip, // Mantém todos os dados originais
+                    nomeExibicao: `${equip.nome} ${sufixo}` // Cria o nome composto
+                };
+            });
+
+            console.log("Equipamentos formatados:", equipamentosFormatados); // Debug no console
+
+            setListaEquipamentos(equipamentosFormatados);
             setListaLocais(resLocais.data);
             setListaFrequencias(resFrequencias.data);
             setListaSetores(resSetores.data);
@@ -134,7 +151,6 @@ function CriarOsPage() {
                 solicitante: formData.solicitante,
                 prioridade: formData.prioridade,
                 descricaoProblema: formData.descricaoProblema,
-                // ✨ ALTERAÇÃO AQUI: O campo 'turno' não é mais enviado.
             };
         } else { // PREVENTIVA
             dadosParaApi = {
@@ -185,7 +201,12 @@ function CriarOsPage() {
                             <label htmlFor="equipamento">EQUIPAMENTO:</label>
                             <select id="equipamento" name="equipamentoId" value={formData.equipamentoId} onChange={handleInputChange} required>
                                 <option value="" disabled>Selecione...</option>
-                                {listaEquipamentos.map((equip) => (<option key={equip.id} value={equip.id}>{equip.nome}</option>))}
+                                {/* ✨ ALTERAÇÃO AQUI: Agora usamos apenas o campo pré-calculado 'nomeExibicao' */}
+                                {listaEquipamentos.map((equip) => (
+                                    <option key={equip.id} value={equip.id}>
+                                        {equip.nomeExibicao}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <div className="input-group">
@@ -234,7 +255,6 @@ function CriarOsPage() {
                                     <label>SOLICITANTE:</label>
                                     <input type="text" name="solicitante" value={formData.solicitante} disabled />
                                 </div>
-                                {/* ✨ ALTERAÇÃO AQUI: Campo de turno foi completamente REMOVIDO do formulário */}
                             </div>
                         </>
                     )}
@@ -281,4 +301,4 @@ function CriarOsPage() {
     );
 }
 
-export default CriarOsPage; 
+export default CriarOsPage;

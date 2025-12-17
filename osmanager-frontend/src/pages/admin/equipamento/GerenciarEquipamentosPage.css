@@ -283,6 +283,95 @@ body {
 .historico-table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
 /* ============================================== */
+/* ESTILOS DO MODAL ASSOCIAR SERVIÇOS (NOVO)      */
+/* ============================================== */
+
+/* Estilo para a caixa branca do modal */
+.modal-content.associar-servicos-modal {
+    background: var(--fundo-card);
+    border-radius: var(--raio-borda);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    /* Limita o tamanho e a altura */
+    width: 90%;
+    max-width: 650px;
+    max-height: 80vh; /* Máximo de 80% da altura da tela */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Importante para o header e footer ficarem fixos */
+}
+
+/* Área central onde fica a lista - habilita o scroll */
+.modal-content.associar-servicos-modal .modal-body {
+    padding: 1.5rem;
+    overflow-y: auto; /* Scroll apenas aqui dentro */
+    flex-grow: 1;
+}
+
+/* Container da lista de checkboxes */
+.lista-servicos-modal {
+    display: grid;
+    /* Cria colunas automáticas com mínimo de 250px cada */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Cada item (checkbox + label) */
+.servico-item-modal {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.8rem;
+    transition: background-color 0.2s;
+}
+
+.servico-item-modal:hover {
+    background-color: #e2e6ea;
+    border-color: #ced4da;
+}
+
+.servico-item-modal label {
+    display: flex;
+    align-items: center; /* Alinha checkbox e texto verticalmente */
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--cor-texto-principal);
+    line-height: 1.2;
+}
+
+.servico-item-modal input[type="checkbox"] {
+    width: 1.1em;
+    height: 1.1em;
+    cursor: pointer;
+}
+
+/* Rodapé do modal (botão Fechar) */
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--cor-borda);
+    background-color: var(--fundo-pagina);
+    text-align: right;
+    flex-shrink: 0; /* Impede que o footer encolha */
+}
+
+/* Scrollbar personalizada para o modal */
+.modal-content.associar-servicos-modal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+.modal-content.associar-servicos-modal .modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.modal-content.associar-servicos-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+.modal-content.associar-servicos-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
+}
+
+
+/* ============================================== */
 /* ESTILOS PARA IMPRESSÃO DO MODAL HISTÓRICO      */
 /* ============================================== */
 /* ... (Regras @media print permanecem as mesmas) ... */

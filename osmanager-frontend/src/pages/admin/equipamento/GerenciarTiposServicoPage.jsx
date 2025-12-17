@@ -62,7 +62,9 @@ function GerenciarTiposServicoPage() {
             setNovoServico({ nome: '', descricao: '', equipamentoIds: new Set() });
             carregarDadosIniciais();
         } catch (err) {
-            setMensagem({ tipo: 'erro', texto: 'Erro ao cadastrar serviço.' });
+            // ✨ ALTERAÇÃO AQUI: Agora extraímos a mensagem do erro vinda do Backend
+            const errorMsg = err.response?.data?.message || 'Erro ao cadastrar serviço.';
+            setMensagem({ tipo: 'erro', texto: errorMsg });
         }
     };
 
@@ -73,7 +75,11 @@ function GerenciarTiposServicoPage() {
                     setMensagem({ tipo: 'sucesso', texto: 'Serviço excluído!' });
                     carregarDadosIniciais();
                 })
-                .catch(() => setMensagem({ tipo: 'erro', texto: 'Erro ao excluir.' }));
+                .catch((err) => {
+                    // ✨ ALTERAÇÃO AQUI: Também melhoramos a mensagem de erro na exclusão
+                    const errorMsg = err.response?.data?.message || 'Erro ao excluir.';
+                    setMensagem({ tipo: 'erro', texto: errorMsg });
+                });
         }
     };
 
@@ -99,6 +105,7 @@ function GerenciarTiposServicoPage() {
             setEditandoId(null);
             carregarDadosIniciais();
         } catch (err) {
+            // ✨ ALTERAÇÃO AQUI: Garante que a mensagem do backend seja exibida
             setMensagem({ tipo: 'erro', texto: err.response?.data?.message || 'Erro ao atualizar o serviço.' });
         }
     };

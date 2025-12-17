@@ -1,8 +1,8 @@
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.TipoServicoDTO;
-// ✨ ALTERAÇÃO AQUI: Import DataIntegrityException removido pois não será mais lançado daqui
-// import com.bag.osmanager.exception.DataIntegrityException;
+// ✨ ALTERAÇÃO: Import para exceção personalizada
+import com.bag.osmanager.exception.DataIntegrityException;
 import com.bag.osmanager.exception.ResourceNotFoundException;
 import com.bag.osmanager.model.Equipamento;
 import com.bag.osmanager.model.TipoServico;
@@ -10,6 +10,8 @@ import com.bag.osmanager.repository.EquipamentoRepository;
 import com.bag.osmanager.repository.TipoServicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+// ✨ ALTERAÇÃO: Import para exceção do banco
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.hibernate.Hibernate;
@@ -34,29 +36,39 @@ public class TipoServicoService {
 
     @Transactional
     public TipoServicoDTO criar(TipoServicoDTO dto) {
-        TipoServico tipoServico = new TipoServico();
-        BeanUtils.copyProperties(dto, tipoServico, "equipamentoIds");
-        // Salva o tipoServico primeiro para ter um ID
-        TipoServico salvo = tipoServicoRepository.save(tipoServico);
+        // ✨ ALTERAÇÃO AQUI: Bloco try-catch para capturar erros de banco de dados
+        try {
+            TipoServico tipoServico = new TipoServico();
+            BeanUtils.copyProperties(dto, tipoServico, "equipamentoIds");
+            // Salva o tipoServico primeiro para ter um ID
+            TipoServico salvo = tipoServicoRepository.save(tipoServico);
 
-        if (dto.getEquipamentoIds() != null && !dto.getEquipamentoIds().isEmpty()) {
-            // Busca os equipamentos que serão associados
-            List<Equipamento> equipamentosParaAssociar = equipamentoRepository.findAllById(dto.getEquipamentoIds());
-            for (Equipamento equip : equipamentosParaAssociar) {
-                if (equip.getServicosDisponiveis() == null) {
-                    equip.setServicosDisponiveis(new HashSet<>());
+            if (dto.getEquipamentoIds() != null && !dto.getEquipamentoIds().isEmpty()) {
+                // Busca os equipamentos que serão associados
+                List<Equipamento> equipamentosParaAssociar = equipamentoRepository.findAllById(dto.getEquipamentoIds());
+                for (Equipamento equip : equipamentosParaAssociar) {
+                    if (equip.getServicosDisponiveis() == null) {
+                        equip.setServicosDisponiveis(new HashSet<>());
+                    }
+                    // Adiciona o serviço *salvo* (com ID) à coleção do equipamento
+                    equip.getServicosDisponiveis().add(salvo);
+                    // Salva o equipamento para persistir a associação na tabela de junção
+                    equipamentoRepository.save(equip);
                 }
-                // Adiciona o serviço *salvo* (com ID) à coleção do equipamento
-                equip.getServicosDisponiveis().add(salvo);
-                // Salva o equipamento para persistir a associação na tabela de junção
-                equipamentoRepository.save(equip);
+                // Atualiza a referência na entidade TipoServico (opcional, dependendo do cascade e fetch)
+                // É mais seguro buscar novamente ou atualizar manualmente a coleção aqui se necessário
+                 salvo.setEquipamentos(new HashSet<>(equipamentosParaAssociar)); // Atualiza a entidade salva
             }
-            // Atualiza a referência na entidade TipoServico (opcional, dependendo do cascade e fetch)
-            // É mais seguro buscar novamente ou atualizar manualmente a coleção aqui se necessário
-             salvo.setEquipamentos(new HashSet<>(equipamentosParaAssociar)); // Atualiza a entidade salva
-        }
 
-        return converteParaDTO(salvo); // Retorna o DTO com base na entidade final
+            return converteParaDTO(salvo); // Retorna o DTO com base na entidade final
+        } catch (DataIntegrityViolationException e) {
+            // ✨ ALTERAÇÃO AQUI: Imprime o erro REAL no console do servidor para você saber se é Duplicidade ou Tamanho
+            System.err.println("### ERRO AO SALVAR SERVIÇO ###");
+            System.err.println("Causa raiz: " + e.getMostSpecificCause().getMessage());
+            
+            // Relança como uma exceção de negócio que retorna 409 Conflict para o frontend
+            throw new DataIntegrityException("Não foi possível cadastrar o serviço. Verifique se o nome já existe ou se o texto é muito longo.");
+        }
     }
 
     @Transactional
@@ -64,16 +76,25 @@ public class TipoServicoService {
         TipoServico servico = tipoServicoRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Tipo de serviço não encontrado com o ID: " + id));
 
-        BeanUtils.copyProperties(dto, servico, "id", "equipamentoIds");
+        // ✨ ALTERAÇÃO AQUI: Proteção também na atualização
+        try {
+            BeanUtils.copyProperties(dto, servico, "id", "equipamentoIds");
 
-        // ✨ ALTERAÇÃO AQUI: Lógica para atualizar associações (semelhante ao 'criar')
-        // Remove associações antigas não presentes no DTO atualizado (se necessário - depende do requisito)
-        // Adiciona novas associações presentes no DTO atualizado (se necessário - depende do requisito)
-        // Por simplicidade, este exemplo atualiza apenas nome/descrição.
-        // Se precisar atualizar associações, a lógica seria mais complexa aqui.
+            // ✨ ALTERAÇÃO AQUI: Lógica para atualizar associações (semelhante ao 'criar')
+            // Remove associações antigas não presentes no DTO atualizado (se necessário - depende do requisito)
+            // Adiciona novas associações presentes no DTO atualizado (se necessário - depende do requisito)
+            // Por simplicidade, este exemplo atualiza apenas nome/descrição.
+            // Se precisar atualizar associações, a lógica seria mais complexa aqui.
 
-        TipoServico servicoAtualizado = tipoServicoRepository.save(servico);
-        return converteParaDTO(servicoAtualizado);
+            TipoServico servicoAtualizado = tipoServicoRepository.save(servico);
+            return converteParaDTO(servicoAtualizado);
+        } catch (DataIntegrityViolationException e) {
+            // Log do erro real
+            System.err.println("### ERRO AO ATUALIZAR SERVIÇO ###");
+            System.err.println("Causa raiz: " + e.getMostSpecificCause().getMessage());
+            
+            throw new DataIntegrityException("Erro ao atualizar serviço. O nome informado pode já estar em uso ou é muito longo.");
+        }
     }
 
     // ✨ ALTERAÇÃO AQUI: Método deletar modificado para remover associações
