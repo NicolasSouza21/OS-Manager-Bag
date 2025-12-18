@@ -10,19 +10,16 @@ import {
     iniciarExecucao,
     registrarExecucao,
     verificarOS,
-    // ✨ Importa a nova função 'criarAcompanhamento'
-    criarAcompanhamento
+    criarAcompanhamento 
 } from '../services/apiService';
 import ExecucaoModal from '../components/ExecucaoModal';
 import VerificacaoModal from '../components/VerificacaoModal';
-// ✨ Importa o novo modal de acompanhamento
 import AcompanhamentoModal from '../components/AcompanhamentoModal'; 
 import { jwtDecode } from 'jwt-decode';
-// ✨ Importa o ícone da prancheta (FaClipboardList)
 import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck, FaClipboardList } from 'react-icons/fa';
 import './DashBoardPage.css';
 
-// Hook useDebounce (inalterado)
+// Hook useDebounce
 function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
@@ -36,11 +33,9 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-// ✨ Função de data simplificada
+// Função de data segura
 const parseSafeDate = (dateString) => {
     if (!dateString) return null;
-    // Apenas cria o objeto Date. O 'toLocaleString' usado depois
-    // vai lidar automaticamente com o fuso horário do navegador.
     return new Date(dateString);
 };
 
@@ -93,7 +88,10 @@ function DashboardPage() {
     const [selectedOs, setSelectedOs] = useState(null); 
     const [userRole, setUserRole] = useState('');
     const [userId, setUserId] = useState(null);
+    
+    // Estados de Loading
     const [actionLoading, setActionLoading] = useState(false);
+    const [isReportLoading, setIsReportLoading] = useState(false); // ✅ Estado necessário para o modal novo
     
     // Estados dos Modais
     const [isExecucaoModalOpen, setIsExecucaoModalOpen] = useState(false);
@@ -101,10 +99,6 @@ function DashboardPage() {
     const [isAcompanhamentoModalOpen, setIsAcompanhamentoModalOpen] = useState(false);
     const [osParaAcompanhamento, setOsParaAcompanhamento] = useState(null);
     
-    // Novo estado para o loading do relatório parcial
-    const [isReportLoading, setIsReportLoading] = useState(false);
-    
-    // ✨ ALTERAÇÃO AQUI: Removido 'minhasTarefas' do estado inicial
     const [filtros, setFiltros] = useState({
         keyword: '', status: '', equipamentoId: '', localId: '',
         tipoManutencao: '', aguardandoVerificacao: false,
@@ -132,8 +126,6 @@ function DashboardPage() {
                 tipoManutencao: debouncedFiltros.tipoManutencao,
                 equipamentoId: debouncedFiltros.equipamentoId, 
                 localId: debouncedFiltros.localId,
-                // ✨ ALTERAÇÃO AQUI: Removemos o filtro 'mecanicoId'. Agora busca SEMPRE todas.
-                // mecanicoId: debouncedFiltros.minhasTarefas ? userId : null, <-- REMOVIDO
                 dataInicio: debouncedFiltros.dataInicio,
                 dataFim: debouncedFiltros.dataFim,
             };
@@ -147,7 +139,7 @@ function DashboardPage() {
         } finally {
             setLoading(false);
         }
-    }, [debouncedFiltros]); // ✨ Dependência 'userId' removida pois não filtramos mais por ele
+    }, [debouncedFiltros]);
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -185,13 +177,11 @@ function DashboardPage() {
         setFiltros(prev => ({ ...prev, [name]: value }));
     };
 
-    // ✨ ALTERAÇÃO AQUI: Simplificado para lidar apenas com 'aguardandoVerificacao'
     const handleToggleFilter = (filterName) => {
         const newFilters = { 
             ...filtros, 
             [filterName]: !filtros[filterName] 
         };
-        // Se ativou o filtro de verificação, limpa o status genérico para não conflitar
         if (newFilters.aguardandoVerificacao) {
             newFilters.status = '';
         }
@@ -203,15 +193,15 @@ function DashboardPage() {
     
     const renderDataRelevante = (os) => {
         const dateString = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva ? os.dataInicioPreventiva : os.dataSolicitacao;
-        
         const date = parseSafeDate(dateString);
-
         if (!date) return '—';
         const options = os.tipoManutencao === 'PREVENTIVA' ? { day: '2-digit', month: '2-digit', year: 'numeric' } : { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-        
         return date.toLocaleString('pt-BR', options);
     };
 
+    // --- AÇÕES DOS MODAIS ---
+
+    // 1. FINALIZAR OS
     const handleFinalizacaoSubmit = async (dadosExecucao) => {
         if (!selectedOs) return;
         setActionLoading(true);
@@ -228,11 +218,15 @@ function DashboardPage() {
         }
     };
 
+    // 2. SALVAR RELATÓRIO PARCIAL / PAUSA
     const handleSalvarRelatorio = async (dadosRelatorio, onSuccessCallback) => {
         setIsReportLoading(true);
         try {
+            // Usa a função de criar acompanhamento (ou registrarExecucao parcial, dependendo do backend)
+            // Aqui mantemos a lógica de criarAcompanhamento que salva histórico
             await criarAcompanhamento(dadosRelatorio);
-            alert('Acompanhamento salvo com sucesso!');
+            
+            alert('Acompanhamento/Relatório salvo com sucesso!');
             
             if (onSuccessCallback) {
                 onSuccessCallback();
@@ -246,7 +240,7 @@ function DashboardPage() {
         }
     };
 
-
+    // 3. VERIFICAR OS
     const handleVerificacaoSubmit = async (dadosVerificacao) => {
         if (!selectedOs) return;
         setActionLoading(true);
@@ -273,7 +267,6 @@ function DashboardPage() {
             userRole.includes('LIDER') || 
             userRole.includes('ANALISTA_CQ');
 
-        // Verifica se a OS tem relatórios parciais. 
         const hasAcompanhamentos = os.acompanhamentos && os.acompanhamentos.length > 0;
 
         return (
@@ -375,8 +368,6 @@ function DashboardPage() {
                         {equipamentos.map(e => (<option key={e.id} value={e.id}>{e.nome}</option>))}
                     </select>
                     
-                    {/* ✨ ALTERAÇÃO AQUI: Botão 'Minhas Tarefas' REMOVIDO para garantir visão global */}
-                    
                     {podeVerificarFiltro && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
                 </div>
                 <div className="os-list-container">
@@ -409,7 +400,6 @@ function DashboardPage() {
                                                     <td>{getEquipamentoNome(os.equipamentoId)}</td>
                                                     <td>{os.solicitante || 'N/A'}</td>
                                                     <td>{os.liderCienciaNome || 'Pendente'}</td>
-                                                    {/* ✨ Ajuste: Usando executadoPorNome padrão do DTO */}
                                                     <td>{os.executadoPorNome || 'Pendente'}</td>
                                                     <td>{renderAcoes(os)}</td>
                                                 </tr>
@@ -424,18 +414,21 @@ function DashboardPage() {
                     )}
                 </div>
             </main>
-            {/* Modal de Execução */}
+            
+            {/* Modal de Execução - ATUALIZADO PARA SUPORTAR RASCUNHOS */}
             {isExecucaoModalOpen && selectedOs && (
                 <ExecucaoModal 
                     isOpen={isExecucaoModalOpen}
                     onClose={() => setIsExecucaoModalOpen(false)}
-                    onSubmit={handleFinalizacaoSubmit}
+                    // ✨ ALTERAÇÃO: Passamos onFinalizar e onSalvarRelatorio separadamente
+                    onFinalizar={handleFinalizacaoSubmit}
                     onSalvarRelatorio={handleSalvarRelatorio}
                     os={selectedOs}
                     actionLoading={actionLoading}
                     isReportLoading={isReportLoading}
                 />
             )}
+
             {/* Modal de Verificação */}
             {isVerificacaoModalOpen && selectedOs && (
                 <VerificacaoModal
@@ -446,7 +439,8 @@ function DashboardPage() {
                     actionLoading={actionLoading}
                 />
             )}
-            {/* ✨ Modal de Acompanhamento */}
+
+            {/* Modal de Acompanhamento (Visualizar Histórico) */}
             {isAcompanhamentoModalOpen && osParaAcompanhamento && (
                 <AcompanhamentoModal
                     isOpen={isAcompanhamentoModalOpen}
