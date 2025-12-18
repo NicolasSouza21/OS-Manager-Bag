@@ -9,15 +9,17 @@ import {
     registrarCiencia, 
     iniciarExecucao,
     registrarExecucao,
-    verificarOS
+    verificarOS,
+    criarAcompanhamento 
 } from '../services/apiService';
 import ExecucaoModal from '../components/ExecucaoModal';
 import VerificacaoModal from '../components/VerificacaoModal';
+import AcompanhamentoModal from '../components/AcompanhamentoModal'; 
 import { jwtDecode } from 'jwt-decode';
-import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck } from 'react-icons/fa';
+import { FaSearch, FaCheck, FaTools, FaPlay, FaClipboardCheck, FaClipboardList } from 'react-icons/fa';
 import './DashBoardPage.css';
 
-// Hook useDebounce (inalterado)
+// Hook useDebounce
 function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
@@ -31,12 +33,10 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-// Funções de data (inalteradas)
+// Função de data segura
 const parseSafeDate = (dateString) => {
     if (!dateString) return null;
-    const date = new Date(dateString);
-    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() + userTimezoneOffset);
+    return new Date(dateString);
 };
 
 const groupOrdensByDate = (ordens) => {
@@ -51,7 +51,9 @@ const groupOrdensByDate = (ordens) => {
         const dateString = os.tipoManutencao === 'PREVENTIVA' && os.dataInicioPreventiva 
             ? os.dataInicioPreventiva 
             : os.dataSolicitacao;
-        const osDate = parseSafeDate(dateString);
+        
+        const osDate = parseSafeDate(dateString); 
+        
         if (!osDate) {
             if (!groups['Sem Data']) { groups['Sem Data'] = []; }
             groups['Sem Data'].push(os);
@@ -83,22 +85,28 @@ function DashboardPage() {
     const [equipamentos, setEquipamentos] = useState([]);
     const [locais, setLocais] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedOs, setSelectedOs] = useState(null);
+    const [selectedOs, setSelectedOs] = useState(null); 
     const [userRole, setUserRole] = useState('');
     const [userId, setUserId] = useState(null);
+    
+    // Estados de Loading
     const [actionLoading, setActionLoading] = useState(false);
+    const [isReportLoading, setIsReportLoading] = useState(false); // ✅ Estado necessário para o modal novo
+    
+    // Estados dos Modais
     const [isExecucaoModalOpen, setIsExecucaoModalOpen] = useState(false);
     const [isVerificacaoModalOpen, setIsVerificacaoModalOpen] = useState(false);
+    const [isAcompanhamentoModalOpen, setIsAcompanhamentoModalOpen] = useState(false);
+    const [osParaAcompanhamento, setOsParaAcompanhamento] = useState(null);
     
     const [filtros, setFiltros] = useState({
         keyword: '', status: '', equipamentoId: '', localId: '',
-        tipoManutencao: '', minhasTarefas: false, aguardandoVerificacao: false,
+        tipoManutencao: '', aguardandoVerificacao: false,
         dataInicio: '', dataFim: '',
     });
     
     const debouncedFiltros = useDebounce(filtros, 500);
 
-    // ✨ ALTERAÇÃO AQUI: 'CIENTE' foi trocado por 'PENDENTE' para alinhar com o backend.
     const statusOptions = [
         { label: 'Abertas', value: 'ABERTA' }, 
         { label: 'Pendente', value: 'PENDENTE' },
@@ -118,7 +126,6 @@ function DashboardPage() {
                 tipoManutencao: debouncedFiltros.tipoManutencao,
                 equipamentoId: debouncedFiltros.equipamentoId, 
                 localId: debouncedFiltros.localId,
-                mecanicoId: debouncedFiltros.minhasTarefas ? userId : null,
                 dataInicio: debouncedFiltros.dataInicio,
                 dataFim: debouncedFiltros.dataFim,
             };
@@ -132,7 +139,7 @@ function DashboardPage() {
         } finally {
             setLoading(false);
         }
-    }, [debouncedFiltros, userId]);
+    }, [debouncedFiltros]);
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -173,8 +180,6 @@ function DashboardPage() {
     const handleToggleFilter = (filterName) => {
         const newFilters = { 
             ...filtros, 
-            minhasTarefas: false, 
-            aguardandoVerificacao: false, 
             [filterName]: !filtros[filterName] 
         };
         if (newFilters.aguardandoVerificacao) {
@@ -194,7 +199,10 @@ function DashboardPage() {
         return date.toLocaleString('pt-BR', options);
     };
 
-    const handleExecucaoSubmit = async (dadosExecucao) => {
+    // --- AÇÕES DOS MODAIS ---
+
+    // 1. FINALIZAR OS
+    const handleFinalizacaoSubmit = async (dadosExecucao) => {
         if (!selectedOs) return;
         setActionLoading(true);
         try {
@@ -210,6 +218,29 @@ function DashboardPage() {
         }
     };
 
+    // 2. SALVAR RELATÓRIO PARCIAL / PAUSA
+    const handleSalvarRelatorio = async (dadosRelatorio, onSuccessCallback) => {
+        setIsReportLoading(true);
+        try {
+            // Usa a função de criar acompanhamento (ou registrarExecucao parcial, dependendo do backend)
+            // Aqui mantemos a lógica de criarAcompanhamento que salva histórico
+            await criarAcompanhamento(dadosRelatorio);
+            
+            alert('Acompanhamento/Relatório salvo com sucesso!');
+            
+            if (onSuccessCallback) {
+                onSuccessCallback();
+            }
+            fetchData(); 
+        } catch (error) {
+            console.error("Erro ao salvar acompanhamento:", error);
+            alert(error?.response?.data?.message || "Falha ao salvar o acompanhamento.");
+        } finally {
+            setIsReportLoading(false);
+        }
+    };
+
+    // 3. VERIFICAR OS
     const handleVerificacaoSubmit = async (dadosVerificacao) => {
         if (!selectedOs) return;
         setActionLoading(true);
@@ -229,7 +260,14 @@ function DashboardPage() {
     const renderAcoes = (os) => {
         const cargosDeAcao = ['ADMIN', 'LIDER', 'MECANICO'];
         const podeExecutarAcao = cargosDeAcao.some(cargo => userRole.includes(cargo));
-        const isEncarregado = userRole.includes('ENCARREGADO');
+        
+        const podeVerificar = 
+            userRole.includes('ADMIN') || 
+            userRole.includes('ENCARREGADO') || 
+            userRole.includes('LIDER') || 
+            userRole.includes('ANALISTA_CQ');
+
+        const hasAcompanhamentos = os.acompanhamentos && os.acompanhamentos.length > 0;
 
         return (
             <div className="actions-cell">
@@ -240,7 +278,6 @@ function DashboardPage() {
                         </button>
                     )}
 
-                    {/* ✨ ALTERAÇÃO AQUI: Botão "Iniciar Execução" agora verifica pelo status 'PENDENTE' */}
                     {podeExecutarAcao && os.status === 'PENDENTE' && (
                         <button title="Iniciar Execução" className="action-button-circle iniciar-btn" onClick={() => iniciarExecucao(os.id).then(fetchData)}>
                             <FaPlay />
@@ -253,12 +290,26 @@ function DashboardPage() {
                         </button>
                     )}
                     
-                    {(isEncarregado || userRole.includes('ADMIN')) && os.status === 'AGUARDANDO_VERIFICACAO' && (
+                    {podeVerificar && os.status === 'AGUARDANDO_VERIFICACAO' && (
                         <button title="Verificar OS" className="action-button-circle verificar-btn" onClick={() => { setSelectedOs(os); setIsVerificacaoModalOpen(true); }}>
                             <FaClipboardCheck />
                         </button>
                     )}
                 </div>
+
+                {hasAcompanhamentos && (
+                    <button 
+                        title="Ver Relatórios Parciais" 
+                        className="view-button-report"
+                        onClick={() => {
+                            setOsParaAcompanhamento(os); 
+                            setIsAcompanhamentoModalOpen(true);
+                        }}
+                    >
+                        <FaClipboardList />
+                    </button>
+                )}
+
                 <button title="Visualizar Detalhes" className="view-button" onClick={() => navigate(`/os/${os.id}`)}>
                     <FaSearch />
                 </button>
@@ -282,6 +333,12 @@ function DashboardPage() {
         const dateB = b.split('/').reverse().join('-');
         return dateB.localeCompare(dateA);
     });
+
+    const podeVerificarFiltro = 
+        userRole.includes('ADMIN') || 
+        userRole.includes('ENCARREGADO') || 
+        userRole.includes('LIDER') || 
+        userRole.includes('ANALISTA_CQ');
 
     return (
         <div className="dashboard-container">
@@ -310,8 +367,8 @@ function DashboardPage() {
                         <option value="">Equipamento (Todos)</option>
                         {equipamentos.map(e => (<option key={e.id} value={e.id}>{e.nome}</option>))}
                     </select>
-                    <button className={`filtro-btn-rapido ${filtros.minhasTarefas ? 'ativo' : ''}`} onClick={() => handleToggleFilter('minhasTarefas')}>Minhas Tarefas</button>
-                    {userRole.includes('ENCARREGADO') && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
+                    
+                    {podeVerificarFiltro && (<button className={`filtro-btn-rapido ${filtros.aguardandoVerificacao ? 'ativo' : ''}`} onClick={() => handleToggleFilter('aguardandoVerificacao')}>Aguardando Minha Verificação</button>)}
                 </div>
                 <div className="os-list-container">
                     {ordens.length > 0 ? (
@@ -357,15 +414,22 @@ function DashboardPage() {
                     )}
                 </div>
             </main>
+            
+            {/* Modal de Execução - ATUALIZADO PARA SUPORTAR RASCUNHOS */}
             {isExecucaoModalOpen && selectedOs && (
                 <ExecucaoModal 
                     isOpen={isExecucaoModalOpen}
                     onClose={() => setIsExecucaoModalOpen(false)}
-                    onSubmit={handleExecucaoSubmit}
+                    // ✨ ALTERAÇÃO: Passamos onFinalizar e onSalvarRelatorio separadamente
+                    onFinalizar={handleFinalizacaoSubmit}
+                    onSalvarRelatorio={handleSalvarRelatorio}
                     os={selectedOs}
                     actionLoading={actionLoading}
+                    isReportLoading={isReportLoading}
                 />
             )}
+
+            {/* Modal de Verificação */}
             {isVerificacaoModalOpen && selectedOs && (
                 <VerificacaoModal
                     isOpen={isVerificacaoModalOpen}
@@ -373,6 +437,16 @@ function DashboardPage() {
                     onSubmit={handleVerificacaoSubmit}
                     os={{...selectedOs, equipamentoNome: getEquipamentoNome(selectedOs.equipamentoId)}}
                     actionLoading={actionLoading}
+                />
+            )}
+
+            {/* Modal de Acompanhamento (Visualizar Histórico) */}
+            {isAcompanhamentoModalOpen && osParaAcompanhamento && (
+                <AcompanhamentoModal
+                    isOpen={isAcompanhamentoModalOpen}
+                    onClose={() => setIsAcompanhamentoModalOpen(false)}
+                    osCodigo={osParaAcompanhamento.codigoOs}
+                    acompanhamentos={osParaAcompanhamento.acompanhamentos || []} 
                 />
             )}
         </div>

@@ -1,30 +1,32 @@
+// Local: src/main/java/com/bag/osmanager/service/PlanoPreventivaService.java
 package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.FrequenciaDTO;
 import com.bag.osmanager.dto.PlanoPreventivaDTO;
-import com.bag.osmanager.dto.ProgramacaoManutencaoDTO; // ✨ ALTERAÇÃO AQUI
+import com.bag.osmanager.dto.ProgramacaoManutencaoDTO; 
 import com.bag.osmanager.exception.ResourceNotFoundException;
 import com.bag.osmanager.model.Equipamento;
 import com.bag.osmanager.model.Frequencia;
-import com.bag.osmanager.model.OrdemServico; // ✨ ALTERAÇÃO AQUI
+import com.bag.osmanager.model.Funcionario; // ✨ ALTERAÇÃO AQUI: Import adicionado
+import com.bag.osmanager.model.OrdemServico; 
 import com.bag.osmanager.model.PlanoPreventiva;
 import com.bag.osmanager.model.TipoServico;
-import com.bag.osmanager.model.enums.StatusOrdemServico; // ✨ ALTERAÇÃO AQUI
+import com.bag.osmanager.model.enums.StatusOrdemServico; 
 import com.bag.osmanager.repository.EquipamentoRepository;
 import com.bag.osmanager.repository.FrequenciaRepository;
-import com.bag.osmanager.repository.OrdemServicoRepository; // ✨ ALTERAÇÃO AQUI
+import com.bag.osmanager.repository.OrdemServicoRepository; 
 import com.bag.osmanager.repository.PlanoPreventivaRepository;
 import com.bag.osmanager.repository.TipoServicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.domain.Sort; // ✨ ALTERAÇÃO AQUI
+import org.springframework.data.domain.Sort; 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import java.util.Comparator; // ✨ ALTERAÇÃO AQUI
+import java.util.Comparator; 
 import java.util.List;
-import java.util.Optional; // ✨ ALTERAÇÃO AQUI
+import java.util.Optional; 
 import java.util.stream.Collectors;
 
 @Service
@@ -35,9 +37,8 @@ public class PlanoPreventivaService {
     private final EquipamentoRepository equipamentoRepository;
     private final TipoServicoRepository tipoServicoRepository;
     private final FrequenciaRepository frequenciaRepository;
-    private final OrdemServicoRepository ordemServicoRepository; // ✨ ALTERAÇÃO AQUI: Repositório injetado
+    private final OrdemServicoRepository ordemServicoRepository; 
 
-    // ✨ ALTERAÇÃO AQUI: Novo método para buscar a programação de manutenção
     @Transactional(readOnly = true)
     public List<ProgramacaoManutencaoDTO> getProgramacaoManutencao(Long equipamentoId) {
         List<PlanoPreventiva> planos = planoRepository.findByEquipamentoId(equipamentoId);
@@ -45,7 +46,12 @@ public class PlanoPreventivaService {
         return planos.stream().map(plano -> {
             String servico = plano.getTipoServico() != null ? plano.getTipoServico().getNome() : "N/A";
             String frequencia = plano.getFrequencia() != null ? plano.getFrequencia().getNome() : "N/A";
+            String tempoPadrao = plano.getTempoPadrao(); // Pode ser nulo
+            
+            // ✨ ALTERAÇÃO AQUI: Busca o manutentor do PLANO, não do histórico
+            String manutentor = plano.getManutentor() != null ? plano.getManutentor() : "N/A";
 
+            /* LÓGICA ANTIGA (REMOVIDA)
             // Busca a última OS concluída para este serviço e equipamento
             Optional<OrdemServico> ultimaOsConcluida = ordemServicoRepository
                     .findAll((root, query, cb) -> {
@@ -59,10 +65,19 @@ public class PlanoPreventivaService {
                     .stream().findFirst();
 
             String ultimoManutentor = ultimaOsConcluida
-                    .map(os -> os.getExecutadoPor() != null ? os.getExecutadoPor().getNome() : "Não informado")
+                    .map(os -> {
+                        if (os.getExecutores() == null || os.getExecutores().isEmpty()) {
+                            return "Não informado";
+                        }
+                        return os.getExecutores().stream()
+                                .map(Funcionario::getNome)
+                                .collect(Collectors.joining(", "));
+                    })
                     .orElse("Nenhuma execução anterior");
-
-            return new ProgramacaoManutencaoDTO(servico, frequencia, ultimoManutentor);
+            */
+            
+            // ✨ ALTERAÇÃO AQUI: Passa o 'manutentor' do plano (não 'ultimoManutentor')
+            return new ProgramacaoManutencaoDTO(servico, frequencia, manutentor, tempoPadrao);
         }).collect(Collectors.toList());
     }
 
@@ -89,6 +104,10 @@ public class PlanoPreventivaService {
         plano.setTipoServico(tipoServico);
         plano.setFrequencia(frequencia);
         plano.setToleranciaDias(dto.getToleranciaDias());
+        plano.setTempoPadrao(dto.getTempoPadrao());
+        
+        // ✨ ALTERAÇÃO AQUI: Salva o novo campo 'manutentor'
+        plano.setManutentor(dto.getManutentor());
 
         PlanoPreventiva planoSalvo = planoRepository.save(plano);
         return converteParaDTO(planoSalvo);
@@ -108,6 +127,10 @@ public class PlanoPreventivaService {
         plano.setTipoServico(tipoServico);
         plano.setFrequencia(frequencia);
         plano.setToleranciaDias(dto.getToleranciaDias());
+        plano.setTempoPadrao(dto.getTempoPadrao());
+        
+        // ✨ ALTERAÇÃO AQUI: Atualiza o novo campo 'manutentor'
+        plano.setManutentor(dto.getManutentor());
         
         PlanoPreventiva planoAtualizado = planoRepository.save(plano);
         return converteParaDTO(planoAtualizado);
@@ -122,6 +145,8 @@ public class PlanoPreventivaService {
 
     private PlanoPreventivaDTO converteParaDTO(PlanoPreventiva plano) {
         PlanoPreventivaDTO dto = new PlanoPreventivaDTO();
+        
+        // ✨ ALTERAÇÃO AQUI: Copia todos os campos, incluindo 'tempoPadrao' e 'manutentor'
         BeanUtils.copyProperties(plano, dto, "tipoServico", "frequencia");
 
         if (plano.getEquipamento() != null) {

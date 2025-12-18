@@ -1,0 +1,194 @@
+.relatorios-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    background-color: #f4f7fc;
+}
+
+.relatorios-title {
+    text-align: center;
+    color: #334155;
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+}
+
+/* Filtro de data (sem alteração) */
+.relatorio-filtro {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e9ecef;
+    max-width: 400px; 
+    margin: 0 auto 1.5rem auto; 
+}
+
+.relatorio-filtro label {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #4b5563;
+}
+
+.relatorio-filtro input[type="month"] {
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: #f9fafb;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.relatorio-filtro input[type="month"]:focus {
+    outline: none;
+    border-color: #3b82f6; 
+}
+
+.relatorio-filtro input[type="month"]:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+/* --- ✨ ALTERAÇÕES AQUI --- */
+
+/* 1. Grid para o Dashboard (Layout) */
+.relatorios-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); 
+    grid-auto-rows: auto;
+    gap: 1.5rem; 
+}
+
+/* 2. Card base (agora dentro do grid) */
+.relatorio-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+    padding: 2rem;
+    border: 1px solid #e9ecef;
+    margin-top: 0; /* Removido, pois o grid controla o espaço */
+    /* ✨ ALTERAÇÃO AQUI: Adicionado para que os cards de KPI funcionem */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 3. Tamanhos dos Gráficos no Grid */
+.relatorio-card.large {
+    grid-column: 1 / -1; /* Ocupa 2 colunas */
+}
+.relatorio-card.medium {
+    grid-column: span 1; /* Ocupa 1 coluna */
+}
+.relatorio-card.small {
+    grid-column: span 1; /* Ocupa 1 coluna */
+}
+
+/* 4. A CORREÇÃO para o estouro do gráfico */
+.chart-wrapper {
+    position: relative;
+    height: 400px; /* Altura padrão */
+    width: 100%;   /* <-- ✅ CORREÇÃO ADICIONADA */
+    max-width: 100%; /* Garante que não ultrapasse */
+    flex-grow: 1; /* Permite que o wrapper do gráfico cresça */
+}
+
+.relatorio-card.large .chart-wrapper {
+    height: 450px; /* Altura maior para o gráfico principal */
+}
+.relatorio-card.small .chart-wrapper.pie {
+    height: 400px; 
+    max-height: 400px;
+}
+
+
+/* 5. Mensagens de Erro/Loading */
+.relatorio-mensagem {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #6c757d;
+    padding: 3rem;
+    /* Adicionado para ocupar o espaço do grid */
+    grid-column: 1 / -1; 
+}
+
+.relatorio-mensagem.erro {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+/* Mensagem para cards individuais vazios */
+.relatorio-mensagem-small {
+    padding: 2rem;
+    text-align: center;
+    font-size: 1rem;
+    color: #6c757d;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 400px; /* Para manter o alinhamento do grid */
+}
+
+/* --- Responsividade --- */
+@media (max-width: 992px) {
+    .relatorios-grid {
+        grid-template-columns: 1fr; /* Empilha */
+    }
+
+    .relatorio-card.large,
+    .relatorio-card.medium,
+    .relatorio-card.small {
+        grid-column: 1 / -1; /* Todos ocupam 1 coluna */
+    }
+}
+
+/* ================================================= */
+/* --- ✨ ALTERAÇÃO AQUI: NOVOS ESTILOS ABAIXO --- */
+/* ================================================= */
+
+/* 6. Estilos para os Cards de Indicadores (MTTR / MTBF) */
+.relatorio-card.indicator-card {
+    /* Reutiliza o estilo de 'small' mas centraliza o conteúdo */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    /* Define uma altura mínima para ficar bom ao lado do gráfico de pizza */
+    min-height: 200px; 
+    background: linear-gradient(135deg, #005A9C 0%, #004070 100%);
+    color: #ffffff;
+}
+
+/* Sobrescreve o min-height de 400px caso a mensagem de erro apareça */
+.relatorio-mensagem-small.indicator-card-placeholder {
+    min-height: 200px;
+}
+
+.indicator-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    opacity: 0.8;
+}
+
+.indicator-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.indicator-desc {
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+    opacity: 0.7;
+}

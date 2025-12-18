@@ -28,14 +28,22 @@ function LoginPage() {
 
             // ✅ 3. Salva TODAS as informações no localStorage
             localStorage.setItem('authToken', token);
-            localStorage.setItem('userRole', role);
+            localStorage.setItem('userRole', role); // O 'role' vem direto da API (ex: "MECANICO", "ADMIN")
             localStorage.setItem('userName', userName);
-            localStorage.setItem('userId', userId); // <-- A peça final do quebra-cabeça!
+            localStorage.setItem('userId', userId); 
 
             console.log(`Login bem-sucedido! Role: ${role}, Nome: ${userName}, ID: ${userId}`);
             
             alert('Login bem-sucedido! Redirecionando...');
-            navigate('/dashboard');
+
+            // ✨ ALTERAÇÃO AQUI: Redirecionamento com base no cargo
+            // Se o cargo for MECANICO ou LIDER, vai para o painel novo.
+            // Qualquer outro cargo (ADMIN, ENCARREGADO, etc.) vai para o dashboard antigo.
+            if (role === 'MECANICO' || role === 'LIDER') {
+                navigate('/meu-painel');
+            } else {
+                navigate('/dashboard');
+            }
 
         } catch (err) {
             console.error('Erro no login:', err);

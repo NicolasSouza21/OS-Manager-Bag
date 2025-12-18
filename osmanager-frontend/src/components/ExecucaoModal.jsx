@@ -1,3 +1,4 @@
+// Local: osmanager-frontend/src/components/ExecucaoModal.jsx
 import React, { useState, useEffect } from 'react';
 import { listarServicosPorEquipamento } from '../services/apiService';
 import './ExecucaoModal.css';
@@ -10,22 +11,26 @@ const toInputDateTimeFormat = (isoString) => {
     return localDate.toISOString().slice(0, 16);
 };
 
-function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
+function ExecucaoModal({ isOpen, onClose, onFinalizar, onSalvarRelatorio, os, actionLoading, isReportLoading }) {
+    // --- Estados para a FINALIZAÇÃO da OS ---
     const [acaoRealizada, setAcaoRealizada] = useState(os?.acaoRealizada || '');
-    const [pecasSubstituidas, setPecasSubstituidas] = useState(os?.pecasSubstituidas?.length > 0 ? os.pecasSubstituidas : [{ nome: '', quantidade: 1 }]);
+    const [pecasSubstituidas, setPecasSubstituidas] = useState(os?.pecasSubstituidas?.length > 0 ? os.pecasSubstituidas : [{ nomePeca: '', quantidade: 1 }]);
     const [inicio, setInicio] = useState(() => toInputDateTimeFormat(os?.inicio || new Date().toISOString()));
     const [termino, setTermino] = useState(toInputDateTimeFormat(os?.termino || ''));
-
-    // ✨ ALTERAÇÃO AQUI: States iniciam como null para forçar uma escolha
-    const [maquinaParada, setMaquinaParada] = useState(os?.maquinaParada ?? null);
     const [trocaPecas, setTrocaPecas] = useState(os?.trocaPecas ?? null);
-
-    const [motivoMaquinaParada, setMotivoMaquinaParada] = useState('');
     const [motivoTrocaPeca, setMotivoTrocaPeca] = useState('');
-    
+    const [fimDowntime, setFimDowntime] = useState(() => toInputDateTimeFormat(new Date().toISOString()));
+
+    // --- Estados do Checklist de Preventiva ---
     const [servicosDoEquipamento, setServicosDoEquipamento] = useState([]);
     const [loadingServicos, setLoadingServicos] = useState(false);
     const [servicoStatus, setServicoStatus] = useState({});
+
+    // --- Estados do Relatório Parcial / Pausa ---
+    const [relatorioDescricao, setRelatorioDescricao] = useState('');
+    const [relatorioMotivoPausa, setRelatorioMotivoPausa] = useState('');
+    const [relatorioMinutosPausa, setRelatorioMinutosPausa] = useState(''); 
+    const [relatorioMinutosTrabalhados, setRelatorioMinutosTrabalhados] = useState('');
 
     useEffect(() => {
         if (isOpen && os?.tipoManutencao === 'PREVENTIVA' && os?.equipamentoId) {
@@ -52,10 +57,19 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
     }, [isOpen, os]);
 
     useEffect(() => {
+        if (!isOpen) return; // ✅ PROTEÇÃO: Não executa lógica se fechado
+
         if (!inicio) {
             setInicio(toInputDateTimeFormat(new Date().toISOString()));
         }
-    }, [inicio]);
+        
+        // ✅ CORREÇÃO TELA BRANCA: Uso de Optional Chaining (os?.)
+        if (os?.fimDowntime) {
+            setFimDowntime(toInputDateTimeFormat(os.fimDowntime));
+        } else {
+             setFimDowntime(toInputDateTimeFormat(new Date().toISOString()));
+        }
+    }, [isOpen, inicio, os?.fimDowntime]); // ✅ Dependência segura
 
     if (!isOpen) return null;
 
@@ -66,7 +80,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
     };
 
     const adicionarPeca = () => {
-        setPecasSubstituidas([...pecasSubstituidas, { nome: '', quantidade: 1 }]);
+        setPecasSubstituidas([...pecasSubstituidas, { nomePeca: '', quantidade: 1 }]);
     };
 
     const handleStatusChange = (servicoId, newStatus) => {
@@ -83,9 +97,60 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
         }));
     };
 
+    const handleSalvarTrabalho = async () => {
+        const minutosTrabalhados = Number(relatorioMinutosTrabalhados) || 0;
+
+        if (!relatorioDescricao.trim() && minutosTrabalhados <= 0) {
+            alert('Preencha o "Relatório" e/ou os "Minutos Trabalhados".');
+            return;
+        }
+
+        const dadosRelatorio = {
+            descricao: relatorioDescricao,
+            minutosTrabalhados: minutosTrabalhados,
+            motivoPausa: '',
+            minutosPausa: 0, 
+            ordemServicoId: os.id,
+        };
+
+        // Verifica se a função existe antes de chamar
+        if (onSalvarRelatorio) {
+            await onSalvarRelatorio(dadosRelatorio, () => {
+                setRelatorioDescricao('');
+                setRelatorioMinutosTrabalhados('');
+            });
+        } else {
+            console.error("Função onSalvarRelatorio não fornecida pelo pai.");
+        }
+    };
+
+    const handleSalvarPausa = async () => {
+        const minutosPausa = Number(relatorioMinutosPausa) || 0;
+
+        if (!relatorioMotivoPausa.trim() || minutosPausa <= 0) {
+            alert('Para registrar uma pausa, preencha o "Motivo da Pausa" e os "Minutos de Pausa".');
+            return;
+        }
+
+        const dadosRelatorio = {
+            descricao: '',
+            minutosTrabalhados: 0,
+            motivoPausa: relatorioMotivoPausa,
+            minutosPausa: minutosPausa, 
+            ordemServicoId: os.id,
+        };
+
+        if (onSalvarRelatorio) {
+            await onSalvarRelatorio(dadosRelatorio, () => {
+                setRelatorioMotivoPausa('');
+                setRelatorioMinutosPausa('');
+            });
+        }
+    };
+
     const handleFinalizacao = async (statusFinal) => {
-        if (statusFinal === 'CONCLUIDA' && (maquinaParada === null || trocaPecas === null)) {
-            alert('Por favor, selecione "Sim" ou "Não" para "Máquina Parada" e "Houve Troca de Peças".');
+        if (statusFinal === 'CONCLUIDA' && (trocaPecas === null)) {
+            alert('Por favor, selecione "Sim" ou "Não" para "Houve Troca de Peças".');
             return;
         }
 
@@ -93,7 +158,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
 
         if (os.tipoManutencao === 'PREVENTIVA') {
             const todosMarcados = servicosDoEquipamento.every(
-                servico => servicoStatus[servico.id].status !== null
+                (servico) => servicoStatus[servico.id] && servicoStatus[servico.id].status !== null
             );
 
             if (!todosMarcados && statusFinal === 'CONCLUIDA') {
@@ -102,7 +167,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             }
             
             acaoFinalFormatada = servicosDoEquipamento.map(servico => {
-                const { status, motivo } = servicoStatus[servico.id];
+                const { status, motivo } = servicoStatus[servico.id] || { status: 'NÃO MARCADO', motivo: ''}; 
                 if (status === 'NÃO REALIZADO' && motivo) {
                     return `- ${servico.nome}: ${status} (Motivo: ${motivo})`;
                 }
@@ -110,24 +175,30 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             }).join('\n');
         }
         
-        if (statusFinal === 'CONCLUIDA' && (!acaoFinalFormatada || !inicio || !termino)) {
+        if (statusFinal === 'CONCLUIDA' && (!acaoFinalFormatada.trim() || !inicio || !termino)) {
             alert("Para concluir, preencha a Ação Realizada (ou o checklist) e as datas de Início e Término.");
+            return;
+        }
+
+        if (statusFinal === 'CONCLUIDA' && os.maquinaParada && !fimDowntime) {
+             alert("Esta OS foi marcada com 'Máquina Parada'. Por favor, informe a data e hora que a máquina voltou a funcionar.");
             return;
         }
 
         const dados = {
             acaoRealizada: acaoFinalFormatada,
             trocaPecas,
-            pecasSubstituidas: trocaPecas ? pecasSubstituidas.filter(p => p.nome.trim()) : [],
+            pecasSubstituidas: trocaPecas ? pecasSubstituidas.filter(p => p.nomePeca && p.nomePeca.trim()) : [],
             inicio,
             termino,
-            maquinaParada,
-            motivoMaquinaParada: maquinaParada ? motivoMaquinaParada : null,
             motivoTrocaPeca: trocaPecas ? motivoTrocaPeca : null,
             statusFinal,
+            fimDowntime: os.maquinaParada ? fimDowntime : null,
         };
         
-        await onSubmit(dados);
+        if (onFinalizar) {
+            await onFinalizar(dados);
+        }
     };
 
     const renderAcaoRealizada = () => {
@@ -169,7 +240,13 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
         }
 
         return (
-            <textarea rows="4" value={acaoRealizada} onChange={(e) => setAcaoRealizada(e.target.value)} required />
+            <textarea 
+                className="acao-realizada-textarea"
+                rows="4" 
+                value={acaoRealizada} 
+                onChange={(e) => setAcaoRealizada(e.target.value)} 
+                placeholder="Descreva a solução final aplicada..."
+            />
         );
     };
 
@@ -178,26 +255,30 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
             <div className="modal-content">
                 <h2>Registrar Execução da OS: #{os.codigoOs}</h2>
                 <div className="form-container">
+                    
                     <div className="form-group">
-                        <label>Ação Realizada:</label>
+                        <label>Ação Realizada (Solução Final):</label>
                         {renderAcaoRealizada()}
                     </div>
                     <div className="form-group-inline">
-                        <div className="form-group"><label>Início:</label><input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} required /></div>
-                        <div className="form-group"><label>Término:</label><input type="datetime-local" value={termino} onChange={(e) => setTermino(e.target.value)} required /></div>
+                        <div className="form-group"><label>Início da Execução:</label><input type="datetime-local" value={inicio} onChange={(e) => setInicio(e.target.value)} required /></div>
+                        <div className="form-group"><label>Término da Execução (Conclusão):</label><input type="datetime-local" value={termino} onChange={(e) => setTermino(e.target.value)} /></div>
                     </div>
                     
-                    <div className="form-group">
-                        <label>Máquina Parada?</label>
-                        <div className="radio-group-container">
-                            <label><input type="radio" name="maquinaParada" checked={maquinaParada === true} onChange={() => setMaquinaParada(true)} /> Sim</label>
-                            <label><input type="radio" name="maquinaParada" checked={maquinaParada === false} onChange={() => setMaquinaParada(false)} /> Não</label>
-                        </div>
-                    </div>
-                    {maquinaParada && (
-                        <div className="form-group motivo-explicacao">
-                            <label htmlFor="motivoMaquinaParada">Por que a máquina ficou parada?</label>
-                            <textarea id="motivoMaquinaParada" rows="2" value={motivoMaquinaParada} onChange={(e) => setMotivoMaquinaParada(e.target.value)} />
+                    {os.maquinaParada && (
+                         <div className="form-group-inline downtime-section">
+                            <div className="form-group downtime-info">
+                                <label>Máquina Parou em:</label>
+                                <input type="datetime-local" value={toInputDateTimeFormat(os.inicioDowntime)} disabled />
+                            </div>
+                            <div className="form-group">
+                                <label>Máquina Voltou (Fim da Parada):</label>
+                                <input 
+                                    type="datetime-local" 
+                                    value={fimDowntime} 
+                                    onChange={(e) => setFimDowntime(e.target.value)} 
+                                />
+                            </div>
                         </div>
                     )}
 
@@ -218,7 +299,7 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                                 <h4>Peças Substituídas</h4>
                                 {pecasSubstituidas.map((peca, index) => (
                                     <div key={index} className="peca-item">
-                                        <input type="text" placeholder="Nome da Peça" value={peca.nome} onChange={(e) => handlePecaChange(index, 'nome', e.target.value)} />
+                                        <input type="text" placeholder="Nome da Peça" value={peca.nomePeca || ''} onChange={(e) => handlePecaChange(index, 'nomePeca', e.target.value)} />
                                         <input type="number" placeholder="Qtd" value={peca.quantidade} min="1" onChange={(e) => handlePecaChange(index, 'quantidade', parseInt(e.target.value, 10) || 1)} />
                                     </div>
                                 ))}
@@ -227,19 +308,82 @@ function ExecucaoModal({ isOpen, onClose, onSubmit, os, actionLoading }) {
                         </>
                     )}
                     
+                    <div className="acompanhamento-container">
+                        
+                        <div className="relatorio-trabalho-section">
+                            <h3>Registrar Relatório Diário</h3>
+                            <p className="section-desc">Registre o que foi feito hoje.</p>
+                            
+                            <div className="form-group">
+                                <label>O que foi feito?</label>
+                                <textarea 
+                                    rows="3" 
+                                    value={relatorioDescricao} 
+                                    onChange={(e) => setRelatorioDescricao(e.target.value)}
+                                    placeholder="Ex: Desmontagem iniciada..."
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Minutos Trabalhados</label>
+                                <input
+                                    type="number"
+                                    value={relatorioMinutosTrabalhados}
+                                    onChange={(e) => setRelatorioMinutosTrabalhados(e.target.value)}
+                                    placeholder="Ex: 120"
+                                    min="0"
+                                />
+                            </div>
+                            <button 
+                                type="button" 
+                                onClick={handleSalvarTrabalho} 
+                                className="action-button-modal report-btn" 
+                                disabled={isReportLoading || actionLoading} 
+                            >
+                                {isReportLoading ? 'Salvando...' : 'Salvar Relatório'}
+                            </button>
+                        </div>
+
+                        <div className="relatorio-pausa-section">
+                            <h3>Registrar Pausa</h3>
+                            <p className="section-desc">Registre paradas (almoço, espera).</p>
+                            
+                            <div className="form-group">
+                                <label>Motivo da Pausa</label>
+                                <textarea 
+                                    rows="3" 
+                                    value={relatorioMotivoPausa} 
+                                    onChange={(e) => setRelatorioMotivoPausa(e.target.value)}
+                                    placeholder="Ex: Aguardando peças..."
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Minutos de Pausa</label>
+                                <input
+                                    type="number"
+                                    value={relatorioMinutosPausa}
+                                    onChange={(e) => setRelatorioMinutosPausa(e.target.value)}
+                                    placeholder="Ex: 60"
+                                    min="0"
+                                />
+                            </div>
+                            <button 
+                                type="button" 
+                                onClick={handleSalvarPausa} 
+                                className="action-button-modal pausa-btn" 
+                                disabled={isReportLoading || actionLoading} 
+                            >
+                                {isReportLoading ? 'Salvando...' : 'Salvar Pausa'}
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="modal-actions">
-                        <button type="button" onClick={onClose} className="action-button-modal cancel-btn" disabled={actionLoading}>
+                        <button type="button" onClick={onClose} className="action-button-modal cancel-btn" disabled={actionLoading || isReportLoading}>
                             Voltar
                         </button>
                         
-                        {os.tipoManutencao !== 'PREVENTIVA' && (
-                            <button type="button" onClick={() => handleFinalizacao('CANCELADA')} className="action-button-modal danger-btn" disabled={actionLoading}>
-                                {actionLoading ? 'Salvando...' : 'Cancelar OS'}
-                            </button>
-                        )}
-
-                        <button type="button" onClick={() => handleFinalizacao('CONCLUIDA')} className="action-button-modal success-btn" disabled={actionLoading}>
-                           {actionLoading ? 'Salvando...' : 'Concluir OS'}
+                        <button type="button" onClick={() => handleFinalizacao('CONCLUIDA')} className="action-button-modal success-btn" disabled={actionLoading || isReportLoading}>
+                           {actionLoading ? 'Finalizando...' : 'Concluir OS'}
                         </button>
                     </div>
                 </div>

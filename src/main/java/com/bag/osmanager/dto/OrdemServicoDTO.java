@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
+// ✨ ALTERAÇÃO AQUI: Importei o FuncionarioDTO que será usado na lista
+import com.bag.osmanager.dto.FuncionarioDTO;
+
 @Data
 public class OrdemServicoDTO {
     
@@ -19,7 +22,6 @@ public class OrdemServicoDTO {
     // Detalhes da OS
     private Long equipamentoId;
     private Long localId;
-    // ✨ ALTERAÇÃO AQUI: Campos para os nomes do local e setor adicionados
     private String localNome;
     private String setorNome;
     private Prioridade prioridade;
@@ -33,15 +35,22 @@ public class OrdemServicoDTO {
     private String liderCienciaNome;
     private LocalDateTime dataCiencia;
     
-    // Dados da Execução
-    private Long executadoPorId;
-    private String executadoPorNome;
+    // ✨ ALTERAÇÃO AQUI: Campos de execução unitária removidos
+    // private Long executadoPorId;
+    // private String executadoPorNome;
+
+    // ✨ ALTERAÇÃO AQUI: Novo campo para a lista de executores (equipe)
+    private Set<FuncionarioDTO> executores;
+
     private LocalDateTime dataExecucao;
     private String acaoRealizada;
     private LocalDateTime inicio;
     private LocalDateTime termino;
     private Boolean maquinaParada;
     private Boolean trocaPecas;
+    
+    private LocalDateTime inicioDowntime; // (Vindo da entidade)
+    private LocalDateTime fimDowntime; // (Vindo da entidade)
     
     // Dados da Verificação de Qualidade
     private Long verificadoPorId;
@@ -59,4 +68,10 @@ public class OrdemServicoDTO {
     private Set<TipoServicoDTO> tiposServico;
     
     private FrequenciaDTO frequencia;
+
+    // ✨ ALTERAÇÃO AQUI: Novo campo para carregar os relatórios parciais
+    /**
+     * Lista de todos os relatórios parciais (acompanhamentos) salvos para esta OS.
+     */
+    private List<AcompanhamentoOSDTO> acompanhamentos;
 }

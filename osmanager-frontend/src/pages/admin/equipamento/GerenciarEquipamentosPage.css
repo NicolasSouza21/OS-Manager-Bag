@@ -282,106 +282,29 @@ body {
 .historico-table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 .historico-table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
-/* ============================================== */
-/* ESTILOS DO MODAL ASSOCIAR SERVIÇOS (NOVO)      */
-/* ============================================== */
-
-/* Estilo para a caixa branca do modal */
-.modal-content.associar-servicos-modal {
-    background: var(--fundo-card);
-    border-radius: var(--raio-borda);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    /* Limita o tamanho e a altura */
-    width: 90%;
-    max-width: 650px;
-    max-height: 80vh; /* Máximo de 80% da altura da tela */
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Importante para o header e footer ficarem fixos */
-}
-
-/* Área central onde fica a lista - habilita o scroll */
-.modal-content.associar-servicos-modal .modal-body {
-    padding: 1.5rem;
-    overflow-y: auto; /* Scroll apenas aqui dentro */
-    flex-grow: 1;
-}
-
-/* Container da lista de checkboxes */
-.lista-servicos-modal {
-    display: grid;
-    /* Cria colunas automáticas com mínimo de 250px cada */
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-/* Cada item (checkbox + label) */
-.servico-item-modal {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    padding: 0.8rem;
-    transition: background-color 0.2s;
-}
-
-.servico-item-modal:hover {
-    background-color: #e2e6ea;
-    border-color: #ced4da;
-}
-
-.servico-item-modal label {
-    display: flex;
-    align-items: center; /* Alinha checkbox e texto verticalmente */
-    gap: 0.5rem;
-    cursor: pointer;
-    font-size: 0.95rem;
-    color: var(--cor-texto-principal);
-    line-height: 1.2;
-}
-
-.servico-item-modal input[type="checkbox"] {
-    width: 1.1em;
-    height: 1.1em;
-    cursor: pointer;
-}
-
-/* Rodapé do modal (botão Fechar) */
-.modal-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--cor-borda);
-    background-color: var(--fundo-pagina);
-    text-align: right;
-    flex-shrink: 0; /* Impede que o footer encolha */
-}
-
-/* Scrollbar personalizada para o modal */
-.modal-content.associar-servicos-modal .modal-body::-webkit-scrollbar {
-    width: 8px;
-}
-.modal-content.associar-servicos-modal .modal-body::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-.modal-content.associar-servicos-modal .modal-body::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 4px;
-}
-.modal-content.associar-servicos-modal .modal-body::-webkit-scrollbar-thumb:hover {
-    background: #bbb;
+/* ✨ ============================================== */
+/* ✨ ALTERAÇÃO AQUI: Wrapper para esconder impressão da tela */
+/* ✨ ============================================== */
+.print-hidden-wrapper {
+    display: none;
 }
 
 
 /* ============================================== */
-/* ESTILOS PARA IMPRESSÃO DO MODAL HISTÓRICO      */
+/* ESTILOS PARA IMPRESSÃO (AGORA PARA PLANO E HISTÓRICO) */
 /* ============================================== */
-/* ... (Regras @media print permanecem as mesmas) ... */
 @media print {
     /* Esconde a página principal (a tela do gerenciador de equipamentos) */
     .gerenciar-equipamentos-container {
         display: none !important;
     }
 
-    /* Mostra APENAS o conteúdo de impressão do modal de histórico */
+    /* ✨ ALTERAÇÃO AQUI: Esconde o wrapper escondido (que só serve para tela) */
+    .print-hidden-wrapper {
+        display: none !important;
+    }
+
+    /* Mostra APENAS o conteúdo de impressão */
     .printable-container, .printable-container * {
         visibility: visible;
     }
@@ -392,31 +315,69 @@ body {
         width: 100%;
     }
 
-    /* Estilos da tabela de impressão */
+    /* ✨ ALTERAÇÃO AQUI: Novo cabeçalho simples para o PLANO */
+    .print-header-simple {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+    }
+    .print-header-simple h2 {
+        font-size: 14pt;
+        margin: 0;
+        font-family: 'Arial', sans-serif;
+    }
+    .print-header-simple span {
+        font-size: 10pt;
+        font-weight: bold;
+        font-family: 'Arial', sans-serif;
+    }
+    /* Fim da alteração */
+
+    /* Estilos da tabela de impressão (GENÉRICO) */
     .print-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 9pt;
         page-break-inside: auto;
+        font-family: 'Arial', sans-serif;
     }
     .print-table tr {
         page-break-inside: avoid;
         page-break-after: auto;
     }
     .print-table th, .print-table td {
-        border: 1px solid #ccc;
-        padding: 6px;
+        border: 1px solid #000; /* Borda preta para a planilha */
+        padding: 4px 6px;
         text-align: left;
+        vertical-align: middle; /* Alinha no meio */
     }
 
     .print-table thead, .print-table tfoot {
         display: table-row-group;
     }
-    .print-table tfoot {
-        display: table-footer-group;
+    
+    .print-table th {
+        background-color: #E0E0E0 !important; /* Fundo cinza */
+        font-weight: bold;
+        text-align: center;
     }
 
-    /* Estilização do cabeçalho da página (dentro da tabela) */
+    /* ✨ ALTERAÇÃO AQUI: Estilos específicos para a tabela PLANO */
+    .print-table.plano .equipamento-cell {
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
+    }
+    .print-table.plano td {
+        height: 25px; /* Altura de linha como na planilha */
+    }
+    /* Fim da alteração */
+
+
+    /* Estilização do cabeçalho da página (para o HISTÓRICO) */
     .printable-header {
         text-align: center;
         border: none !important;
@@ -426,6 +387,10 @@ body {
         padding: 5px;
     }
 
+    /* Rodapé (Usado pelo HISTÓRICO) */
+    .print-table tfoot {
+        display: table-footer-group;
+    }
     .printable-footer {
         display: flex;
         justify-content: space-between;
@@ -437,12 +402,80 @@ body {
         padding: 5px 0;
         width: 100%;
     }
-
     .printable-footer span {
         white-space: nowrap;
     }
-
     .printable-footer span:nth-child(1) { text-align: left; flex: 1; }
     .printable-footer span:nth-child(2) { text-align: center; flex: 1; }
     .printable-footer span:nth-child(3) { text-align: right; flex: 1; }
 }
+
+/* ✨ ============================================== */
+/* ✨ ALTERAÇÃO AQUI: Estilos para o Modal de Edição de Plano */
+/* ✨ ============================================== */
+
+/* Ajusta a tabela de edição para que os inputs/selects fiquem bons */
+.programacao-table.plano-edit-table {
+    font-size: 0.85rem; /* Fonte um pouco menor para caber tudo */
+}
+
+/* Garante que inputs e selects ocupem 100% da célula */
+.programacao-table.plano-edit-table input[type="text"],
+.programacao-table.plano-edit-table input[type="number"],
+.programacao-table.plano-edit-table select {
+    width: 100%;
+    padding: 8px;
+    font-size: 0.85rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: 5px;
+    box-sizing: border-box; /* Garante que o padding não estoure a célula */
+}
+
+.programacao-table.plano-edit-table input:focus,
+.programacao-table.plano-edit-table select:focus {
+    outline: none;
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 2px rgba(0, 90, 156, 0.2);
+}
+
+/* Estilo para a linha do formulário de adição no <tfoot> */
+/* ✨ ALTERAÇÃO AQUI: Classe corrigida para <tfoot> */
+.programacao-table tfoot.form-add-plano-footer tr {
+    background-color: #f8f9fa; /* Fundo levemente cinza */
+    border-top: 2px solid var(--cor-borda);
+}
+
+.programacao-table tfoot.form-add-plano-footer td {
+    padding: 1rem; /* Mais espaço no formulário de adição */
+    vertical-align: top; /* Alinha os inputs de cima para baixo */
+}
+/* Fim da alteração */
+
+/* Botões de ação dentro da tabela de edição */
+.btn-acao {
+    padding: 8px 10px; /* Padding igual ao dos botões principais */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: var(--transicao-rapida);
+    color: var(--fundo-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    box-sizing: border-box; 
+    width: 90px; /* Largura fixa */
+}
+
+/* Cores específicas (reutilizando variáveis) */
+.btn-acao.btn-salvar { background-color: var(--cor-sucesso); }
+.btn-acao.btn-salvar:hover { background-color: var(--cor-sucesso-hover); }
+
+.btn-acao.btn-excluir { background-color: var(--cor-alerta); }
+.btn-acao.btn-excluir:hover { background-color: var(--cor-alerta-hover); }
+
+.btn-acao.btn-cancelar { background-color: var(--cor-secundaria); }
+.btn-acao.btn-cancelar:hover { background-color: #5a6268; }

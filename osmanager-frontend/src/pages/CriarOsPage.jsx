@@ -1,18 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrdemServico, getEquipamentos, getLocais, getTiposServico, getFrequencias, getSetores } from '../services/apiService';
-import './CriarOsPage.css';
+import './CriarOsPage.css'; // ✨ ALTERAÇÃO AQUI: Vamos precisar adicionar estilos a este CSS
 
+// Função para formatar data (YYYY-MM-DD)
 const formatDateForInput = (date) => {
     const d = new Date(date);
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     return d.toISOString().slice(0, 10);
 };
 
+// ✨ ALTERAÇÃO AQUI: Nova função para formatar data e hora (YYYY-MM-DDTHH:mm)
+const toInputDateTimeFormat = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); // Ajusta para o fuso horário local
+    return d.toISOString().slice(0, 16);
+};
+
+
 function CriarOsPage() {
     const navigate = useNavigate();
     const [tipoManutencao, setTipoManutencao] = useState('CORRETIVA');
 
+    // ✨ ALTERAÇÃO AQUI: Novos campos de downtime adicionados ao estado
     const [formData, setFormData] = useState({
         equipamentoId: '',
         localId: '',
@@ -22,6 +33,8 @@ function CriarOsPage() {
         dataInicioPreventiva: formatDateForInput(new Date()),
         tipoServicoIds: new Set(),
         frequenciaId: '',
+        maquinaParada: false, // Novo campo
+        inicioDowntime: toInputDateTimeFormat(new Date()), // Novo campo
     });
 
     const [listaEquipamentos, setListaEquipamentos] = useState([]);
@@ -36,30 +49,13 @@ function CriarOsPage() {
 
     const equipamentoSelecionado = listaEquipamentos.find(e => e.id === Number(formData.equipamentoId));
 
+    // ... (carregarDadosIniciais e useEffects permanecem os mesmos) ...
     const carregarDadosIniciais = useCallback(async () => {
         try {
             const [resEquipamentos, resLocais, resFrequencias, resSetores] = await Promise.all([
                 getEquipamentos(), getLocais(), getFrequencias(), getSetores()
             ]);
-            
-            // ✨ ALTERAÇÃO AQUI: Processamento Prévio (Pre-processing)
-            // Criamos um campo 'nomeExibicao' fixo para cada item assim que ele chega da API.
-            const equipamentosFormatados = resEquipamentos.data.map(equip => {
-                let sufixo = `(ID: ${equip.id})`; // Padrão se não tiver tag
-                
-                if (equip.tag && String(equip.tag).trim().length > 0) {
-                    sufixo = `- ${equip.tag}`;
-                }
-
-                return {
-                    ...equip, // Mantém todos os dados originais
-                    nomeExibicao: `${equip.nome} ${sufixo}` // Cria o nome composto
-                };
-            });
-
-            console.log("Equipamentos formatados:", equipamentosFormatados); // Debug no console
-
-            setListaEquipamentos(equipamentosFormatados);
+            setListaEquipamentos(resEquipamentos.data);
             setListaLocais(resLocais.data);
             setListaFrequencias(resFrequencias.data);
             setListaSetores(resSetores.data);
@@ -93,6 +89,7 @@ function CriarOsPage() {
         setFormData(prev => ({ ...prev, tipoServicoIds: new Set() }));
     }, [equipamentoSelecionado]);
 
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -116,15 +113,30 @@ function CriarOsPage() {
 
     const handleTipoManutencaoChange = (tipo) => {
         setTipoManutencao(tipo);
+        // Reseta os campos ao trocar de aba
         setFormData(prev => ({
             ...prev,
             dataInicioPreventiva: formatDateForInput(new Date()),
             tipoServicoIds: new Set(),
             frequenciaId: '',
             prioridade: 'MEDIA',
-            descricaoProblema: ''
+            descricaoProblema: '',
+            maquinaParada: false, // ✨ ALTERAÇÃO AQUI: Reseta o downtime
+            inicioDowntime: toInputDateTimeFormat(new Date()), // ✨ ALTERAÇÃO AQUI: Reseta o downtime
         }));
     };
+
+    // ✨ ALTERAÇÃO AQUI: Novo handler para os botões de rádio (Sim/Não)
+    const handleDowntimeChange = (e) => {
+        const isParada = e.target.value === 'sim';
+        setFormData(prev => ({
+            ...prev,
+            maquinaParada: isParada,
+            // Se marcar "sim", define a data/hora atual. Se marcar "não", limpa.
+            inicioDowntime: isParada ? toInputDateTimeFormat(new Date()) : ''
+        }));
+    };
+
 
     const handleSubmit = async (evento) => {
         evento.preventDefault();
@@ -132,6 +144,12 @@ function CriarOsPage() {
 
         if (tipoManutencao === 'PREVENTIVA' && (formData.tipoServicoIds.size === 0 || !formData.frequenciaId)) {
             alert('Para manutenção preventiva, selecione ao menos um Tipo de Serviço e a Frequência.');
+            return;
+        }
+
+        // ✨ ALTERAÇÃO AQUI: Validação para o novo campo
+        if (tipoManutencao === 'CORRETIVA' && formData.maquinaParada && !formData.inicioDowntime) {
+            alert('Se a máquina está parada, por favor, informe a data e hora que ela parou.');
             return;
         }
 
@@ -151,6 +169,9 @@ function CriarOsPage() {
                 solicitante: formData.solicitante,
                 prioridade: formData.prioridade,
                 descricaoProblema: formData.descricaoProblema,
+                // ✨ ALTERAÇÃO AQUI: Envia os novos dados de downtime
+                maquinaParada: formData.maquinaParada,
+                inicioDowntime: formData.maquinaParada ? formData.inicioDowntime : null
             };
         } else { // PREVENTIVA
             dadosParaApi = {
@@ -159,6 +180,9 @@ function CriarOsPage() {
                 dataInicioPreventiva: formData.dataInicioPreventiva,
                 tipoServicoIds: Array.from(formData.tipoServicoIds),
                 frequenciaId: Number(formData.frequenciaId),
+                // ✨ ALTERAÇÃO AQUI: Garante que os campos de downtime sejam nulos
+                maquinaParada: false,
+                inicioDowntime: null
             };
         }
 
@@ -201,12 +225,7 @@ function CriarOsPage() {
                             <label htmlFor="equipamento">EQUIPAMENTO:</label>
                             <select id="equipamento" name="equipamentoId" value={formData.equipamentoId} onChange={handleInputChange} required>
                                 <option value="" disabled>Selecione...</option>
-                                {/* ✨ ALTERAÇÃO AQUI: Agora usamos apenas o campo pré-calculado 'nomeExibicao' */}
-                                {listaEquipamentos.map((equip) => (
-                                    <option key={equip.id} value={equip.id}>
-                                        {equip.nomeExibicao}
-                                    </option>
-                                ))}
+                                {listaEquipamentos.map((equip) => (<option key={equip.id} value={equip.id}>{equip.nome}</option>))}
                             </select>
                         </div>
                         <div className="input-group">
@@ -256,10 +275,52 @@ function CriarOsPage() {
                                     <input type="text" name="solicitante" value={formData.solicitante} disabled />
                                 </div>
                             </div>
+
+                            {/* ✨ ALTERAÇÃO AQUI: Novos campos de Downtime */}
+                            <div className="form-row">
+                                <div className="input-group downtime-check-group">
+                                    <label>Máquina Parada?</label>
+                                    <div className="radio-options">
+                                        <label>
+                                            <input 
+                                                type="radio" 
+                                                name="maquinaParada" 
+                                                value="nao"
+                                                checked={!formData.maquinaParada} 
+                                                onChange={handleDowntimeChange} 
+                                            /> Não
+                                        </label>
+                                        <label>
+                                            <input 
+                                                type="radio" 
+                                                name="maquinaParada" 
+                                                value="sim"
+                                                checked={formData.maquinaParada} 
+                                                onChange={handleDowntimeChange} 
+                                            /> Sim
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                {formData.maquinaParada && (
+                                    <div className="input-group">
+                                        <label htmlFor="inicioDowntime">Máquina parada desde (data/hora):</label>
+                                        <input 
+                                            type="datetime-local" 
+                                            id="inicioDowntime"
+                                            name="inicioDowntime" 
+                                            value={formData.inicioDowntime} 
+                                            onChange={handleInputChange} 
+                                            required 
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </>
                     )}
 
                     {tipoManutencao === 'PREVENTIVA' && (
+                         // ... (JSX da Preventiva permanece o mesmo) ...
                         <>
                             <div className="input-group full-width">
                                 <label>SERVIÇOS A SEREM REALIZADOS:</label>

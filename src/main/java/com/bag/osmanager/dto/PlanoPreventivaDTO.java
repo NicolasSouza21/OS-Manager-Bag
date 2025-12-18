@@ -24,6 +24,13 @@ public class PlanoPreventivaDTO {
     
     private Integer toleranciaDias;
 
+    // ✨ ALTERAÇÃO AQUI: Novo campo para o Tempo Padrão (ex: "00:30:00")
+    private String tempoPadrao;
+
+    // ✨ ALTERAÇÃO AQUI: Novo campo para o TIPO de Manutentor
+    private String manutentor; // "Manutenção mecânica", "Manutenção elétrica"
+
+
     // ✨ ALTERAÇÃO AQUI: O campo 'dataInicio' foi removido.
     // private LocalDate dataInicio;
 }

@@ -186,4 +186,82 @@
       strong {
           font-weight: bold;
       }
+
+      /* ✨ ====================================================== */
+      /* ✨ ALTERAÇÃO AQUI: Estilos adicionados para motivos e reprovação */
+      /* ✨ ====================================================== */
+
+      /* Estilo para o wrapper de cada item do checklist (para borda) */
+      .checklist-item-impressao-wrapper {
+          border-bottom: 1px dashed #eee; 
+          padding: 2px 0;
+      }
+      .checklist-item-impressao-wrapper:last-child {
+          border-bottom: none;
+      }
+
+      /* Estilo para o motivo do item "Não Realizado" */
+      .checklist-motivo-impressao {
+          font-style: italic;
+          color: #333;
+          padding-left: 20px;
+          display: block;
+          font-size: 8pt;
+      }
+
+      /* Estilos para a linha de REPROVAÇÃO */
+      .reprovado-row td, .reprovado-row-motivo td {
+          background-color: #ffebee !important; /* Fundo vermelho claro */
+          color: #b71c1c !important; /* Texto vermelho escuro */
+          font-weight: bold;
+      }
+      /* Estilo específico para a célula do motivo da reprovação */
+      .reprovado-row-motivo td {
+          font-size: 8pt !important;
+          padding-left: 10px !important;
+      }
+
+      /* ✨ ====================================================== */
+      /* ✨ ALTERAÇÃO AQUI: Estilos para o Log de Atividades */
+      /* ✨ ====================================================== */
+
+      /* Garante que a célula do log use todo o espaço */
+      .log-atividades-cell {
+          padding: 0 !important;
+          vertical-align: top;
+      }
+
+      /* Tabela interna do Log */
+      .log-table {
+          width: 100%;
+          border: none; /* Remove borda da tabela em si */
+          font-size: 8pt; /* Fonte menor para caber mais dados */
+      }
+
+      /* Cabeçalho da tabela de log */
+      .log-table th {
+          border: 1px solid #999 !important; /* Borda mais fina que a principal */
+          background-color: #f0f0f0 !important; /* Fundo cinza claro */
+          font-weight: bold;
+          padding: 4px;
+          text-align: center;
+          vertical-align: middle;
+          white-space: nowrap;
+      }
+      
+      /* Células da tabela de log */
+      .log-table td {
+          border: 1px solid #ccc !important; /* Borda cinza claro */
+          padding: 4px;
+          vertical-align: top;
+          font-family: 'Arial', sans-serif;
+          line-height: 1.3;
+      }
+
+      /* Estilo para a descrição da pausa (itálico e menor) */
+      .log-table em {
+          font-style: italic;
+          font-size: 7pt;
+          color: #333;
+      }
   }

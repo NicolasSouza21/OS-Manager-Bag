@@ -5,12 +5,22 @@ import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
+// ✅ CORREÇÃO: Importar os protetores de rota
+import ProtectedRoute from './components/ProtectedRoute'; // Proteção base (só logado)
+import RoleProtectedRoute from './components/RoleProtectedRoute'; // Proteção por cargo
+
 // Páginas Principais
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import VisualizarOsPage from './pages/VisualizarOsPage';
 import CalendarioPage from './pages/CalendarioPage'; 
 import CriarOsPage from './pages/CriarOsPage';
+
+// ✨ ALTERAÇÃO AQUI: Importar a nova página de Relatórios
+import RelatoriosPage from './pages/RelatoriosPage';
+
+// ✨ ALTERAÇÃO AQUI: Importar a nova página do Mecânico
+import PainelMecanicoPage from './pages/PainelMecanicoPage';
 
 // Páginas de Administração
 import GerenciarFuncionariosPage from './pages/admin/GerenciarFuncionariosPage';
@@ -44,31 +54,52 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
 
-      <Route element={<AppLayout />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/os/:id" element={<VisualizarOsPage />} />
-        <Route path="/calendario" element={<CalendarioPage />} />
-        <Route path="/criar-os" element={<CriarOsPage />} />
+      {/* ✅ CORREÇÃO: Todas as rotas internas são protegidas pelo ProtectedRoute */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          
+          {/* --- Rotas Comuns (Todos logados) --- */}
+          {/* ✨ ALTERAÇÃO AQUI: Rota /dashboard movida para baixo */}
+          <Route path="/os/:id" element={<VisualizarOsPage />} />
+          <Route path="/calendario" element={<CalendarioPage />} />
+          <Route path="/criar-os" element={<CriarOsPage />} />
 
-        {/* Rotas de Administração */}
-        <Route path="/admin/funcionarios" element={<GerenciarFuncionariosPage />} />
-        <Route path="/admin/funcionarios/listar" element={<ListarFuncionariosPage />} />
-        <Route path="/admin/funcionarios/cadastrar" element={<CadastroUsuarioPage />} />
+          {/* --- ✨ ALTERAÇÃO AQUI: Nova Rota para o Painel do Mecânico --- */}
+          {/* Acessível por Mecânicos, Líderes e Admins */}
+          <Route element={<RoleProtectedRoute allowedRoles={['ADMIN', 'LIDER', 'MECANICO']} />}>
+            <Route path="/meu-painel" element={<PainelMecanicoPage />} />
+          </Route>
 
-        <Route path="/admin/equipamentos" element={<EquipamentoMenuPage />} />
-        <Route path="/admin/equipamentos/gerenciar" element={<GerenciarEquipamentosPage />} />
-        <Route path="/admin/equipamentos/servicos" element={<GerenciarTiposServicoPage />} />
-        
-        <Route path="/admin/frequencias/gerenciar" element={<GerenciarFrequenciasPage />} />
+          {/* --- Rotas de Relatórios (ADMIN, LIDER) --- */}
+          <Route element={<RoleProtectedRoute allowedRoles={['ADMIN', 'LIDER']} />}>
+            <Route path="/relatorios" element={<RelatoriosPage />} />
+          </Route>
 
-        {/* ✨ ALTERAÇÃO AQUI: Rota unificada para gerenciar setores e locais */}
-        <Route path="/admin/locais/gerenciar" element={<GerenciarLocaisPage />} />
-        
-        {/* ✨ REMOÇÃO AQUI: Rotas antigas foram removidas */}
-        {/* <Route path="/admin/equipamentos/locais" element={<LocaisListPage />} /> */}
-        {/* <Route path="/admin/equipamentos/locais/adicionar" element={<LocalAddPage />} /> */}
+          {/* --- Rotas de Admin (ADMIN, LIDER, ENCARREGADO, ANALISTA_CQ) --- */}
+          {/* ✨ ALTERAÇÃO AQUI: Adicionado ANALISTA_CQ e movido o /dashboard para cá */}
+          <Route element={<RoleProtectedRoute allowedRoles={['ADMIN', 'LIDER', 'ENCARREGADO', 'ANALISTA_CQ']} />}>
+            {/* O Dashboard geral (antigo) agora é para gestores */}
+            <Route path="/dashboard" element={<DashboardPage />} /> 
+            
+            <Route path="/admin/equipamentos" element={<EquipamentoMenuPage />} />
+            <Route path="/admin/equipamentos/gerenciar" element={<GerenciarEquipamentosPage />} />
+            <Route path="/admin/equipamentos/servicos" element={<GerenciarTiposServicoPage />} />
+            <Route path="/admin/frequencias/gerenciar" element={<GerenciarFrequenciasPage />} />
+            <Route path="/admin/locais/gerenciar" element={<GerenciarLocaisPage />} />
+          </Route>
+
+          {/* --- Rotas de Admin (Apenas ADMIN) --- */}
+          {/* ✅ CORREÇÃO: Protegendo as rotas de funcionários (só ADMIN) */}
+          <Route element={<RoleProtectedRoute allowedRoles={['ADMIN']} />}>
+            <Route path="/admin/funcionarios" element={<GerenciarFuncionariosPage />} />
+            <Route path="/admin/funcionarios/listar" element={<ListarFuncionariosPage />} />
+            <Route path="/admin/funcionarios/cadastrar" element={<CadastroUsuarioPage />} />
+          </Route>
+          
+        </Route>
       </Route>
 
+      {/* Redirecionamentos */}
       <Route path="/" element={<Navigate to="/login" />} />
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>

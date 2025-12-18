@@ -1,0 +1,153 @@
+/* Local: osmanager-frontend/src/components/AcompanhamentoModal.css */
+
+.acompanhamento-modal {
+    max-width: 600px;
+    width: 90%;
+}
+
+/* Reutiliza estilos do VerificacaoModal para consistência */
+.acompanhamento-modal .modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.acompanhamento-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #333;
+}
+
+.acompanhamento-modal .close-button {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.acompanhamento-modal .modal-body {
+    padding: 0; /* Remove padding para a lista ir de ponta a ponta */
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.historico-vazio {
+    padding: 2rem;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.historico-lista {
+    display: flex;
+    flex-direction: column;
+}
+
+.historico-item {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.historico-item:last-child {
+    border-bottom: none;
+}
+
+.historico-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.historico-autor {
+    font-size: 1.1rem;
+    color: #0056b3;
+}
+
+.historico-data {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.historico-descricao {
+    margin: 0.5rem 0;
+    color: #212529;
+    white-space: pre-wrap; /* Preserva quebras de linha do textarea */
+}
+
+.historico-descricao strong {
+    color: #495057;
+}
+
+/* ✨ ALTERAÇÃO AQUI: Novo estilo para o bloco de tempo trabalhado */
+.historico-trabalho {
+    background-color: #e6f7f2; /* Fundo verde claro */
+    border: 1px solid #b6e9d9;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.historico-trabalho strong {
+    color: #0f5132; /* Verde escuro */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+/* Fim da alteração */
+
+
+.historico-pausa {
+    background-color: #fffbeb;
+    border: 1px solid #ffeeba;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.historico-pausa strong {
+    color: #856404;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+/* Rodapé */
+.acompanhamento-modal .modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.acompanhamento-modal .button-cancel {
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #6c757d;
+    background-color: #ffffff;
+    color: #6c757d;
+}
+
+.acompanhamento-modal .button-cancel:hover {
+    background-color: #6c757d;
+    color: white;
+}

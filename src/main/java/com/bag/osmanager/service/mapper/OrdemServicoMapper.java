@@ -1,16 +1,26 @@
 package com.bag.osmanager.service.mapper;
 
+// ✨ ALTERAÇÃO AQUI: Imports adicionados
+import com.bag.osmanager.dto.AcompanhamentoOSDTO;
 import com.bag.osmanager.dto.FrequenciaDTO;
+import com.bag.osmanager.dto.FuncionarioDTO; // ✨ ALTERAÇÃO AQUI: Import necessário
 import com.bag.osmanager.dto.OrdemServicoDTO;
 import com.bag.osmanager.dto.PecaSubstituidaDTO;
 import com.bag.osmanager.dto.TipoServicoDTO;
+import com.bag.osmanager.model.AcompanhamentoOS; // ✨ Import da entidade
+import com.bag.osmanager.model.Funcionario; // ✨ ALTERAÇÃO AQUI: Import necessário
 import com.bag.osmanager.model.OrdemServico;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
+// ✨ ALTERAÇÃO AQUI: Imports adicionados
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet; // ✨ ALTERAÇÃO AQUI: Import necessário
+// ---
 import java.util.stream.Collectors;
 
-// ✨ ALTERAÇÃO AQUI: Código completo do novo Mapper
 @Component // Marca esta classe como um bean do Spring para que possamos injetá-la
 public class OrdemServicoMapper {
 
@@ -25,7 +35,8 @@ public class OrdemServicoMapper {
         }
 
         OrdemServicoDTO dto = new OrdemServicoDTO();
-        BeanUtils.copyProperties(os, dto, "frequencia", "tiposServico", "local");
+        // ✨ ALTERAÇÃO AQUI: "acompanhamentos" e "executores" adicionados à lista de exclusão
+        BeanUtils.copyProperties(os, dto, "frequencia", "tiposServico", "local", "pecasSubstituidas", "acompanhamentos", "executores");
 
         dto.setCodigoOs(os.getCodigoOs());
 
@@ -33,10 +44,15 @@ public class OrdemServicoMapper {
             dto.setLiderCienciaId(os.getMecanicoCiencia().getId());
             dto.setLiderCienciaNome(os.getMecanicoCiencia().getNome());
         }
+
+        // ✨ ALTERAÇÃO AQUI: Lógica de 'executadoPor' removida
+        /*
         if (os.getExecutadoPor() != null) {
             dto.setExecutadoPorId(os.getExecutadoPor().getId());
             dto.setExecutadoPorNome(os.getExecutadoPor().getNome());
         }
+        */
+
         if (os.getVerificadoPor() != null) {
             dto.setVerificadoPorId(os.getVerificadoPor().getId());
             dto.setVerificadoPorNome(os.getVerificadoPor().getNome());
@@ -49,7 +65,6 @@ public class OrdemServicoMapper {
             dto.setEquipamentoId(os.getEquipamento().getId());
         }
 
-        // ✅ CORREÇÃO AQUI: Linhas descomentadas e ajustadas
         if (os.getLocal() != null) {
             dto.setLocalId(os.getLocal().getId());
             dto.setLocalNome(os.getLocal().getNome()); // Adiciona o nome do Local
@@ -79,6 +94,74 @@ public class OrdemServicoMapper {
             BeanUtils.copyProperties(os.getFrequencia(), freqDTO);
             dto.setFrequencia(freqDTO);
         }
+
+        dto.setInicioDowntime(os.getInicioDowntime());
+        dto.setFimDowntime(os.getFimDowntime());
+
+        // ✨ ALTERAÇÃO AQUI: Lógica para converter a lista de acompanhamentos (Mantida do seu código)
+        if (os.getAcompanhamentos() != null && !os.getAcompanhamentos().isEmpty()) {
+            dto.setAcompanhamentos(
+                os.getAcompanhamentos().stream()
+                    .map(this::converteAcompanhamentoParaDTO)
+                    // Ordena pela data mais recente primeiro
+                    .sorted(Comparator.comparing(AcompanhamentoOSDTO::getDataHora).reversed())
+                    .collect(Collectors.toList())
+            );
+        } else {
+            dto.setAcompanhamentos(Collections.emptyList()); // Garante que seja uma lista vazia, não nula
+        }
+        // --- Fim da alteração ---
+
+        // ✨ ALTERAÇÃO AQUI: Nova lógica para converter a lista de executores
+        if (os.getExecutores() != null && !os.getExecutores().isEmpty()) {
+            dto.setExecutores(
+                os.getExecutores().stream()
+                    .map(this::converteFuncionarioParaDTO)
+                    .collect(Collectors.toSet())
+            );
+        } else {
+            dto.setExecutores(new HashSet<>()); // Garante um Set vazio
+        }
+        // --- Fim da nova alteração ---
+
+        return dto;
+    }
+
+    // ✨ ALTERAÇÃO AQUI: Novo método helper privado para converter o acompanhamento (Mantido do seu código)
+    /**
+     * Helper para converter a entidade AcompanhamentoOS em AcompanhamentoOSDTO.
+     */
+    private AcompanhamentoOSDTO converteAcompanhamentoParaDTO(AcompanhamentoOS entidade) {
+        if (entidade == null) {
+            return null;
+        }
+        AcompanhamentoOSDTO dto = new AcompanhamentoOSDTO();
+        BeanUtils.copyProperties(entidade, dto);
+        
+        if (entidade.getFuncionario() != null) {
+            dto.setFuncionarioId(entidade.getFuncionario().getId());
+            dto.setFuncionarioNome(entidade.getFuncionario().getNome());
+        }
+        if (entidade.getOrdemServico() != null) {
+            dto.setOrdemServicoId(entidade.getOrdemServico().getId());
+        }
+        return dto;
+    }
+
+    // ✨ ALTERAÇÃO AQUI: Novo método helper para converter Funcionario -> FuncionarioDTO
+    /**
+     * Helper para converter a entidade Funcionario em FuncionarioDTO (sem dados sensíveis).
+     */
+    private FuncionarioDTO converteFuncionarioParaDTO(Funcionario entidade) {
+        if (entidade == null) {
+            return null;
+        }
+        FuncionarioDTO dto = new FuncionarioDTO();
+        dto.setId(entidade.getId());
+        dto.setNome(entidade.getNome());
+        dto.setEmail(entidade.getEmail());
+        dto.setTipoFuncionario(entidade.getTipoFuncionario());
+        // Propositalmente não copiamos a senha
         return dto;
     }
 }
