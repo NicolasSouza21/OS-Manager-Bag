@@ -1,6 +1,7 @@
 package com.bag.osmanager.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import java.util.Set;
 
@@ -11,10 +12,22 @@ public class EquipamentoDTO {
     @NotBlank(message = "O nome do equipamento é obrigatório.")
     private String nome;
 
+    // ✨ ALTERAÇÃO AQUI: Tag agora é obrigatória
+    @NotBlank(message = "O número do ativo (Tag) é obrigatório.")
     private String tag;
 
-    // ✨ ALTERAÇÃO AQUI: A anotação @NotBlank foi removida.
     private String descricao;
+
+    // ✨ ALTERAÇÃO AQUI: Novos campos de relacionamento obrigatórios
+    @NotNull(message = "O Setor é obrigatório.")
+    private Long setorId;
+
+    @NotNull(message = "O Local é obrigatório.")
+    private Long localId;
+
+    // ✨ ALTERAÇÃO AQUI: Campos auxiliares para exibição (apenas leitura)
+    private String setorNome;
+    private String localNome;
 
     private Set<TipoServicoDTO> servicosDisponiveis;
 }

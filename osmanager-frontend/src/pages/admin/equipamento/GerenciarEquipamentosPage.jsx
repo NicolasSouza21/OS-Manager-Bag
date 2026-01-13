@@ -3,13 +3,14 @@ import {
     getEquipamentos, createEquipamento, updateEquipamento, deleteEquipamento,
     getTiposServico,
     getHistoricoPorEquipamento,
-    listarServicosPorEquipamento, associarServico, desassociarServico
+    listarServicosPorEquipamento, associarServico, desassociarServico,
+    getSetores, getLocais // ✨ ALTERAÇÃO AQUI: Import para buscar setores e locais
 } from '../../../services/apiService';
 import HistoricoModal from './HistoricoModal';
 import ProgramacaoModal from './ProgramacaoModal';
 import './GerenciarEquipamentosPage.css';
 
-// --- Modal de Associar Serviços ---
+// --- Modal de Associar Serviços (Mantido igual) ---
 const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdate }) => {
     const [servicosAssociados, setServicosAssociados] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -38,7 +39,6 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
             ? desassociarServico(equipamento.id, servico.id)
             : associarServico(equipamento.id, servico.id);
 
-        // Otimismo UI: Atualiza localmente antes da resposta
         setServicosAssociados(prev =>
             jaAssociado
                 ? prev.filter(s => s.id !== servico.id)
@@ -52,7 +52,6 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
             .catch(err => {
                 console.error("Erro ao atualizar associação:", err);
                 alert("Falha ao atualizar associação do serviço.");
-                // Reverte em caso de erro
                 setServicosAssociados(prev =>
                     jaAssociado
                         ? [...prev, servico]
@@ -65,12 +64,8 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-content associar-servicos-modal" onClick={e => e.stopPropagation()}>
-                    <header className="modal-header">
-                        <h2>Carregando...</h2>
-                    </header>
-                    <div className="modal-body" style={{ textAlign: 'center', padding: '3rem' }}>
-                        <p>Buscando serviços...</p>
-                    </div>
+                    <header className="modal-header"><h2>Carregando...</h2></header>
+                    <div className="modal-body" style={{ textAlign: 'center', padding: '3rem' }}><p>Buscando serviços...</p></div>
                 </div>
             </div>
         );
@@ -83,12 +78,8 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
                     <h2>Serviços para {equipamento.nome}</h2>
                     <button onClick={onClose} className="btn-fechar-modal">&times;</button>
                 </header>
-                
                 <div className="modal-body">
-                    <p style={{ marginBottom: '1rem', color: '#666' }}>
-                        Marque os serviços que devem aparecer no checklist de manutenção preventiva deste equipamento.
-                    </p>
-                    
+                    <p style={{ marginBottom: '1rem', color: '#666' }}>Marque os serviços que devem aparecer no checklist de manutenção preventiva deste equipamento.</p>
                     <div className="lista-servicos-modal">
                         {Array.isArray(catalogoServicos) && catalogoServicos.length > 0 ? (
                             catalogoServicos.map(servico => (
@@ -103,15 +94,10 @@ const ModalAssociarServicos = ({ equipamento, catalogoServicos, onClose, onUpdat
                                     </label>
                                 </div>
                             ))
-                        ) : (
-                            <p>Nenhum serviço cadastrado no sistema.</p>
-                        )}
+                        ) : (<p>Nenhum serviço cadastrado no sistema.</p>)}
                     </div>
                 </div>
-
-                <footer className="modal-footer">
-                    <button onClick={onClose} className="btn-fechar-modal">Fechar</button>
-                </footer>
+                <footer className="modal-footer"><button onClick={onClose} className="btn-fechar-modal">Fechar</button></footer>
             </div>
         </div>
     );
@@ -122,45 +108,56 @@ function GerenciarEquipamentosPage() {
     const [equipamentos, setEquipamentos] = useState([]);
     const [loading, setLoading] = useState(true);
     
+    // ✨ ALTERAÇÃO AQUI: Estados para armazenar Setores e Locais
+    const [listaSetores, setListaSetores] = useState([]);
+    const [listaLocais, setListaLocais] = useState([]);
+
     // Estados de Edição/Criação
     const [editandoId, setEditandoId] = useState(null);
-    const [formEdicao, setFormEdicao] = useState({ tag: '', nome: '', descricao: '' });
-    const [novoEquipamento, setNovoEquipamento] = useState({ nome: '', tag: '' });
+    // ✨ ALTERAÇÃO AQUI: Adicionado setorId e localId no form de edição
+    const [formEdicao, setFormEdicao] = useState({ tag: '', nome: '', descricao: '', setorId: '', localId: '' });
+    // ✨ ALTERAÇÃO AQUI: Adicionado setorId e localId no novo equipamento
+    const [novoEquipamento, setNovoEquipamento] = useState({ nome: '', tag: '', setorId: '', localId: '' });
 
-    // Estados dos Modais e Dados Auxiliares
     const [tiposServico, setTiposServico] = useState([]);
     const [mensagem, setMensagem] = useState({ tipo: '', texto: '' });
     
     const [isModalServicosOpen, setIsModalServicosOpen] = useState(false);
     const [equipamentoParaModal, setEquipamentoParaModal] = useState(null);
-    
     const [isProgramacaoModalOpen, setIsProgramacaoModalOpen] = useState(false);
     const [equipamentoParaProgramacao, setEquipamentoParaProgramacao] = useState(null);
-    
     const [isHistoricoModalOpen, setIsHistoricoModalOpen] = useState(false);
     const [equipamentoParaHistorico, setEquipamentoParaHistorico] = useState(null);
 
-    const carregarEquipamentos = useCallback(() => {
+    // ✨ ALTERAÇÃO AQUI: Carrega todos os dados necessários (Equipamentos, Setores, Locais, Serviços)
+    const carregarDadosIniciais = useCallback(async () => {
         setLoading(true);
-        getEquipamentos()
-            .then(response => setEquipamentos(response.data))
-            .catch(error => {
-                console.error("Erro ao carregar equipamentos:", error);
-                setMensagem({ tipo: 'erro', texto: 'Falha ao carregar equipamentos.' });
-            })
-            .finally(() => setLoading(false));
-    }, []);
+        try {
+            const [resEquip, resSetores, resLocais, resServicos] = await Promise.all([
+                getEquipamentos(),
+                getSetores(),
+                getLocais(),
+                getTiposServico()
+            ]);
 
-    const carregarTiposServico = useCallback(() => {
-        getTiposServico()
-            .then(response => setTiposServico(response.data))
-            .catch(error => console.error("Erro ao carregar tipos de serviço:", error));
+            // Ordenação dos equipamentos por Nome
+            const equipamentosOrdenados = resEquip.data.sort((a, b) => a.nome.localeCompare(b.nome));
+            setEquipamentos(equipamentosOrdenados);
+            setListaSetores(resSetores.data);
+            setListaLocais(resLocais.data);
+            setTiposServico(resServicos.data);
+
+        } catch (error) {
+            console.error("Erro ao carregar dados:", error);
+            setMensagem({ tipo: 'erro', texto: 'Falha ao carregar dados do sistema.' });
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     useEffect(() => {
-        carregarEquipamentos();
-        carregarTiposServico();
-    }, [carregarEquipamentos, carregarTiposServico]);
+        carregarDadosIniciais();
+    }, [carregarDadosIniciais]);
 
     const exibeMensagemTemporaria = (texto, tipo = 'sucesso') => {
         setMensagem({ tipo, texto });
@@ -171,26 +168,52 @@ function GerenciarEquipamentosPage() {
         if (mensagem.texto) setMensagem({ tipo: '', texto: '' });
     };
 
+    // --- Lógica de Filtro de Locais ---
+    const getLocaisFiltrados = (setorId) => {
+        if (!setorId) return [];
+        return listaLocais.filter(l => l.setorId === Number(setorId));
+    };
+
     // --- Handlers de Novo Equipamento ---
     const handleNovoEquipamentoChange = (e) => {
         limparMensagem();
         const { name, value } = e.target;
-        setNovoEquipamento(prev => ({ ...prev, [name]: value }));
+        
+        setNovoEquipamento(prev => {
+            const newState = { ...prev, [name]: value };
+            // Se mudou o setor, limpa o local
+            if (name === 'setorId') {
+                newState.localId = '';
+            }
+            return newState;
+        });
     };
 
     const handleNovoEquipamentoSubmit = (e) => {
         e.preventDefault();
         limparMensagem();
-        const dadosParaApi = { ...novoEquipamento, descricao: '' };
+        
+        // ✨ ALTERAÇÃO AQUI: Validação frontend básica
+        if(!novoEquipamento.setorId || !novoEquipamento.localId) {
+            alert("Setor e Local são obrigatórios.");
+            return;
+        }
+
+        const dadosParaApi = { 
+            ...novoEquipamento, 
+            descricao: '',
+            setorId: Number(novoEquipamento.setorId),
+            localId: Number(novoEquipamento.localId)
+        };
 
         createEquipamento(dadosParaApi)
             .then(() => {
                 exibeMensagemTemporaria('Equipamento criado com sucesso!');
-                setNovoEquipamento({ nome: '', tag: '' });
-                carregarEquipamentos();
+                setNovoEquipamento({ nome: '', tag: '', setorId: '', localId: '' });
+                carregarDadosIniciais(); // Recarrega a lista
             })
             .catch(error => {
-                const msg = error.response?.data?.message || 'Erro ao criar equipamento.';
+                const msg = error.response?.data?.message || 'Erro ao criar equipamento. Verifique se a Tag é única.';
                 exibeMensagemTemporaria(msg, 'erro');
             });
     };
@@ -202,7 +225,7 @@ function GerenciarEquipamentosPage() {
             deleteEquipamento(id)
                 .then(() => {
                     exibeMensagemTemporaria('Equipamento excluído com sucesso!');
-                    carregarEquipamentos();
+                    carregarDadosIniciais();
                 })
                 .catch(error => {
                     const msg = error.response?.data?.message || 'Falha ao excluir.';
@@ -214,63 +237,61 @@ function GerenciarEquipamentosPage() {
     const handleEditarClick = (equip) => {
         limparMensagem();
         setEditandoId(equip.id);
-        setFormEdicao({ tag: equip.tag || '', nome: equip.nome, descricao: equip.descricao || '' });
+        // ✨ ALTERAÇÃO AQUI: Carrega os dados existentes no form de edição
+        setFormEdicao({ 
+            tag: equip.tag || '', 
+            nome: equip.nome, 
+            descricao: equip.descricao || '',
+            setorId: equip.setorId || '',
+            localId: equip.localId || ''
+        });
     };
 
     const handleEdicaoChange = (e) => {
         const { name, value } = e.target;
-        setFormEdicao(prev => ({ ...prev, [name]: value }));
+        setFormEdicao(prev => {
+            const newState = { ...prev, [name]: value };
+            // Se mudou o setor na edição, reseta o local para obrigar a escolha de um válido
+            if (name === 'setorId') {
+                newState.localId = '';
+            }
+            return newState;
+        });
     };
 
     const handleSalvarEdicao = (id) => {
         limparMensagem();
-        updateEquipamento(id, formEdicao)
+        
+        if(!formEdicao.setorId || !formEdicao.localId) {
+            alert("Setor e Local são obrigatórios.");
+            return;
+        }
+
+        updateEquipamento(id, {
+            ...formEdicao,
+            setorId: Number(formEdicao.setorId),
+            localId: Number(formEdicao.localId)
+        })
             .then(() => {
                 exibeMensagemTemporaria('Equipamento atualizado com sucesso!');
                 setEditandoId(null);
-                carregarEquipamentos();
+                carregarDadosIniciais();
             })
             .catch(error => {
-                const msg = error.response?.data?.message || 'Erro ao atualizar.';
+                const msg = error.response?.data?.message || 'Erro ao atualizar. Verifique duplicidade de Tag.';
                 exibeMensagemTemporaria(msg, 'erro');
             });
     };
 
     // --- Handlers dos Modais ---
-    const handleOpenServicosModal = (equipamento) => {
-        limparMensagem();
-        setEquipamentoParaModal(equipamento);
-        setIsModalServicosOpen(true);
-    };
+    const handleOpenServicosModal = (equip) => { setEquipamentoParaModal(equip); setIsModalServicosOpen(true); };
+    const handleCloseServicosModal = () => { setIsModalServicosOpen(false); setEquipamentoParaModal(null); };
+    const handleOpenProgramacaoModal = (equip) => { setEquipamentoParaProgramacao(equip); setIsProgramacaoModalOpen(true); };
+    const handleCloseProgramacaoModal = () => { setIsProgramacaoModalOpen(false); setEquipamentoParaProgramacao(null); };
+    const handleOpenHistoricoModal = (equip) => { setEquipamentoParaHistorico(equip); setIsHistoricoModalOpen(true); };
+    const handleCloseHistoricoModal = () => { setIsHistoricoModalOpen(false); setEquipamentoParaHistorico(null); };
 
-    const handleCloseServicosModal = () => {
-        setIsModalServicosOpen(false);
-        setEquipamentoParaModal(null);
-    };
-
-    const handleOpenProgramacaoModal = (equipamento) => {
-        limparMensagem();
-        setEquipamentoParaProgramacao(equipamento);
-        setIsProgramacaoModalOpen(true);
-    };
-
-    const handleCloseProgramacaoModal = () => {
-        setIsProgramacaoModalOpen(false);
-        setEquipamentoParaProgramacao(null);
-    };
-
-    const handleOpenHistoricoModal = (equipamento) => {
-        limparMensagem();
-        setEquipamentoParaHistorico(equipamento);
-        setIsHistoricoModalOpen(true);
-    };
-
-    const handleCloseHistoricoModal = () => {
-        setIsHistoricoModalOpen(false);
-        setEquipamentoParaHistorico(null);
-    };
-
-    if (loading) return <div className="loading-message">Carregando equipamentos...</div>;
+    if (loading) return <div className="loading-message">Carregando dados...</div>;
 
     return (
         <div className="gerenciar-equipamentos-container">
@@ -281,13 +302,40 @@ function GerenciarEquipamentosPage() {
                 <h2>Cadastrar Novo Equipamento</h2>
                 <form onSubmit={handleNovoEquipamentoSubmit} className="form-novo-equipamento">
                     <div>
-                        <label>Nome do Equipamento</label>
+                        <label>Nome do Equipamento *</label>
                         <input type="text" name="nome" value={novoEquipamento.nome} onChange={handleNovoEquipamentoChange} placeholder="Ex: Empilhadeira 01" required />
                     </div>
                     <div>
-                        <label>Número do Ativo (Opcional)</label>
-                        <input type="text" name="tag" value={novoEquipamento.tag} onChange={handleNovoEquipamentoChange} placeholder="Ex: PAT-001" />
+                        <label>Número do Ativo (Tag) *</label>
+                        <input type="text" name="tag" value={novoEquipamento.tag} onChange={handleNovoEquipamentoChange} placeholder="Ex: PAT-001" required />
                     </div>
+                    
+                    {/* ✨ ALTERAÇÃO AQUI: Selects de Setor e Local */}
+                    <div>
+                        <label>Setor *</label>
+                        <select name="setorId" value={novoEquipamento.setorId} onChange={handleNovoEquipamentoChange} required>
+                            <option value="">Selecione...</option>
+                            {listaSetores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Local *</label>
+                        <select 
+                            name="localId" 
+                            value={novoEquipamento.localId} 
+                            onChange={handleNovoEquipamentoChange} 
+                            required
+                            disabled={!novoEquipamento.setorId}
+                        >
+                            <option value="">
+                                {!novoEquipamento.setorId ? 'Escolha setor primeiro' : 'Selecione...'}
+                            </option>
+                            {getLocaisFiltrados(novoEquipamento.setorId).map(l => (
+                                <option key={l.id} value={l.id}>{l.nome}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <button type="submit" className="btn-principal">Adicionar</button>
                 </form>
             </div>
@@ -299,6 +347,8 @@ function GerenciarEquipamentosPage() {
                         <tr>
                             <th>Nº do Ativo</th>
                             <th>Nome</th>
+                            <th>Setor</th> {/* Nova Coluna */}
+                            <th>Local</th> {/* Nova Coluna */}
                             <th>Descrição</th>
                             <th style={{ textAlign: 'right' }}>Ações</th>
                         </tr>
@@ -308,8 +358,27 @@ function GerenciarEquipamentosPage() {
                             <tr key={equip.id}>
                                 {editandoId === equip.id ? (
                                     <>
-                                        <td><input type="text" name="tag" value={formEdicao.tag} onChange={handleEdicaoChange} /></td>
+                                        <td><input type="text" name="tag" value={formEdicao.tag} onChange={handleEdicaoChange} required /></td>
                                         <td><input type="text" name="nome" value={formEdicao.nome} onChange={handleEdicaoChange} required /></td>
+                                        
+                                        {/* ✨ ALTERAÇÃO AQUI: Edição de Setor */}
+                                        <td>
+                                            <select name="setorId" value={formEdicao.setorId} onChange={handleEdicaoChange} required style={{width: '100%'}}>
+                                                <option value="">Selecione...</option>
+                                                {listaSetores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                                            </select>
+                                        </td>
+                                        
+                                        {/* ✨ ALTERAÇÃO AQUI: Edição de Local */}
+                                        <td>
+                                            <select name="localId" value={formEdicao.localId} onChange={handleEdicaoChange} required style={{width: '100%'}} disabled={!formEdicao.setorId}>
+                                                <option value="">Selecione...</option>
+                                                {getLocaisFiltrados(formEdicao.setorId).map(l => (
+                                                    <option key={l.id} value={l.id}>{l.nome}</option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        
                                         <td><input type="text" name="descricao" value={formEdicao.descricao} onChange={handleEdicaoChange} /></td>
                                         <td>
                                             <div className="actions-group">
@@ -322,6 +391,9 @@ function GerenciarEquipamentosPage() {
                                     <>
                                         <td>{equip.tag || '-'}</td>
                                         <td>{equip.nome}</td>
+                                        {/* ✨ ALTERAÇÃO AQUI: Exibição dos nomes vindos do DTO */}
+                                        <td>{equip.setorNome || '-'}</td>
+                                        <td>{equip.localNome || '-'}</td>
                                         <td>{equip.descricao}</td>
                                         <td>
                                             <div className="actions-container">
@@ -344,28 +416,15 @@ function GerenciarEquipamentosPage() {
                 </table>
             </div>
 
-            {/* Renderização dos Modais */}
+            {/* Modais */}
             {isModalServicosOpen && equipamentoParaModal && (
-                <ModalAssociarServicos
-                    equipamento={equipamentoParaModal}
-                    catalogoServicos={tiposServico}
-                    onClose={handleCloseServicosModal}
-                    onUpdate={() => {}}
-                />
+                <ModalAssociarServicos equipamento={equipamentoParaModal} catalogoServicos={tiposServico} onClose={handleCloseServicosModal} />
             )}
-            
             {isProgramacaoModalOpen && equipamentoParaProgramacao && (
-                <ProgramacaoModal
-                    equipamento={equipamentoParaProgramacao}
-                    onClose={handleCloseProgramacaoModal}
-                />
+                <ProgramacaoModal equipamento={equipamentoParaProgramacao} onClose={handleCloseProgramacaoModal} />
             )}
-            
             {isHistoricoModalOpen && equipamentoParaHistorico && (
-                <HistoricoModal
-                    equipamento={equipamentoParaHistorico}
-                    onClose={handleCloseHistoricoModal}
-                />
+                <HistoricoModal equipamento={equipamentoParaHistorico} onClose={handleCloseHistoricoModal} />
             )}
         </div>
     );

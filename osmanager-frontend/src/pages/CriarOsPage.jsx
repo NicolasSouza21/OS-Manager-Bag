@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrdemServico, getEquipamentos, getLocais, getTiposServico, getFrequencias, getSetores } from '../services/apiService';
-import './CriarOsPage.css'; // ✨ ALTERAÇÃO AQUI: Vamos precisar adicionar estilos a este CSS
+import './CriarOsPage.css';
 
 // Função para formatar data (YYYY-MM-DD)
 const formatDateForInput = (date) => {
@@ -10,7 +10,7 @@ const formatDateForInput = (date) => {
     return d.toISOString().slice(0, 10);
 };
 
-// ✨ ALTERAÇÃO AQUI: Nova função para formatar data e hora (YYYY-MM-DDTHH:mm)
+// Função para formatar data e hora (YYYY-MM-DDTHH:mm)
 const toInputDateTimeFormat = (date) => {
     if (!date) return '';
     const d = new Date(date);
@@ -23,7 +23,6 @@ function CriarOsPage() {
     const navigate = useNavigate();
     const [tipoManutencao, setTipoManutencao] = useState('CORRETIVA');
 
-    // ✨ ALTERAÇÃO AQUI: Novos campos de downtime adicionados ao estado
     const [formData, setFormData] = useState({
         equipamentoId: '',
         localId: '',
@@ -33,8 +32,8 @@ function CriarOsPage() {
         dataInicioPreventiva: formatDateForInput(new Date()),
         tipoServicoIds: new Set(),
         frequenciaId: '',
-        maquinaParada: false, // Novo campo
-        inicioDowntime: toInputDateTimeFormat(new Date()), // Novo campo
+        maquinaParada: false,
+        inicioDowntime: toInputDateTimeFormat(new Date()),
     });
 
     const [listaEquipamentos, setListaEquipamentos] = useState([]);
@@ -49,13 +48,17 @@ function CriarOsPage() {
 
     const equipamentoSelecionado = listaEquipamentos.find(e => e.id === Number(formData.equipamentoId));
 
-    // ... (carregarDadosIniciais e useEffects permanecem os mesmos) ...
     const carregarDadosIniciais = useCallback(async () => {
         try {
             const [resEquipamentos, resLocais, resFrequencias, resSetores] = await Promise.all([
                 getEquipamentos(), getLocais(), getFrequencias(), getSetores()
             ]);
-            setListaEquipamentos(resEquipamentos.data);
+            
+            const equipamentosOrdenados = resEquipamentos.data.sort((a, b) => 
+                a.nome.localeCompare(b.nome)
+            );
+            setListaEquipamentos(equipamentosOrdenados);
+
             setListaLocais(resLocais.data);
             setListaFrequencias(resFrequencias.data);
             setListaSetores(resSetores.data);
@@ -70,6 +73,8 @@ function CriarOsPage() {
         setFormData(prev => ({ ...prev, solicitante: localStorage.getItem('userName') || 'Usuário' }));
     }, [carregarDadosIniciais]);
 
+    // ✨ ALTERAÇÃO AQUI: Removemos o setFormData(localId: '') daqui para evitar limpar
+    // o local quando o sistema tenta preenchê-lo automaticamente.
     useEffect(() => {
         if (setorSelecionadoId) {
             const filtrados = listaLocais.filter(local => local.setorId === Number(setorSelecionadoId));
@@ -77,16 +82,35 @@ function CriarOsPage() {
         } else {
             setLocaisFiltrados([]);
         }
-        setFormData(prev => ({ ...prev, localId: '' }));
     }, [setorSelecionadoId, listaLocais]);
 
+    // ✨ ALTERAÇÃO AQUI: Lógica de preenchimento automático (Auto-Fill)
     useEffect(() => {
-        if (equipamentoSelecionado && equipamentoSelecionado.servicosDisponiveis) {
-            setServicosDisponiveis(equipamentoSelecionado.servicosDisponiveis);
+        if (equipamentoSelecionado) {
+            // 1. Carrega serviços
+            if (equipamentoSelecionado.servicosDisponiveis) {
+                setServicosDisponiveis(equipamentoSelecionado.servicosDisponiveis);
+            } else {
+                setServicosDisponiveis([]);
+            }
+
+            // 2. Preenche Setor automaticamente
+            if (equipamentoSelecionado.setorId) {
+                setSetorSelecionadoId(equipamentoSelecionado.setorId);
+            }
+
+            // 3. Preenche Local automaticamente e reseta serviços selecionados
+            setFormData(prev => ({ 
+                ...prev, 
+                tipoServicoIds: new Set(),
+                // Se o equipamento tem localId, usa ele. Senão mantém vazio.
+                localId: equipamentoSelecionado.localId || '' 
+            }));
+
         } else {
             setServicosDisponiveis([]);
+            setFormData(prev => ({ ...prev, tipoServicoIds: new Set() }));
         }
-        setFormData(prev => ({ ...prev, tipoServicoIds: new Set() }));
     }, [equipamentoSelecionado]);
 
 
@@ -97,6 +121,8 @@ function CriarOsPage() {
 
     const handleSetorChange = (e) => {
         setSetorSelecionadoId(e.target.value);
+        // ✨ ALTERAÇÃO AQUI: Resetamos o local APENAS se o usuário trocar o setor manualmente
+        setFormData(prev => ({ ...prev, localId: '' }));
     };
 
     const handleServicoChange = (servicoId) => {
@@ -121,18 +147,16 @@ function CriarOsPage() {
             frequenciaId: '',
             prioridade: 'MEDIA',
             descricaoProblema: '',
-            maquinaParada: false, // ✨ ALTERAÇÃO AQUI: Reseta o downtime
-            inicioDowntime: toInputDateTimeFormat(new Date()), // ✨ ALTERAÇÃO AQUI: Reseta o downtime
+            maquinaParada: false,
+            inicioDowntime: toInputDateTimeFormat(new Date()),
         }));
     };
 
-    // ✨ ALTERAÇÃO AQUI: Novo handler para os botões de rádio (Sim/Não)
     const handleDowntimeChange = (e) => {
         const isParada = e.target.value === 'sim';
         setFormData(prev => ({
             ...prev,
             maquinaParada: isParada,
-            // Se marcar "sim", define a data/hora atual. Se marcar "não", limpa.
             inicioDowntime: isParada ? toInputDateTimeFormat(new Date()) : ''
         }));
     };
@@ -147,7 +171,6 @@ function CriarOsPage() {
             return;
         }
 
-        // ✨ ALTERAÇÃO AQUI: Validação para o novo campo
         if (tipoManutencao === 'CORRETIVA' && formData.maquinaParada && !formData.inicioDowntime) {
             alert('Se a máquina está parada, por favor, informe a data e hora que ela parou.');
             return;
@@ -169,7 +192,6 @@ function CriarOsPage() {
                 solicitante: formData.solicitante,
                 prioridade: formData.prioridade,
                 descricaoProblema: formData.descricaoProblema,
-                // ✨ ALTERAÇÃO AQUI: Envia os novos dados de downtime
                 maquinaParada: formData.maquinaParada,
                 inicioDowntime: formData.maquinaParada ? formData.inicioDowntime : null
             };
@@ -180,7 +202,6 @@ function CriarOsPage() {
                 dataInicioPreventiva: formData.dataInicioPreventiva,
                 tipoServicoIds: Array.from(formData.tipoServicoIds),
                 frequenciaId: Number(formData.frequenciaId),
-                // ✨ ALTERAÇÃO AQUI: Garante que os campos de downtime sejam nulos
                 maquinaParada: false,
                 inicioDowntime: null
             };
@@ -225,7 +246,11 @@ function CriarOsPage() {
                             <label htmlFor="equipamento">EQUIPAMENTO:</label>
                             <select id="equipamento" name="equipamentoId" value={formData.equipamentoId} onChange={handleInputChange} required>
                                 <option value="" disabled>Selecione...</option>
-                                {listaEquipamentos.map((equip) => (<option key={equip.id} value={equip.id}>{equip.nome}</option>))}
+                                {listaEquipamentos.map((equip) => (
+                                    <option key={equip.id} value={equip.id}>
+                                        {equip.nome} {equip.tag ? `(Tag: ${equip.tag})` : ''}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <div className="input-group">
@@ -276,7 +301,6 @@ function CriarOsPage() {
                                 </div>
                             </div>
 
-                            {/* ✨ ALTERAÇÃO AQUI: Novos campos de Downtime */}
                             <div className="form-row">
                                 <div className="input-group downtime-check-group">
                                     <label>Máquina Parada?</label>
@@ -320,7 +344,6 @@ function CriarOsPage() {
                     )}
 
                     {tipoManutencao === 'PREVENTIVA' && (
-                         // ... (JSX da Preventiva permanece o mesmo) ...
                         <>
                             <div className="input-group full-width">
                                 <label>SERVIÇOS A SEREM REALIZADOS:</label>

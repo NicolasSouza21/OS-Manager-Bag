@@ -2,21 +2,27 @@ package com.bag.osmanager.service;
 
 import com.bag.osmanager.dto.EquipamentoDTO;
 import com.bag.osmanager.dto.TipoServicoDTO;
+import com.bag.osmanager.exception.DataIntegrityException; // ✨ ALTERAÇÃO AQUI: Import para validação
 import com.bag.osmanager.exception.ResourceNotFoundException;
 import com.bag.osmanager.model.Equipamento;
+import com.bag.osmanager.model.Local; // ✨ ALTERAÇÃO AQUI: Import
+import com.bag.osmanager.model.Setor; // ✨ ALTERAÇÃO AQUI: Import
 import com.bag.osmanager.model.TipoServico;
 import com.bag.osmanager.repository.EquipamentoRepository;
+import com.bag.osmanager.repository.LocalRepository; // ✨ ALTERAÇÃO AQUI: Import
 import com.bag.osmanager.repository.OrdemServicoRepository;
+import com.bag.osmanager.repository.SetorRepository; // ✨ ALTERAÇÃO AQUI: Import
 import com.bag.osmanager.repository.TipoServicoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap; // 1. ✅ Importe o HashMap
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map; // 2. ✅ Importe o Map
+import java.util.Map;
+import java.util.Optional; // ✨ ALTERAÇÃO AQUI: Import
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,39 +33,30 @@ public class EquipamentoService {
     private final EquipamentoRepository equipamentoRepository;
     private final TipoServicoRepository tipoServicoRepository;
     private final OrdemServicoRepository ordemServicoRepository;
+    
+    // ✨ ALTERAÇÃO AQUI: Injeção dos repositórios de Setor e Local
+    private final SetorRepository setorRepository;
+    private final LocalRepository localRepository;
 
-    // --- ✅ MÉTODO DELETAR ATUALIZADO ---
-    /**
-     * Tenta deletar um equipamento. Em vez de lançar DataIntegrityException,
-     * retorna um Map indicando o resultado da operação.
-     * @param id O ID do equipamento a ser deletado.
-     * @return Um Map contendo a chave "success" (boolean) e "message" (String).
-     * @throws ResourceNotFoundException se o equipamento não for encontrado.
-     */
     @Transactional
     public Map<String, Object> deletar(Long id) {
         Map<String, Object> response = new HashMap<>();
 
-        // Primeiro, verifica se o equipamento existe.
         if (!equipamentoRepository.existsById(id)) {
             throw new ResourceNotFoundException("Equipamento não encontrado com o ID: " + id);
         }
 
-        // VERIFICAÇÃO DE INTEGRIDADE: Checa se existem OS para este equipamento.
         if (ordemServicoRepository.existsByEquipamentoId(id)) {
             response.put("success", false);
             response.put("message", "Não é possível excluir o equipamento, pois ele já possui Ordens de Serviço associadas.");
             return response;
         }
 
-        // Se passar na verificação, pode deletar.
         equipamentoRepository.deleteById(id);
         response.put("success", true);
         response.put("message", "Equipamento excluído com sucesso.");
         return response;
     }
-    
-    // --- O RESTO DA CLASSE PERMANECE IGUAL ---
 
     public List<EquipamentoDTO> listarTodos() {
         return equipamentoRepository.findAll().stream()
@@ -73,20 +70,60 @@ public class EquipamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + id));
     }
 
+    // ✨ ALTERAÇÃO AQUI: Validação de Tag e Associação de Setor/Local no Cadastro
+    @Transactional
     public EquipamentoDTO cadastrar(EquipamentoDTO dto) {
+        // 1. Validação: A Tag deve ser única
+        // ⚠️ Nota: Certifique-se de que o método findByTag existe no EquipamentoRepository
+        Optional<Equipamento> equipExistente = equipamentoRepository.findByTag(dto.getTag());
+        if (equipExistente.isPresent()) {
+            throw new DataIntegrityException("Já existe um equipamento cadastrado com a Tag " + dto.getTag());
+        }
+
         Equipamento equipamento = new Equipamento();
         BeanUtils.copyProperties(dto, equipamento, "servicosDisponiveis");
+
+        // 2. Associação: Busca e seta Setor e Local
+        configurarSetorELocal(equipamento, dto);
+
         Equipamento salvo = equipamentoRepository.save(equipamento);
         return converteParaDTO(salvo);
     }
 
+    // ✨ ALTERAÇÃO AQUI: Validação de Tag e Associação de Setor/Local na Atualização
+    @Transactional
     public EquipamentoDTO atualizar(Long id, EquipamentoDTO dto) {
         Equipamento equipamento = equipamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + id));
 
+        // 1. Validação: Verifica se a Tag já existe em OUTRO equipamento
+        Optional<Equipamento> equipExistente = equipamentoRepository.findByTag(dto.getTag());
+        if (equipExistente.isPresent() && !equipExistente.get().getId().equals(id)) {
+            throw new DataIntegrityException("Já existe outro equipamento cadastrado com a Tag " + dto.getTag());
+        }
+
         BeanUtils.copyProperties(dto, equipamento, "id", "servicosDisponiveis");
+        
+        // 2. Atualização: Busca e seta Setor e Local
+        configurarSetorELocal(equipamento, dto);
+
         Equipamento atualizado = equipamentoRepository.save(equipamento);
         return converteParaDTO(atualizado);
+    }
+
+    // ✨ ALTERAÇÃO AQUI: Método auxiliar para evitar repetição de código
+    private void configurarSetorELocal(Equipamento equipamento, EquipamentoDTO dto) {
+        if (dto.getSetorId() != null) {
+            Setor setor = setorRepository.findById(dto.getSetorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Setor não encontrado com ID: " + dto.getSetorId()));
+            equipamento.setSetor(setor);
+        }
+        
+        if (dto.getLocalId() != null) {
+            Local local = localRepository.findById(dto.getLocalId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Local não encontrado com ID: " + dto.getLocalId()));
+            equipamento.setLocal(local);
+        }
     }
 
     @Transactional
@@ -128,6 +165,16 @@ public class EquipamentoService {
     private EquipamentoDTO converteParaDTO(Equipamento equipamento) {
         EquipamentoDTO dto = new EquipamentoDTO();
         BeanUtils.copyProperties(equipamento, dto, "servicosDisponiveis");
+
+        // ✨ ALTERAÇÃO AQUI: Preenche dados de Setor e Local para exibição no Frontend
+        if (equipamento.getSetor() != null) {
+            dto.setSetorId(equipamento.getSetor().getId());
+            dto.setSetorNome(equipamento.getSetor().getNome());
+        }
+        if (equipamento.getLocal() != null) {
+            dto.setLocalId(equipamento.getLocal().getId());
+            dto.setLocalNome(equipamento.getLocal().getNome());
+        }
 
         if (equipamento.getServicosDisponiveis() != null) {
             dto.setServicosDisponiveis(

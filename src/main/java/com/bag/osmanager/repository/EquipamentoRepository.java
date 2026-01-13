@@ -4,6 +4,8 @@ import com.bag.osmanager.model.Equipamento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional; // ✨ ALTERAÇÃO AQUI: Import necessário
+
 /**
  * Interface de repositório para a entidade Equipamento.
  * Ao estender JpaRepository, o Spring Data JPA nos fornece
@@ -11,10 +13,8 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> {
-    // Não precisamos escrever nenhum método aqui por enquanto.
-    // O JpaRepository já nos dá métodos como:
-    // - findAll() para buscar todos os equipamentos
-    // - findById(Long id) para buscar um por ID
-    // - save(Equipamento equipamento) para salvar um novo ou atualizar um existente
-    // - deleteById(Long id) para apagar um equipamento
+    
+    // ✨ ALTERAÇÃO AQUI: Método para buscar equipamento pela Tag
+    // O Spring Data JPA cria a implementação SQL automaticamente baseado no nome do método.
+    Optional<Equipamento> findByTag(String tag);
 }

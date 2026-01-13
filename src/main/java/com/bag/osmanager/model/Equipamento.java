@@ -21,24 +21,38 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"planos", "servicosDisponiveis"}) // Evita problemas com coleções
-@ToString(exclude = {"planos", "servicosDisponiveis"}) // Evita problemas com coleções
+@EqualsAndHashCode(exclude = {"planos", "servicosDisponiveis", "setor", "local"}) // ✨ ALTERAÇÃO AQUI: Exclusão para evitar loops
+@ToString(exclude = {"planos", "servicosDisponiveis", "setor", "local"}) // ✨ ALTERAÇÃO AQUI: Exclusão para evitar loops
 public class Equipamento {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nome; 
-    private String tag; 
+    private String nome;
+
+    // ✨ ALTERAÇÃO AQUI: Regra de unicidade para o número do ativo (Tag)
+    @Column(unique = true, nullable = false)
+    private String tag;
+
     private String descricao;
+
+    // ✨ ALTERAÇÃO AQUI: Relacionamento com Setor (Obrigatório)
+    @ManyToOne
+    @JoinColumn(name = "setor_id", nullable = false)
+    private Setor setor;
+
+    // ✨ ALTERAÇÃO AQUI: Relacionamento com Local (Obrigatório)
+    @ManyToOne
+    @JoinColumn(name = "local_id", nullable = false)
+    private Local local;
 
     // Relação: Um equipamento pode ter vários planos de preventiva.
     @OneToMany(mappedBy = "equipamento", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference("equipamento-planos")
     private List<PlanoPreventiva> planos;
 
-    // ✅ NOVA RELAÇÃO: Um equipamento pode ter vários tipos de serviço aplicáveis.
+    // Relação: Um equipamento pode ter vários tipos de serviço aplicáveis.
     @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(
         name = "equipamento_servicos",
