@@ -10,13 +10,13 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { getOrdensServico, getEquipamentos } from '../services/apiService';
 import './CalendarioPage.css';
 
-// Configurações de localização (sem alterações)
+// Configurações de localização
 const locales = { 'pt-BR': ptBR };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 const messages = { allDay: 'Dia todo', previous: 'Anterior', next: 'Próximo', today: 'Hoje', month: 'Mês', week: 'Semana', day: 'Dia', agenda: 'Agenda', date: 'Data', time: 'Hora', event: 'Evento', noEventsInRange: 'Não há eventos neste período.', showMore: total => `+ ver mais (${total})`};
 const formats = { dayHeaderFormat: (date, culture, localizer) => localizer.format(date, "EEEE, dd 'de' MMMM", culture), dayRangeHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'dd', culture)} - ${localizer.format(end, "dd 'de' MMMM", culture)}`, agendaHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'dd/MM/yyyy', culture)} - ${localizer.format(end, 'dd/MM/yyyy', culture)}`};
 
-// ✨✅ CORREÇÃO AQUI: A Legenda está correta agora
+// ✨✅ CORREÇÃO: Legenda ajustada para os status corretos
 const Legenda = () => (
     <div className="legenda-container">
         <div className="legenda-item"><span className="cor-box" style={{ backgroundColor: '#ffc107' }}></span>Corretiva</div>
@@ -26,7 +26,7 @@ const Legenda = () => (
     </div>
 );
 
-// ✨✅ CORREÇÃO AQUI: O título do evento reflete o status 'Prevista'
+// ✨✅ CORREÇÃO: Título do evento reflete o status 'Prevista' para OS ABERTA
 const CustomEvent = ({ event }) => {
     const os = event.resource;
     const frequenciaObj = os.frequencia;
@@ -49,14 +49,14 @@ const CustomEvent = ({ event }) => {
 
 const CustomToolbar = ({ label, onNavigate, onView, views, view }) => { const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1); const viewNames = { month: 'Mês', week: 'Semana', day: 'Dia', agenda: 'Agenda' }; return ( <div className="rbc-toolbar"> <div className="rbc-btn-group"> <button type="button" onClick={() => onNavigate('TODAY')}>Hoje</button> <button type="button" onClick={() => onNavigate('PREV')}>Anterior</button> <button type="button" onClick={() => onNavigate('NEXT')}>Próximo</button> </div> <span className="rbc-toolbar-label">{label}</span> <div className="rbc-btn-group"> {views.map(viewName => ( <button key={viewName} type="button" className={view === viewName ? 'rbc-active' : ''} onClick={() => onView(viewName)} > {viewNames[viewName] || capitalize(viewName)} </button>))} </div> </div> ); };
 
-// Função de range (sem alterações)
+// Função de range
 const getRangeForAPI = (targetDate) => {
     const dataInicio = format(startOfWeek(subMonths(targetDate, 1)), 'yyyy-MM-dd');
     const dataFim = format(endOfMonth(addMonths(targetDate, 1)), 'yyyy-MM-dd');
     return { dataInicio, dataFim };
 };
 
-// Componente de impressão (sem alterações)
+// Componente de impressão
 const PrintableCalendar = React.forwardRef(({ events, currentDate }, ref) => {
     const monthName = format(currentDate, 'MMMM yyyy', { locale: ptBR });
     const weekDays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -116,7 +116,7 @@ const PrintableCalendar = React.forwardRef(({ events, currentDate }, ref) => {
     );
 });
 
-// Estilos de impressão (sem alterações)
+// Estilos de impressão
 const printStyles = `
     @page {
         size: landscape;
@@ -231,8 +231,7 @@ function CalendarioPage() {
             const todasAsOrdens = resOrdens.data.content || [];
             const formattedEvents = [];
 
-            // ✨✅ CORREÇÃO AQUI: Esta é a lógica que você quer.
-            // "Me mostre TUDO, exceto CONCLUIDA e CANCELADA"
+            // ✨✅ CORREÇÃO: Lógica para filtrar 'CONCLUIDA' e 'CANCELADA'
             todasAsOrdens.forEach(os => {
                 const isConcluidaOuCancelada = ['CONCLUIDA', 'CANCELADA'].includes(os.status);
                 
@@ -282,7 +281,7 @@ function CalendarioPage() {
         navigate(`/os/${event.id}`);
     };
 
-    // ✨✅ CORREÇÃO AQUI: Lógica de estilo corrigida para Bater com a Legenda
+    // ✨✅ CORREÇÃO: Lógica de estilo corrigida para Bater com a Legenda
     const eventStyleGetter = (event) => {
         const os = event.resource;
         let style = { borderRadius: '5px', opacity: 0.9, color: 'white', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'block' };
@@ -315,7 +314,7 @@ function CalendarioPage() {
 
     return (
         <div className="calendario-container">
-            {/* Cabeçalho (sem alterações) */}
+            {/* Cabeçalho */}
             <div className="calendario-header">
                 <h1 className="calendario-title">Calendário de Manutenção</h1>
                 <div className="header-controls">

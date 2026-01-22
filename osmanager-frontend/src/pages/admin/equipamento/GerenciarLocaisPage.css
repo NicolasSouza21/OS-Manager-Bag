@@ -3,11 +3,27 @@
     max-width: 1200px;
     margin: 2rem auto;
     padding: 1rem;
+
     display: grid;
-    grid-template-columns: 1fr 2fr; /* Divide a tela em 1/3 para setores e 2/3 para locais */
+    grid-template-columns: 1fr 1fr;
     gap: 2rem;
-    align-items: flex-start;
+    align-items: start;
+
+    position: relative;
 }
+
+/* ✅ Mensagem ocupa a linha inteira */
+.mensagem-feedback {
+    grid-column: 1 / -1;
+    padding: 1rem;
+    margin: 0 0 1rem 0;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.mensagem-feedback.sucesso { background-color: #d4edda; color: #155724; }
+.mensagem-feedback.erro { background-color: #f8d7da; color: #721c24; }
 
 /* Estilo unificado para os cards de Setor e Local */
 .card {
@@ -15,11 +31,30 @@
     padding: 1.5rem 2rem;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    min-width: 0;
+
+    position: static;
+    float: none;
+    z-index: auto;
+
+    /* ✅ garante que o card cole no topo da “célula” do grid */
+    align-self: start;
+}
+
+/* ✅ mata qualquer margin-top do PRIMEIRO filho dentro do card
+   (normalmente é o h2 que causa o “desnível”) */
+.card > :first-child {
+    margin-top: 0 !important;
+}
+
+/* ✅ opcional: mata margin-bottom do ÚLTIMO filho (evita espaços diferentes no final) */
+.card > :last-child {
+    margin-bottom: 0;
 }
 
 .card h2 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
+    margin: 0 0 1.5rem 0; /* ✅ padroniza */
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #dee2e6;
     color: #0056b3;
@@ -30,20 +65,24 @@
 .form-cadastro {
     display: flex;
     gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    margin: 0 0 1.5rem 0; /* ✅ padroniza (não depende de css externo) */
+    flex-wrap: wrap;
+    align-items: stretch;
 }
 
 .form-cadastro input,
 .form-cadastro select {
-    flex-grow: 1;
+    flex: 1 1 220px;
     padding: 0.75rem;
     border: 1px solid #ced4da;
     border-radius: 5px;
     font-size: 1rem;
+    min-width: 0;
 }
 
 .form-cadastro button {
-    padding: 0 1.5rem;
+    flex: 0 0 auto;
+    padding: 0.75rem 1.5rem;
     border: none;
     background-color: #28a745;
     color: white;
@@ -51,6 +90,7 @@
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s;
+    white-space: nowrap;
 }
 
 .form-cadastro button:hover {
@@ -61,6 +101,7 @@
 .lista-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .lista-table th,
@@ -69,6 +110,9 @@
     text-align: left;
     border-bottom: 1px solid #dee2e6;
     vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lista-table th {
@@ -82,6 +126,13 @@
     padding: 0.5rem;
     border: 1px solid #ced4da;
     border-radius: 4px;
+    min-width: 0;
+}
+
+/* Coluna de ações */
+.lista-table th:last-child,
+.lista-table td:last-child {
+    width: 180px;
 }
 
 /* Botões de ação na tabela */
@@ -89,6 +140,7 @@
     display: flex;
     gap: 0.5rem;
     justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 .actions-cell button {
@@ -112,20 +164,14 @@
 .btn-cancel { background-color: #6c757d; }
 .btn-cancel:hover { background-color: #5a6268; }
 
-/* Mensagens de feedback */
-.mensagem-feedback {
-    padding: 1rem;
-    margin-top: 1rem;
-    border-radius: 5px;
-    text-align: center;
-    font-weight: 500;
-}
-.mensagem-feedback.sucesso { background-color: #d4edda; color: #155724; }
-.mensagem-feedback.erro { background-color: #f8d7da; color: #721c24; }
-
 /* Media query para telas menores */
 @media (max-width: 992px) {
     .gerenciar-locais-container {
-        grid-template-columns: 1fr; /* Empilha os cards em telas menores */
+        grid-template-columns: 1fr;
+    }
+
+    .lista-table th:last-child,
+    .lista-table td:last-child {
+        width: auto;
     }
 }

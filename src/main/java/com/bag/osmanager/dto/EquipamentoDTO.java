@@ -12,20 +12,20 @@ public class EquipamentoDTO {
     @NotBlank(message = "O nome do equipamento é obrigatório.")
     private String nome;
 
-    // ✨ ALTERAÇÃO AQUI: Tag agora é obrigatória
+    // Tag é obrigatória
     @NotBlank(message = "O número do ativo (Tag) é obrigatório.")
     private String tag;
 
     private String descricao;
 
-    // ✨ ALTERAÇÃO AQUI: Novos campos de relacionamento obrigatórios
+    // Setor continua obrigatório
     @NotNull(message = "O Setor é obrigatório.")
     private Long setorId;
 
-    @NotNull(message = "O Local é obrigatório.")
+    // ✨ ALTERAÇÃO AQUI: Removido @NotNull para tornar o Local opcional no DTO
     private Long localId;
 
-    // ✨ ALTERAÇÃO AQUI: Campos auxiliares para exibição (apenas leitura)
+    // Campos auxiliares para exibição (apenas leitura)
     private String setorNome;
     private String localNome;
 

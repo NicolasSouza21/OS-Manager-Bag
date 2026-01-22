@@ -45,7 +45,8 @@ body {
   gap: 2.5rem;
 }
 
-.form-card, .lista-card {
+.form-card,
+.lista-card {
   background: var(--fundo-card);
   padding: 2rem 2.5rem;
   border-radius: var(--raio-borda);
@@ -53,7 +54,8 @@ body {
   border: 1px solid var(--cor-borda);
 }
 
-.form-card h2, .lista-card h2 {
+.form-card h2,
+.lista-card h2 {
   font-size: 1.5rem;
   margin-top: 0;
   margin-bottom: 2rem;
@@ -66,28 +68,27 @@ body {
 /* --- Formulários --- */
 .form-novo-equipamento {
   display: grid;
-  /* ✨ CORREÇÃO AQUI: Ajusta colunas para input, input, botão */
-  grid-template-columns: 1fr 1fr auto; /* Duas colunas flexíveis, uma automática pro botão */
-  gap: 1rem; /* Reduzido o gap */
+  grid-template-columns: repeat(4, 1fr) auto; /* ✨ agora comporta Nome, Tag, Setor, Local + botão */
+  gap: 1rem;
   align-items: flex-end;
 }
 
-.form-novo-equipamento > div { /* Aplica ao div que envolve label+input */
-    display: flex;
-    flex-direction: column;
+.form-novo-equipamento > div {
+  display: flex;
+  flex-direction: column;
 }
 
 .form-novo-equipamento label {
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--cor-texto-secundario);
-    font-size: 0.875rem;
-    text-align: left;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--cor-texto-secundario);
+  font-size: 0.875rem;
 }
 
-.form-novo-equipamento input {
+.form-novo-equipamento input,
+.form-novo-equipamento select {
   width: 100%;
-  padding: 10px 12px; /* Padding ajustado */
+  padding: 10px 12px;
   font-size: 1rem;
   border: 1px solid var(--cor-borda);
   border-radius: 6px;
@@ -96,31 +97,39 @@ body {
   box-sizing: border-box;
 }
 
-.form-novo-equipamento input:focus {
+.form-novo-equipamento input:focus,
+.form-novo-equipamento select:focus {
   outline: none;
   border-color: var(--cor-primaria);
   box-shadow: 0 0 0 3px rgba(0, 90, 156, 0.2);
 }
 
-.form-novo-equipamento button.btn-principal {
-    padding: 10px 20px; /* Padding ajustado para o botão */
-    height: calc(20px + 1rem + 2px); /* Altura baseada no padding + font-size + borda */
-    white-space: nowrap; /* Impede que "Adicionar" quebre linha */
+.form-novo-equipamento select:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
 }
 
+.form-novo-equipamento button.btn-principal {
+  height: 42px;
+  padding: 0 22px;
+  white-space: nowrap;
+  align-self: flex-end;
+}
 
 /* --- Tabela de Equipamentos --- */
 .equipamentos-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* ✨ evita estouro */
 }
 
 .equipamentos-table th,
 .equipamentos-table td {
-  padding: 0.8rem 1rem; /* Padding ligeiramente reduzido */
+  padding: 0.8rem 1rem;
   text-align: left;
   vertical-align: middle;
   border-bottom: 1px solid var(--cor-borda);
+  word-break: break-word;
 }
 
 .equipamentos-table th {
@@ -137,82 +146,80 @@ body {
   background-color: #f8f9fa;
 }
 
-/* --- Célula de Ações e Botões --- */
+/* --- Célula de Ações --- */
 .equipamentos-table td:last-child {
-    /* ✨ CORREÇÃO AQUI: Define largura automática e alinhamento */
-    width: auto; /* Deixa a largura se ajustar ao conteúdo */
-    min-width: 280px; /* Aumenta um pouco o mínimo para caber 3 botões lado a lado */
-    text-align: right; /* Alinha o container flex à direita */
-    vertical-align: middle; /* Centraliza verticalmente */
+  min-width: 320px;
+  text-align: right;
 }
 
-/* ✨ CORREÇÃO AQUI: Container principal dos botões */
+/* --- Ações --- */
 .actions-container {
-    display: inline-flex; /* Torna o container inline para respeitar text-align: right */
-    flex-direction: column; /* Empilha os grupos */
-    gap: 6px; /* Espaço entre as linhas de botões */
-    align-items: stretch; /* Faz os grupos ocuparem a largura disponível */
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
 }
 
-/* ✨ CORREÇÃO AQUI: Grupo superior (Plano, Histórico) */
+.actions-group,
 .actions-group-vertical {
-    display: flex; /* Alinha os botões lado a lado */
-    gap: 6px; /* Espaço entre Plano e Histórico */
-}
-/* Faz Plano e Histórico terem a mesma largura */
-.actions-group-vertical > button {
-    flex: 1; /* Divide o espaço igualmente */
+  display: flex;
+  gap: 6px;
 }
 
-/* ✨ CORREÇÃO AQUI: Grupo inferior (Serviços, Editar, Excluir) */
-.actions-group {
-    display: flex; /* Alinha os botões lado a lado */
-    gap: 6px; /* Espaço entre Serviços, Editar, Excluir */
-}
-/* Faz Serviços, Editar, Excluir terem a mesma largura */
-.actions-group > button {
-     flex: 1; /* Divide o espaço igualmente */
+.actions-group button,
+.actions-group-vertical button {
+  flex: 1;
+  min-height: 34px;
 }
 
-
-/* Estilo base unificado para todos os botões de ação */
-.btn-principal, /* Incluído para consistência */
-.btn-plano, .btn-historico, .btn-servicos, .btn-editar, .btn-excluir, .btn-salvar, .btn-cancelar {
-  padding: 8px 10px; /* Padding ajustado */
+/* --- Botões --- */
+.btn-principal,
+.btn-plano,
+.btn-historico,
+.btn-servicos,
+.btn-editar,
+.btn-excluir,
+.btn-salvar,
+.btn-cancelar {
+  padding: 8px 10px;
   border: none;
-  border-radius: 5px; /* Raio ligeiramente menor */
+  border-radius: 5px;
   cursor: pointer;
   font-weight: 500;
-  font-size: 0.85rem; /* Tamanho ligeiramente menor */
+  font-size: 0.85rem;
   transition: var(--transicao-rapida);
   color: var(--fundo-card);
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
   white-space: nowrap;
-  box-sizing: border-box; /* Garante que padding não afete a largura */
 }
 
-/* --- Cores e Hovers dos Botões --- */
-.btn-principal { background-color: var(--cor-primaria); } /* Adicionado */
-.btn-principal:hover { background-color: var(--cor-primaria-hover); } /* Adicionado */
+.btn-principal { background-color: var(--cor-primaria); }
+.btn-principal:hover { background-color: var(--cor-primaria-hover); }
+
 .btn-plano { background-color: var(--cor-primaria); }
 .btn-plano:hover { background-color: var(--cor-primaria-hover); }
+
 .btn-historico { background-color: #5bc0de; }
 .btn-historico:hover { background-color: #31b0d5; }
+
 .btn-servicos { background-color: var(--cor-sucesso); }
 .btn-servicos:hover { background-color: var(--cor-sucesso-hover); }
+
 .btn-editar { background-color: var(--cor-aviso); }
 .btn-editar:hover { background-color: var(--cor-aviso-hover); }
+
 .btn-excluir { background-color: var(--cor-alerta); }
 .btn-excluir:hover { background-color: var(--cor-alerta-hover); }
+
 .btn-salvar { background-color: var(--cor-sucesso); }
 .btn-salvar:hover { background-color: var(--cor-sucesso-hover); }
+
 .btn-cancelar { background-color: var(--cor-secundaria); }
 .btn-cancelar:hover { background-color: #5a6268; }
 
-/* Mensagens de feedback (sem alterações) */
+/* --- Mensagens --- */
 .mensagem {
   padding: 1rem;
   margin-bottom: 1rem;
@@ -221,261 +228,22 @@ body {
   color: var(--fundo-card);
   text-align: center;
 }
+
 .mensagem.sucesso { background-color: var(--cor-sucesso); }
 .mensagem.erro { background-color: var(--cor-alerta); }
 
-/* ============================================== */
-/* ESTILOS DO MODAL DE PLANO E HISTÓRICO      */
-/* ============================================== */
-/* ... (Estilos do modal permanecem os mesmos) ... */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.6); display: flex; align-items: center;
-    justify-content: center; z-index: 1000; padding: 1rem;
-}
-.modal-content.programacao-modal {
-    background: var(--fundo-card); border-radius: var(--raio-borda);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2); width: 90%; max-width: 900px;
-    max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;
-}
-.modal-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 1rem 1.5rem; background-color: var(--fundo-pagina);
-    color: var(--cor-texto-principal); flex-shrink: 0; border-bottom: 1px solid var(--cor-borda);
-}
-.modal-header h2 {
-    margin: 0 !important; padding: 0 !important; font-size: 1.25rem; font-weight: 600;
-    color: var(--cor-texto-principal) !important; background: none !important; border: none !important;
-}
-.modal-header .btn-fechar-modal, .modal-header .btn-imprimir-modal {
-    padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; cursor: pointer;
-    transition: all 0.2s; font-size: 0.9rem;
-}
-.modal-header .btn-fechar-modal {
-    background-color: #f8f9fa; color: var(--cor-texto-secundario); border: 1px solid var(--cor-borda);
-}
-.modal-header .btn-fechar-modal:hover { background-color: #e9ecef; }
-.modal-header .btn-imprimir-modal {
-    background-color: var(--cor-primaria); color: white; border: 1px solid var(--cor-primaria); margin-right: 0.5rem;
-}
-.modal-header .btn-imprimir-modal:hover { background-color: var(--cor-primaria-hover); }
-.modal-body { padding: 1.5rem; overflow-y: auto; flex-grow: 1; }
-.modal-body h3 { margin-top: 0; margin-bottom: 1.5rem; color: var(--cor-texto-principal); font-size: 1.5rem; }
-.modal-body h4 { margin-top: 2rem; margin-bottom: 1rem; color: #444; border-bottom: 2px solid var(--cor-primaria); padding-bottom: 0.5rem; }
-.mensagem-vazia { font-style: italic; color: var(--cor-texto-secundario); margin-top: 1rem; }
-.tabela-container, .historico-table-container { border: 1px solid var(--cor-borda); border-radius: var(--raio-borda); overflow: hidden; }
-.historico-table-container { max-height: 400px; overflow-y: auto; position: relative; }
-.programacao-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; color: var(--cor-texto-principal); }
-.programacao-table th, .programacao-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--cor-borda); vertical-align: middle; }
-.programacao-table thead th { background-color: #f4f6f8; font-weight: 600; color: var(--cor-texto-secundario); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-.programacao-table tbody tr { transition: background-color 0.15s; }
-.programacao-table tbody tr:nth-child(even) { background-color: #fdfdfd; }
-.programacao-table tbody tr.clickable-row:hover { background-color: #eaf5ff; cursor: pointer; }
-.programacao-table td[title] { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.status-badge { display: inline-block; padding: 0.3rem 0.6rem; font-size: 0.8rem; font-weight: 700; line-height: 1; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: 10rem; color: #fff; text-transform: uppercase; }
-.status-badge.status-aberta { background-color: var(--cor-alerta); }
-.status-badge.status-concluida { background-color: var(--cor-sucesso); }
-.status-badge.status-andamento { background-color: var(--cor-aviso); }
-.status-badge.status-default { background-color: var(--cor-secundaria); }
-.historico-table-container::-webkit-scrollbar { width: 10px; }
-.historico-table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-.historico-table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-.historico-table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
+/* --- Responsividade --- */
+@media (max-width: 1100px) {
+  .form-novo-equipamento {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-/* ✨ ============================================== */
-/* ✨ ALTERAÇÃO AQUI: Wrapper para esconder impressão da tela */
-/* ✨ ============================================== */
-.print-hidden-wrapper {
-    display: none;
-}
-
-
-/* ============================================== */
-/* ESTILOS PARA IMPRESSÃO (AGORA PARA PLANO E HISTÓRICO) */
-/* ============================================== */
-@media print {
-    /* Esconde a página principal (a tela do gerenciador de equipamentos) */
-    .gerenciar-equipamentos-container {
-        display: none !important;
-    }
-
-    /* ✨ ALTERAÇÃO AQUI: Esconde o wrapper escondido (que só serve para tela) */
-    .print-hidden-wrapper {
-        display: none !important;
-    }
-
-    /* Mostra APENAS o conteúdo de impressão */
-    .printable-container, .printable-container * {
-        visibility: visible;
-    }
-    .printable-container {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-
-    /* ✨ ALTERAÇÃO AQUI: Novo cabeçalho simples para o PLANO */
-    .print-header-simple {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 2px solid #000;
-        padding-bottom: 5px;
-        margin-bottom: 10px;
-    }
-    .print-header-simple h2 {
-        font-size: 14pt;
-        margin: 0;
-        font-family: 'Arial', sans-serif;
-    }
-    .print-header-simple span {
-        font-size: 10pt;
-        font-weight: bold;
-        font-family: 'Arial', sans-serif;
-    }
-    /* Fim da alteração */
-
-    /* Estilos da tabela de impressão (GENÉRICO) */
-    .print-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9pt;
-        page-break-inside: auto;
-        font-family: 'Arial', sans-serif;
-    }
-    .print-table tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
-    }
-    .print-table th, .print-table td {
-        border: 1px solid #000; /* Borda preta para a planilha */
-        padding: 4px 6px;
-        text-align: left;
-        vertical-align: middle; /* Alinha no meio */
-    }
-
-    .print-table thead, .print-table tfoot {
-        display: table-row-group;
-    }
-    
-    .print-table th {
-        background-color: #E0E0E0 !important; /* Fundo cinza */
-        font-weight: bold;
-        text-align: center;
-    }
-
-    /* ✨ ALTERAÇÃO AQUI: Estilos específicos para a tabela PLANO */
-    .print-table.plano .equipamento-cell {
-        font-weight: bold;
-        text-align: center;
-        vertical-align: middle;
-    }
-    .print-table.plano td {
-        height: 25px; /* Altura de linha como na planilha */
-    }
-    /* Fim da alteração */
-
-
-    /* Estilização do cabeçalho da página (para o HISTÓRICO) */
-    .printable-header {
-        text-align: center;
-        border: none !important;
-    }
-    .printable-header h2, .printable-header h3 {
-        margin: 0;
-        padding: 5px;
-    }
-
-    /* Rodapé (Usado pelo HISTÓRICO) */
-    .print-table tfoot {
-        display: table-footer-group;
-    }
-    .printable-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: none !important;
-        border-top: 1px solid #000 !important;
-        font-size: 8pt;
-        font-family: Arial, sans-serif;
-        padding: 5px 0;
-        width: 100%;
-    }
-    .printable-footer span {
-        white-space: nowrap;
-    }
-    .printable-footer span:nth-child(1) { text-align: left; flex: 1; }
-    .printable-footer span:nth-child(2) { text-align: center; flex: 1; }
-    .printable-footer span:nth-child(3) { text-align: right; flex: 1; }
-}
-
-/* ✨ ============================================== */
-/* ✨ ALTERAÇÃO AQUI: Estilos para o Modal de Edição de Plano */
-/* ✨ ============================================== */
-
-/* Ajusta a tabela de edição para que os inputs/selects fiquem bons */
-.programacao-table.plano-edit-table {
-    font-size: 0.85rem; /* Fonte um pouco menor para caber tudo */
-}
-
-/* Garante que inputs e selects ocupem 100% da célula */
-.programacao-table.plano-edit-table input[type="text"],
-.programacao-table.plano-edit-table input[type="number"],
-.programacao-table.plano-edit-table select {
+  .form-novo-equipamento button.btn-principal {
+    grid-column: span 2;
     width: 100%;
-    padding: 8px;
-    font-size: 0.85rem;
-    border: 1px solid var(--cor-borda);
-    border-radius: 5px;
-    box-sizing: border-box; /* Garante que o padding não estoure a célula */
+  }
+
+  .equipamentos-table td:last-child {
+    min-width: auto;
+  }
 }
-
-.programacao-table.plano-edit-table input:focus,
-.programacao-table.plano-edit-table select:focus {
-    outline: none;
-    border-color: var(--cor-primaria);
-    box-shadow: 0 0 0 2px rgba(0, 90, 156, 0.2);
-}
-
-/* Estilo para a linha do formulário de adição no <tfoot> */
-/* ✨ ALTERAÇÃO AQUI: Classe corrigida para <tfoot> */
-.programacao-table tfoot.form-add-plano-footer tr {
-    background-color: #f8f9fa; /* Fundo levemente cinza */
-    border-top: 2px solid var(--cor-borda);
-}
-
-.programacao-table tfoot.form-add-plano-footer td {
-    padding: 1rem; /* Mais espaço no formulário de adição */
-    vertical-align: top; /* Alinha os inputs de cima para baixo */
-}
-/* Fim da alteração */
-
-/* Botões de ação dentro da tabela de edição */
-.btn-acao {
-    padding: 8px 10px; /* Padding igual ao dos botões principais */
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 0.85rem;
-    transition: var(--transicao-rapida);
-    color: var(--fundo-card);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    white-space: nowrap;
-    box-sizing: border-box; 
-    width: 90px; /* Largura fixa */
-}
-
-/* Cores específicas (reutilizando variáveis) */
-.btn-acao.btn-salvar { background-color: var(--cor-sucesso); }
-.btn-acao.btn-salvar:hover { background-color: var(--cor-sucesso-hover); }
-
-.btn-acao.btn-excluir { background-color: var(--cor-alerta); }
-.btn-acao.btn-excluir:hover { background-color: var(--cor-alerta-hover); }
-
-.btn-acao.btn-cancelar { background-color: var(--cor-secundaria); }
-.btn-acao.btn-cancelar:hover { background-color: #5a6268; }

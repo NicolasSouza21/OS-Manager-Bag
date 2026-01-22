@@ -21,8 +21,8 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"planos", "servicosDisponiveis", "setor", "local"}) // ✨ ALTERAÇÃO AQUI: Exclusão para evitar loops
-@ToString(exclude = {"planos", "servicosDisponiveis", "setor", "local"}) // ✨ ALTERAÇÃO AQUI: Exclusão para evitar loops
+@EqualsAndHashCode(exclude = {"planos", "servicosDisponiveis", "setor", "local"}) // Evita loops de referência
+@ToString(exclude = {"planos", "servicosDisponiveis", "setor", "local"}) // Evita loops de referência
 public class Equipamento {
 
     @Id
@@ -31,20 +31,21 @@ public class Equipamento {
 
     private String nome;
 
-    // ✨ ALTERAÇÃO AQUI: Regra de unicidade para o número do ativo (Tag)
+    // Regra de unicidade para o número do ativo (Tag)
     @Column(unique = true, nullable = false)
     private String tag;
 
     private String descricao;
 
-    // ✨ ALTERAÇÃO AQUI: Relacionamento com Setor (Obrigatório)
+    // Relacionamento com Setor (Obrigatório)
     @ManyToOne
     @JoinColumn(name = "setor_id", nullable = false)
     private Setor setor;
 
-    // ✨ ALTERAÇÃO AQUI: Relacionamento com Local (Obrigatório)
+    // ✨ ALTERAÇÃO AQUI: Relacionamento com Local alterado para OPCIONAL (nullable = true)
+    // Isso permite que o Frontend envie 'null' sem causar erro 500 no banco.
     @ManyToOne
-    @JoinColumn(name = "local_id", nullable = false)
+    @JoinColumn(name = "local_id", nullable = true)
     private Local local;
 
     // Relação: Um equipamento pode ter vários planos de preventiva.

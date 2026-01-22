@@ -4,7 +4,7 @@ import {
     getTiposServico,
     getHistoricoPorEquipamento,
     listarServicosPorEquipamento, associarServico, desassociarServico,
-    getSetores, getLocais // ✨ ALTERAÇÃO AQUI: Import para buscar setores e locais
+    getSetores, getLocais
 } from '../../../services/apiService';
 import HistoricoModal from './HistoricoModal';
 import ProgramacaoModal from './ProgramacaoModal';
@@ -108,15 +108,11 @@ function GerenciarEquipamentosPage() {
     const [equipamentos, setEquipamentos] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // ✨ ALTERAÇÃO AQUI: Estados para armazenar Setores e Locais
     const [listaSetores, setListaSetores] = useState([]);
     const [listaLocais, setListaLocais] = useState([]);
 
-    // Estados de Edição/Criação
     const [editandoId, setEditandoId] = useState(null);
-    // ✨ ALTERAÇÃO AQUI: Adicionado setorId e localId no form de edição
     const [formEdicao, setFormEdicao] = useState({ tag: '', nome: '', descricao: '', setorId: '', localId: '' });
-    // ✨ ALTERAÇÃO AQUI: Adicionado setorId e localId no novo equipamento
     const [novoEquipamento, setNovoEquipamento] = useState({ nome: '', tag: '', setorId: '', localId: '' });
 
     const [tiposServico, setTiposServico] = useState([]);
@@ -129,7 +125,6 @@ function GerenciarEquipamentosPage() {
     const [isHistoricoModalOpen, setIsHistoricoModalOpen] = useState(false);
     const [equipamentoParaHistorico, setEquipamentoParaHistorico] = useState(null);
 
-    // ✨ ALTERAÇÃO AQUI: Carrega todos os dados necessários (Equipamentos, Setores, Locais, Serviços)
     const carregarDadosIniciais = useCallback(async () => {
         setLoading(true);
         try {
@@ -140,7 +135,6 @@ function GerenciarEquipamentosPage() {
                 getTiposServico()
             ]);
 
-            // Ordenação dos equipamentos por Nome
             const equipamentosOrdenados = resEquip.data.sort((a, b) => a.nome.localeCompare(b.nome));
             setEquipamentos(equipamentosOrdenados);
             setListaSetores(resSetores.data);
@@ -168,20 +162,17 @@ function GerenciarEquipamentosPage() {
         if (mensagem.texto) setMensagem({ tipo: '', texto: '' });
     };
 
-    // --- Lógica de Filtro de Locais ---
     const getLocaisFiltrados = (setorId) => {
         if (!setorId) return [];
         return listaLocais.filter(l => l.setorId === Number(setorId));
     };
 
-    // --- Handlers de Novo Equipamento ---
     const handleNovoEquipamentoChange = (e) => {
         limparMensagem();
         const { name, value } = e.target;
         
         setNovoEquipamento(prev => {
             const newState = { ...prev, [name]: value };
-            // Se mudou o setor, limpa o local
             if (name === 'setorId') {
                 newState.localId = '';
             }
@@ -193,9 +184,8 @@ function GerenciarEquipamentosPage() {
         e.preventDefault();
         limparMensagem();
         
-        // ✨ ALTERAÇÃO AQUI: Validação frontend básica
-        if(!novoEquipamento.setorId || !novoEquipamento.localId) {
-            alert("Setor e Local são obrigatórios.");
+        if(!novoEquipamento.setorId) {
+            alert("O Setor é obrigatório.");
             return;
         }
 
@@ -203,14 +193,14 @@ function GerenciarEquipamentosPage() {
             ...novoEquipamento, 
             descricao: '',
             setorId: Number(novoEquipamento.setorId),
-            localId: Number(novoEquipamento.localId)
+            localId: novoEquipamento.localId ? Number(novoEquipamento.localId) : null
         };
 
         createEquipamento(dadosParaApi)
             .then(() => {
                 exibeMensagemTemporaria('Equipamento criado com sucesso!');
                 setNovoEquipamento({ nome: '', tag: '', setorId: '', localId: '' });
-                carregarDadosIniciais(); // Recarrega a lista
+                carregarDadosIniciais();
             })
             .catch(error => {
                 const msg = error.response?.data?.message || 'Erro ao criar equipamento. Verifique se a Tag é única.';
@@ -218,7 +208,6 @@ function GerenciarEquipamentosPage() {
             });
     };
 
-    // --- Handlers de Edição/Exclusão ---
     const handleExcluir = (id) => {
         limparMensagem();
         if (window.confirm('Tem certeza que deseja excluir este equipamento?')) {
@@ -237,7 +226,6 @@ function GerenciarEquipamentosPage() {
     const handleEditarClick = (equip) => {
         limparMensagem();
         setEditandoId(equip.id);
-        // ✨ ALTERAÇÃO AQUI: Carrega os dados existentes no form de edição
         setFormEdicao({ 
             tag: equip.tag || '', 
             nome: equip.nome, 
@@ -251,7 +239,6 @@ function GerenciarEquipamentosPage() {
         const { name, value } = e.target;
         setFormEdicao(prev => {
             const newState = { ...prev, [name]: value };
-            // Se mudou o setor na edição, reseta o local para obrigar a escolha de um válido
             if (name === 'setorId') {
                 newState.localId = '';
             }
@@ -262,15 +249,15 @@ function GerenciarEquipamentosPage() {
     const handleSalvarEdicao = (id) => {
         limparMensagem();
         
-        if(!formEdicao.setorId || !formEdicao.localId) {
-            alert("Setor e Local são obrigatórios.");
+        if(!formEdicao.setorId) {
+            alert("O Setor é obrigatório.");
             return;
         }
 
         updateEquipamento(id, {
             ...formEdicao,
             setorId: Number(formEdicao.setorId),
-            localId: Number(formEdicao.localId)
+            localId: formEdicao.localId ? Number(formEdicao.localId) : null
         })
             .then(() => {
                 exibeMensagemTemporaria('Equipamento atualizado com sucesso!');
@@ -310,7 +297,6 @@ function GerenciarEquipamentosPage() {
                         <input type="text" name="tag" value={novoEquipamento.tag} onChange={handleNovoEquipamentoChange} placeholder="Ex: PAT-001" required />
                     </div>
                     
-                    {/* ✨ ALTERAÇÃO AQUI: Selects de Setor e Local */}
                     <div>
                         <label>Setor *</label>
                         <select name="setorId" value={novoEquipamento.setorId} onChange={handleNovoEquipamentoChange} required>
@@ -319,16 +305,15 @@ function GerenciarEquipamentosPage() {
                         </select>
                     </div>
                     <div>
-                        <label>Local *</label>
+                        <label>Local (Opcional)</label>
                         <select 
                             name="localId" 
                             value={novoEquipamento.localId} 
                             onChange={handleNovoEquipamentoChange} 
-                            required
                             disabled={!novoEquipamento.setorId}
                         >
                             <option value="">
-                                {!novoEquipamento.setorId ? 'Escolha setor primeiro' : 'Selecione...'}
+                                {!novoEquipamento.setorId ? 'Escolha setor primeiro' : 'Selecione (Opcional)...'}
                             </option>
                             {getLocaisFiltrados(novoEquipamento.setorId).map(l => (
                                 <option key={l.id} value={l.id}>{l.nome}</option>
@@ -347,70 +332,72 @@ function GerenciarEquipamentosPage() {
                         <tr>
                             <th>Nº do Ativo</th>
                             <th>Nome</th>
-                            <th>Setor</th> {/* Nova Coluna */}
-                            <th>Local</th> {/* Nova Coluna */}
+                            <th>Setor</th>
+                            <th>Local</th>
                             <th>Descrição</th>
                             <th style={{ textAlign: 'right' }}>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {equipamentos.map(equip => (
-                            <tr key={equip.id}>
-                                {editandoId === equip.id ? (
-                                    <>
-                                        <td><input type="text" name="tag" value={formEdicao.tag} onChange={handleEdicaoChange} required /></td>
-                                        <td><input type="text" name="nome" value={formEdicao.nome} onChange={handleEdicaoChange} required /></td>
-                                        
-                                        {/* ✨ ALTERAÇÃO AQUI: Edição de Setor */}
-                                        <td>
-                                            <select name="setorId" value={formEdicao.setorId} onChange={handleEdicaoChange} required style={{width: '100%'}}>
-                                                <option value="">Selecione...</option>
-                                                {listaSetores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
-                                            </select>
-                                        </td>
-                                        
-                                        {/* ✨ ALTERAÇÃO AQUI: Edição de Local */}
-                                        <td>
-                                            <select name="localId" value={formEdicao.localId} onChange={handleEdicaoChange} required style={{width: '100%'}} disabled={!formEdicao.setorId}>
-                                                <option value="">Selecione...</option>
-                                                {getLocaisFiltrados(formEdicao.setorId).map(l => (
-                                                    <option key={l.id} value={l.id}>{l.nome}</option>
-                                                ))}
-                                            </select>
-                                        </td>
-                                        
-                                        <td><input type="text" name="descricao" value={formEdicao.descricao} onChange={handleEdicaoChange} /></td>
-                                        <td>
+                            /* ✨ ALTERAÇÃO AQUI: Refatoração do JSX - O 'tr' agora é retornado PELO ternário */
+                            editandoId === equip.id ? (
+                                <tr key={equip.id} className="row-editing">
+                                    <td><input type="text" name="tag" value={formEdicao.tag} onChange={handleEdicaoChange} required /></td>
+                                    <td><input type="text" name="nome" value={formEdicao.nome} onChange={handleEdicaoChange} required /></td>
+                                    
+                                    <td>
+                                        <select name="setorId" value={formEdicao.setorId} onChange={handleEdicaoChange} required style={{width: '100%'}}>
+                                            <option value="">Selecione...</option>
+                                            {listaSetores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                                        </select>
+                                    </td>
+                                    
+                                    <td>
+                                        <select 
+                                            name="localId" 
+                                            value={formEdicao.localId} 
+                                            onChange={handleEdicaoChange} 
+                                            style={{width: '100%'}} 
+                                            disabled={!formEdicao.setorId}
+                                        >
+                                            <option value="">Selecione (Opcional)...</option>
+                                            {getLocaisFiltrados(formEdicao.setorId).map(l => (
+                                                <option key={l.id} value={l.id}>{l.nome}</option>
+                                            ))}
+                                        </select>
+                                    </td>
+                                    
+                                    <td><input type="text" name="descricao" value={formEdicao.descricao} onChange={handleEdicaoChange} /></td>
+                                    <td>
+                                        <div className="actions-group">
+                                            <button onClick={() => handleSalvarEdicao(equip.id)} className="btn-salvar">Salvar</button>
+                                            <button onClick={() => setEditandoId(null)} className="btn-cancelar">Cancelar</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                <tr key={equip.id}>
+                                    <td>{equip.tag || '-'}</td>
+                                    <td>{equip.nome}</td>
+                                    <td>{equip.setorNome || '-'}</td>
+                                    <td>{equip.localNome || '-'}</td>
+                                    <td>{equip.descricao}</td>
+                                    <td>
+                                        <div className="actions-container">
+                                            <div className="actions-group-vertical">
+                                                <button onClick={() => handleOpenProgramacaoModal(equip)} className="btn-plano">Plano</button>
+                                                <button onClick={() => handleOpenHistoricoModal(equip)} className="btn-historico">Histórico</button>
+                                            </div>
                                             <div className="actions-group">
-                                                <button onClick={() => handleSalvarEdicao(equip.id)} className="btn-salvar">Salvar</button>
-                                                <button onClick={() => setEditandoId(null)} className="btn-cancelar">Cancelar</button>
+                                                <button onClick={() => handleOpenServicosModal(equip)} className="btn-servicos">Serviços</button>
+                                                <button onClick={() => handleEditarClick(equip)} className="btn-editar">Editar</button>
+                                                <button onClick={() => handleExcluir(equip.id)} className="btn-excluir">Excluir</button>
                                             </div>
-                                        </td>
-                                    </>
-                                ) : (
-                                    <>
-                                        <td>{equip.tag || '-'}</td>
-                                        <td>{equip.nome}</td>
-                                        {/* ✨ ALTERAÇÃO AQUI: Exibição dos nomes vindos do DTO */}
-                                        <td>{equip.setorNome || '-'}</td>
-                                        <td>{equip.localNome || '-'}</td>
-                                        <td>{equip.descricao}</td>
-                                        <td>
-                                            <div className="actions-container">
-                                                <div className="actions-group-vertical">
-                                                    <button onClick={() => handleOpenProgramacaoModal(equip)} className="btn-plano">Plano</button>
-                                                    <button onClick={() => handleOpenHistoricoModal(equip)} className="btn-historico">Histórico</button>
-                                                </div>
-                                                <div className="actions-group">
-                                                    <button onClick={() => handleOpenServicosModal(equip)} className="btn-servicos">Serviços</button>
-                                                    <button onClick={() => handleEditarClick(equip)} className="btn-editar">Editar</button>
-                                                    <button onClick={() => handleExcluir(equip.id)} className="btn-excluir">Excluir</button>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </>
-                                )}
-                            </tr>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )
                         ))}
                     </tbody>
                 </table>

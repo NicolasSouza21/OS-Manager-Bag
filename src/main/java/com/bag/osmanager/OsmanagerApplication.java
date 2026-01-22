@@ -21,7 +21,7 @@ public class OsmanagerApplication {
     @Bean
     public CommandLineRunner initDatabase(FuncionarioRepository funcionarioRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            String adminEmail = "admin@empresa.com";
+            String adminEmail = "eu@eu.com";
             
             // 1. Verifica se o usuário admin já existe no banco
             if (!funcionarioRepository.findByEmail(adminEmail).isPresent()) {
@@ -34,7 +34,7 @@ public class OsmanagerApplication {
                 Funcionario admin = new Funcionario();
                 admin.setNome("Administrador Padrão");
                 admin.setEmail(adminEmail);
-                admin.setSenha(passwordEncoder.encode("senha_forte_123")); // Senha é codificada!
+                admin.setSenha(passwordEncoder.encode("123456")); // Senha é codificada!
                 admin.setTelefone("00000000000");
                 admin.setTipoFuncionario(TipoFuncionario.ADMIN);
 
